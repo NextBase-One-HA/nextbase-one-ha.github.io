@@ -1,62 +1,40 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NEXTBASE</title>
-  <style>
-    :root{--bg:#0b0b0b;--panel:#121212;--line:#2a2a2a;--gold:#d6b25e;--text:#eaeaea;--muted:#bdbdbd;}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;line-height:1.7}
-    a{color:var(--gold);text-decoration:none} a:hover{opacity:.85}
-    .wrap{max-width:920px;margin:0 auto;padding:28px 16px 60px}
-    header{border-bottom:1px solid var(--line);padding:10px 0 18px;margin-bottom:18px}
-    .brand{color:var(--gold);font-weight:800;letter-spacing:.18em;font-size:22px}
-    .sub{color:var(--muted);font-size:12px;margin-top:8px}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
-    h1,h2{margin:0 0 10px 0;color:var(--gold)}
-    p{margin:0 0 10px 0}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    @media(max-width:640px){.grid{grid-template-columns:1fr}}
-    .btn{display:block;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#0f0f0f}
-    .btn b{display:block;color:var(--gold);margin-bottom:4px;letter-spacing:.06em}
-    .btn span{color:var(--muted);font-size:12px}
-    footer{border-top:1px solid var(--line);margin-top:18px;padding-top:12px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  </style>
+    <meta charset="UTF-8">
+    <title>SOVEREIGN-NODE v1.3 | NEXTBASE Official</title>
+    <style>
+        body { background: #050505; color: #e0e0e0; font-family: "Helvetica Neue", Arial, sans-serif; line-height: 1.6; padding: 0; margin: 0; }
+        .hero { padding: 80px 20px; text-align: center; border-bottom: 1px solid #333; }
+        .hero h1 { font-size: 3em; color: #fff; letter-spacing: 0.1em; }
+        .price { font-size: 2em; color: #ffcc00; margin: 20px 0; }
+        .btn { background: #0070f3; color: #fff; padding: 20px 40px; text-decoration: none; font-weight: bold; border-radius: 5px; font-size: 1.2em; }
+        .btn:hover { background: #0056b3; }
+        .specs { max-width: 800px; margin: 40px auto; padding: 20px; background: #111; border-radius: 10px; }
+        .specs h2 { color: #00ff00; border-left: 5px solid #00ff00; padding-left: 15px; }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">NEXTBASE</div>
-      <div class="sub">Official / Legal / Support</div>
-    </header>
-
-    <div class="card">
-      <h1>Official Pages</h1>
-      <p class="sub">アプリ審査・決済・問い合わせ導線のための公式ページです。</p>
-      <div class="grid">
-        <a class="btn" href="privacy.html"><b>Privacy Policy</b><span>個人情報の取り扱い</span></a>
-        <a class="btn" href="terms.html"><b>Terms of Service</b><span>利用規約</span></a>
-        <a class="btn" href="support.html"><b>Support</b><span>問い合わせ窓口</span></a>
-        <a class="btn" href="legal.html"><b>Legal Notice</b><span>特定商取引法に基づく表記</span></a>
-      </div>
+    <div class="hero">
+        <h1>SOVEREIGN-NODE v1.3</h1>
+        <p>「GAFAに、あなたの思考を渡すな。」</p>
+        <div class="price">一括：30,000円 (税込)</div>
+        <br>
+        <a href="https://buy.stripe.com/3cI5kF8Vngd21F52HRasg03" class="btn">今すぐ要塞を構築する</a>
     </div>
 
-    <div class="card">
-      <h2>Contact</h2>
-      <p><a href="mailto:info@nextbase-japan.com">info@nextbase-japan.com</a></p>
-      <p class="sub">返信目安：3〜5営業日</p>
+    <div class="specs">
+        <h2>物理的な「主権」の証明</h2>
+        <ul>
+            <li><strong>HMAC-SHA256 認証ゲート</strong>: 未認可のアクセスを物理的に遮断[span_0](end_span)[span_1](end_span)</li>
+            [span_2](start_span)[span_3](start_span)<li><strong>不可逆ハッシュチェーン</strong>: 改ざん不能な証拠の蓄積[span_2](end_span)[span_3](end_span)</li>
+            [span_4](start_span)[span_5](start_span)<li><strong>100% ローカル実行</strong>: クラウドへのデータ漏洩を完全に封鎖[span_4](end_span)[span_5](end_span)</li>
+        </ul>
+        <p>※本製品はPythonスクリプト形式での提供となります。意味を理解する必要はありません。起動した瞬間、そこがあなたの聖域になります。</p>
     </div>
 
-    <footer>
-      <span class="mono">© NEXTBASE</span>
-      <span class="mono" id="ts"></span>
+    <footer style="text-align: center; padding: 40px; color: #555;">
+        (c) 2026 NEXTBASE | Sovereign AI Infrastructure
     </footer>
-  </div>
-  <script>
-    const d=new Date(); const p=n=>String(n).padStart(2,'0');
-    document.getElementById('ts').textContent=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
-  </script>
 </body>
 </html>
