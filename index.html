@@ -1,59 +1,221 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTBASE | Web App Solutions</title>
-    <style>
-        :root { --accent: #00ff41; --bg: #050505; --card: #111; }
-        body { background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        .nav { padding: 20px; border-bottom: 1px solid #222; text-align: center; font-weight: bold; letter-spacing: 2px; }
-        .hero { padding: 60px 20px; text-align: center; background: linear-gradient(180deg, #0a0a0a 0%, #050505 100%); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1100px; margin: -40px auto 60px; padding: 0 20px; }
-        .card { background: var(--card); border: 1px solid #222; border-radius: 8px; padding: 30px; transition: 0.3s; display: flex; flex-direction: column; }
-        .card:hover { border-color: var(--accent); transform: translateY(-5px); }
-        .card h2 { color: var(--accent); margin-top: 0; font-size: 1.2rem; }
-        .price { font-size: 2rem; font-weight: bold; margin: 15px 0; color: #fff; }
-        .desc { font-size: 0.9rem; color: #aaa; flex-grow: 1; margin-bottom: 20px; }
-        .buy-btn { background: var(--accent); color: #000; text-decoration: none; text-align: center; padding: 15px; font-weight: bold; border-radius: 4px; }
-        .footer { text-align: center; padding: 40px; font-size: 0.8rem; border-top: 1px solid #222; }
-        .footer a { color: #555; margin: 0 10px; text-decoration: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXTBASE | APP DEPOT</title>
+
+<style>
+:root {
+--accent:#00ff41;
+--bg:#050505;
+--card:#111;
+}
+
+body{
+background:var(--bg);
+color:#eee;
+font-family:'Segoe UI',sans-serif;
+margin:0;
+}
+
+.nav{
+padding:20px;
+border-bottom:1px solid #222;
+text-align:center;
+font-weight:bold;
+letter-spacing:2px;
+}
+
+.hero{
+padding:60px 20px;
+text-align:center;
+background:linear-gradient(180deg,#0a0a0a 0%,#050505 100%);
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+gap:30px;
+max-width:1100px;
+margin:-40px auto 60px;
+padding:0 20px;
+}
+
+.card{
+background:var(--card);
+border:1px solid #222;
+border-radius:8px;
+padding:30px;
+transition:.3s;
+display:flex;
+flex-direction:column;
+}
+
+.card:hover{
+border-color:var(--accent);
+transform:translateY(-5px);
+}
+
+.card h2{
+color:var(--accent);
+margin-top:0;
+font-size:1.2rem;
+}
+
+.price{
+font-size:2rem;
+font-weight:bold;
+margin:15px 0;
+color:#fff;
+}
+
+.desc{
+font-size:.9rem;
+color:#aaa;
+flex-grow:1;
+margin-bottom:20px;
+}
+
+.buy-btn{
+background:var(--accent);
+color:#000;
+text-decoration:none;
+text-align:center;
+padding:15px;
+font-weight:bold;
+border-radius:4px;
+}
+
+.footer{
+text-align:center;
+padding:40px;
+font-size:.8rem;
+border-top:1px solid #222;
+}
+
+.footer a{
+color:#555;
+margin:0 10px;
+text-decoration:none;
+}
+
+.launch{
+background:#000;
+color:var(--accent);
+border:1px solid var(--accent);
+padding:12px;
+margin-top:10px;
+text-align:center;
+text-decoration:none;
+display:block;
+border-radius:4px;
+}
+</style>
 </head>
+
 <body>
-    <div class="nav">NEXTBASE / APP DEPOT</div>
-    
-    <div class="hero">
-        <h1>物理的な「解決」を、あなたのブラウザへ。</h1>
-        <p>30年後の自立を支える、嘘のないツール群。</p>
-    </div>
 
-    <div class="grid">
-        <div class="card">
-            <h2>GOLF-MAHJONG LOGIC</h2>
-            <div class="price">$19 <small>(approx. ¥3,000)</small></div>
-            <p class="desc">「遊び」を「改ざん不能な証拠」に変える。ハッシュチェーン技術を用いた勝敗管理ロジック。説明不要の驚愕を、卓上で体感せよ。</p>
-            <a href="https://buy.stripe.com/8x29AV6NfaSI2J96Y7asg05" class="buy-btn">GET ACCESS</a>
-        </div>
+<div class="nav">
+NEXTBASE / APP DEPOT
+</div>
 
-        <div class="card">
-            <h2>SECRET LEDGER CORE</h2>
-            <div class="price">$99 <small>(approx. ¥15,000)</small></div>
-            <p class="desc">銀行を介さない、個人間の「真実の記録」。暗号化された裏帳簿ロジックにより、あなたの資産と誠実さを物理的に隔離・保存する。</p>
-            <a href="https://buy.stripe.com/14AbJ37RjaSI5Vldmvasg04" class="buy-btn">GET ACCESS</a>
-        </div>
+<div class="hero">
+<h1>物理的な「解決」を、あなたのブラウザへ。</h1>
+<p>30年後の自立を支える、嘘のないツール群。</p>
+</div>
 
-        <div class="card">
-            <h2>SOVEREIGN-NODE v1.3</h2>
-            <div class="price">$199 <small>(approx. ¥30,000)</small></div>
-            <p class="desc">自分専用の知能要塞。HMAC-SHA256認証ゲートにより外部アクセスを遮断。100%ローカル環境で主権を守り抜く、NEXTBASEの基幹インフラ。</p>
-            <a href="https://buy.stripe.com/3cI5kF8Vngd21F52HRasg03" class="buy-btn">GET ACCESS</a>
-        </div>
-    </div>
 
-    <div class="footer">
-        <a href="legal.html">特定商取引法に基づく表記</a> | <a href="terms.html">利用規約</a> | <a href="privacy.html">プライバシーポリシー</a>
-        <p>(c) 2026 NEXTBASE. まともに、自力で立つために。</p>
-    </div>
+<div class="grid">
+
+<!-- GLB -->
+<div class="card">
+<h2>GLB | GLOBAL LANGUAGE BREAKER</h2>
+
+<div class="price">$1.99 / $7.99</div>
+
+<p class="desc">
+言葉の壁を破壊する旅行ツール。  
+オフライン辞書＋オンラインAIのハイブリッド翻訳。
+</p>
+
+<a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="buy-btn">
+GET BASIC
+</a>
+
+<a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="buy-btn">
+GET TRAVELER
+</a>
+
+<a href="apps/glb/index.html" class="launch">
+LAUNCH APP
+</a>
+
+</div>
+
+
+<!-- GOLF MAHJONG -->
+<div class="card">
+<h2>GOLF-MAHJONG LOGIC</h2>
+
+<div class="price">$19</div>
+
+<p class="desc">
+ゴルフ・麻雀の勝敗を改ざん不能な証拠として保存するロジック。
+</p>
+
+<a href="https://buy.stripe.com/8x29AV6NfaSI2J96Y7asg05" class="buy-btn">
+GET ACCESS
+</a>
+</div>
+
+
+<!-- SECRET LEDGER -->
+<div class="card">
+<h2>SECRET LEDGER CORE</h2>
+
+<div class="price">$99</div>
+
+<p class="desc">
+銀行を介さない個人間の暗号化裏帳簿。
+</p>
+
+<a href="https://buy.stripe.com/14AbJ37RjaSI5Vldmvasg04" class="buy-btn">
+GET ACCESS
+</a>
+</div>
+
+
+<!-- SOVEREIGN NODE -->
+<div class="card">
+<h2>SOVEREIGN NODE v1.3</h2>
+
+<div class="price">$199</div>
+
+<p class="desc">
+完全ローカルAIノード。
+</p>
+
+<a href="https://buy.stripe.com/3cI5kF8Vngd21F52HRasg03" class="buy-btn">
+GET ACCESS
+</a>
+</div>
+
+
+</div>
+
+
+<div class="footer">
+
+<a href="legal.html">特定商取引</a> |
+<a href="terms.html">利用規約</a> |
+<a href="privacy.html">プライバシー</a>
+
+<p>
+(c) 2026 NEXTBASE
+</p>
+
+</div>
+
 </body>
 </html>
