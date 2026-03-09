@@ -1,219 +1,179 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXTBASE | APP DEPOT</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NEXTBASE | GLB</title>
 
 <style>
-:root {
---accent:#00ff41;
+
+:root{
+--gold:#d6b25e;
 --bg:#050505;
---card:#111;
+--panel:#0f0f0f;
+--line:#222;
+--text:#eaeaea;
+--muted:#888;
 }
+
+*{box-sizing:border-box}
 
 body{
-background:var(--bg);
-color:#eee;
-font-family:'Segoe UI',sans-serif;
 margin:0;
+background:var(--bg);
+color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+line-height:1.6;
 }
 
-.nav{
-padding:20px;
-border-bottom:1px solid #222;
+.container{
+max-width:1000px;
+margin:auto;
+padding:40px 20px;
+}
+
+.header{
 text-align:center;
-font-weight:bold;
-letter-spacing:2px;
+letter-spacing:6px;
+font-weight:700;
+color:var(--gold);
+font-size:14px;
+margin-bottom:60px;
 }
 
 .hero{
-padding:60px 20px;
 text-align:center;
-background:linear-gradient(180deg,#0a0a0a 0%,#050505 100%);
+margin-bottom:80px;
 }
 
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-gap:30px;
-max-width:1100px;
-margin:-40px auto 60px;
-padding:0 20px;
-}
-
-.card{
-background:var(--card);
-border:1px solid #222;
-border-radius:8px;
-padding:30px;
-transition:.3s;
-display:flex;
-flex-direction:column;
-}
-
-.card:hover{
-border-color:var(--accent);
-transform:translateY(-5px);
-}
-
-.card h2{
-color:var(--accent);
-margin-top:0;
-font-size:1.2rem;
-}
-
-.price{
-font-size:2rem;
-font-weight:bold;
-margin:15px 0;
-color:#fff;
-}
-
-.desc{
-font-size:.9rem;
-color:#aaa;
-flex-grow:1;
+.hero h1{
+font-size:42px;
+font-weight:700;
 margin-bottom:20px;
 }
 
-.buy-btn{
-background:var(--accent);
-color:#000;
-text-decoration:none;
+.hero p{
+color:var(--muted);
+font-size:18px;
+}
+
+.card{
+background:var(--panel);
+border:1px solid var(--line);
+border-radius:10px;
+padding:40px;
+max-width:420px;
+margin:auto;
+}
+
+.card h2{
+color:var(--gold);
+letter-spacing:2px;
+font-size:20px;
+margin-top:0;
+}
+
+.price{
+font-size:48px;
+font-weight:700;
+margin:30px 0;
+}
+
+.desc{
+color:var(--muted);
+margin-bottom:30px;
+}
+
+.btn{
+display:block;
 text-align:center;
-padding:15px;
-font-weight:bold;
-border-radius:4px;
+padding:16px;
+margin-top:10px;
+border-radius:6px;
+text-decoration:none;
+font-weight:700;
+letter-spacing:1px;
+}
+
+.btn-basic{
+background:var(--gold);
+color:#000;
+}
+
+.btn-pro{
+border:1px solid var(--gold);
+color:var(--gold);
+}
+
+.btn-launch{
+margin-top:20px;
+border:1px solid var(--line);
+color:#ccc;
 }
 
 .footer{
 text-align:center;
-padding:40px;
-font-size:.8rem;
-border-top:1px solid #222;
+margin-top:80px;
+font-size:13px;
+color:var(--muted);
 }
 
 .footer a{
-color:#555;
+color:var(--gold);
 margin:0 10px;
 text-decoration:none;
 }
 
-.launch{
-background:#000;
-color:var(--accent);
-border:1px solid var(--accent);
-padding:12px;
-margin-top:10px;
-text-align:center;
-text-decoration:none;
-display:block;
-border-radius:4px;
-}
 </style>
 </head>
 
 <body>
 
-<div class="nav">
-NEXTBASE / APP DEPOT
+<div class="container">
+
+<div class="header">
+NEXTBASE
 </div>
 
 <div class="hero">
-<h1>物理的な「解決」を、あなたのブラウザへ。</h1>
-<p>30年後の自立を支える、嘘のないツール群。</p>
+<h1>Break the Language Barrier</h1>
+<p>GLB is a travel translation weapon.<br>
+Offline dictionary + AI fallback.</p>
 </div>
 
-
-<div class="grid">
-
-<!-- GLB -->
 <div class="card">
-<h2>GLB | GLOBAL LANGUAGE BREAKER</h2>
+
+<h2>GLB / GLOBAL LANGUAGE BREAKER</h2>
 
 <div class="price">$1.99 / $7.99</div>
 
-<p class="desc">
-言葉の壁を破壊する旅行ツール。  
-オフライン辞書＋オンラインAIのハイブリッド翻訳。
-</p>
+<div class="desc">
+Real-world translation tool for travelers.<br>
+Fast. Simple. Reliable.
+</div>
 
-<a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="buy-btn">
+<a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn btn-basic">
 GET BASIC
 </a>
 
-<a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="buy-btn">
+<a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn btn-pro">
 GET TRAVELER
 </a>
 
-<a href="apps/glb/index.html" class="launch">
+<a href="/apps/glb/index.html" class="btn btn-launch">
 LAUNCH APP
 </a>
 
 </div>
 
-
-<!-- GOLF MAHJONG -->
-<div class="card">
-<h2>GOLF-MAHJONG LOGIC</h2>
-
-<div class="price">$19</div>
-
-<p class="desc">
-ゴルフ・麻雀の勝敗を改ざん不能な証拠として保存するロジック。
-</p>
-
-<a href="https://buy.stripe.com/8x29AV6NfaSI2J96Y7asg05" class="buy-btn">
-GET ACCESS
-</a>
-</div>
-
-
-<!-- SECRET LEDGER -->
-<div class="card">
-<h2>SECRET LEDGER CORE</h2>
-
-<div class="price">$99</div>
-
-<p class="desc">
-銀行を介さない個人間の暗号化裏帳簿。
-</p>
-
-<a href="https://buy.stripe.com/14AbJ37RjaSI5Vldmvasg04" class="buy-btn">
-GET ACCESS
-</a>
-</div>
-
-
-<!-- SOVEREIGN NODE -->
-<div class="card">
-<h2>SOVEREIGN NODE v1.3</h2>
-
-<div class="price">$199</div>
-
-<p class="desc">
-完全ローカルAIノード。
-</p>
-
-<a href="https://buy.stripe.com/3cI5kF8Vngd21F52HRasg03" class="buy-btn">
-GET ACCESS
-</a>
-</div>
-
-
-</div>
-
-
 <div class="footer">
-
-<a href="legal.html">特定商取引</a> |
-<a href="terms.html">利用規約</a> |
-<a href="privacy.html">プライバシー</a>
-
-<p>
-(c) 2026 NEXTBASE
-</p>
+<a href="legal.html">Legal</a>
+<a href="terms.html">Terms</a>
+<a href="privacy.html">Privacy</a>
+<a href="support.html">Support</a>
+<br><br>
+© 2026 NEXTBASE
+</div>
 
 </div>
 
