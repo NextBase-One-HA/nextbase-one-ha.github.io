@@ -25,33 +25,47 @@ html,body{
   min-height:100%;
 }
 
-body{overflow-x:hidden}
+body{
+  overflow-x:hidden;
+}
 
 #intro{
-position:fixed;
-inset:0;
-background:#000;
-z-index:9999;
-display:flex;
-align-items:center;
-justify-content:center;
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:opacity .9s ease, visibility .9s ease;
+}
+
+#intro.hidden{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
 }
 
 #intro video{
-width:100vw;
-height:100vh;
-object-fit:cover;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:#000;
 }
 
-#skipIntro{
-position:absolute;
-bottom:40px;
-right:40px;
-padding:10px 20px;
-border:1px solid #d6b25e;
-background:transparent;
-color:#d6b25e;
-border-radius:20px;
+#skip{
+  position:absolute;
+  right:16px;
+  bottom:20px;
+  border:1px solid rgba(214,178,94,.55);
+  color:var(--gold);
+  background:rgba(0,0,0,.45);
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:12px;
+  letter-spacing:.12em;
+  cursor:pointer;
+  backdrop-filter:blur(6px);
 }
 
 #main{
@@ -85,11 +99,23 @@ border-radius:20px;
   padding:18px 0 34px;
 }
 
+.hero-logo{
+  width:min(86vw,520px);
+  aspect-ratio:1/1;
+  margin:0 auto 20px;
+  border-radius:28px;
+  object-fit:cover;
+  display:block;
+  box-shadow:0 0 50px rgba(214,178,94,.18);
+  border:1px solid rgba(214,178,94,.16);
+}
+
 .hero h1{
   margin:0 0 14px;
   font-size:clamp(34px,8vw,58px);
   line-height:1.05;
   font-weight:700;
+  letter-spacing:.01em;
 }
 
 .hero p{
@@ -142,7 +168,11 @@ border-radius:20px;
   margin-top:12px;
   font-weight:800;
   letter-spacing:.04em;
+  transition:transform .15s ease, opacity .15s ease, background .15s ease;
 }
+
+.btn:hover{opacity:.92}
+.btn:active{transform:scale(.985)}
 
 .btn-basic{
   background:var(--gold);
@@ -173,16 +203,20 @@ border-radius:20px;
   text-decoration:none;
   margin:0 10px;
 }
+
+@media (max-width:640px){
+  .container{padding:22px 16px 44px}
+  .product{padding:22px}
+}
 </style>
 </head>
 <body>
 
 <div id="intro">
-<video id="introVideo" autoplay muted playsinline>
-  <source src="door.mp4" type="video/mp4">
-</video>
-
-<button id="skipIntro">SKIP</button>
+  <video id="introVideo" autoplay muted playsinline preload="auto">
+    <source src="door.mp4" type="video/mp4">
+  </video>
+  <button id="skip" type="button">SKIP</button>
 </div>
 
 <div id="main">
@@ -190,6 +224,9 @@ border-radius:20px;
     <div class="topbar">NEXT BASE</div>
 
     <section class="hero">
+      <!-- ここは後でGLB画像に差し替え可 -->
+      <img class="hero-logo" src="glb-hero.jpg" alt="GLB">
+
       <h1>Break the Language Barrier</h1>
       <p>
         GLB is a travel translation weapon.<br>
@@ -221,22 +258,31 @@ border-radius:20px;
 </div>
 
 <script>
+const intro = document.getElementById('intro');
+const introVideo = document.getElementById('introVideo');
+const main = document.getElementById('main');
+const skip = document.getElementById('skip');
 
-const video = document.getElementById("introVideo");
-const intro = document.getElementById("intro");
+function enterSite(){
+  if (intro.classList.contains('hidden')) return;
+  intro.classList.add('hidden');
+  main.classList.add('show');
+  setTimeout(() => {
+    intro.style.display = 'none';
+  }, 900);
+}
 
-video.onended = () => {
-intro.style.display = "none";
-};
+skip.addEventListener('click', enterSite);
+introVideo.addEventListener('ended', enterSite);
 
-setTimeout(()=>{
-intro.style.display="none";
-},10000);
+// 念のため。動画が長い・読込不良でも3.6秒で入る
+setTimeout(enterSite, 3600);
 
-document.getElementById("skipIntro").onclick = ()=>{
-intro.style.display="none";
-};
-
+// 自動再生失敗時
+introVideo.play().catch(() => {
+  setTimeout(enterSite, 1200);
+});
 </script>
+
 </body>
 </html>
