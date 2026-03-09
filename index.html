@@ -46,11 +46,14 @@ body{
   pointer-events:none;
 }
 
-#intro video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  background:#000;
+　.hero-overlay{
+position:absolute;
+inset:0;
+background:linear-gradient(
+to bottom,
+rgba(0,0,0,0.3),
+rgba(0,0,0,0.7)
+);
 }
 
 #skip{
@@ -245,19 +248,29 @@ body{
         <a class="btn btn-pro" href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02">GET TRAVELER</a>
         <a class="btn btn-launch" href="apps/glb/index.html">LAUNCH APP</a>
       </div>
-    </section>
+    <script>
+const intro = document.getElementById('intro');
+const introVideo = document.getElementById('introVideo');
+const main = document.getElementById('main');
+const skip = document.getElementById('skip');
 
-    <div class="legal">
-      <a href="legal.html">Legal</a>
-      <a href="terms.html">Terms</a>
-      <a href="privacy.html">Privacy</a>
-      <a href="support.html">Support</a>
-      <div style="margin-top:14px;">© 2026 NEXT BASE</div>
-    </div>
-  </div>
-</div>
+function enterSite(){
+  if (intro.classList.contains('hidden')) return;
+  intro.classList.add('hidden');
+  main.classList.add('show');
+  setTimeout(() => {
+    intro.style.display = 'none';
+  }, 900);
+}
 
-<script>
+skip.addEventListener('click', enterSite);
+introVideo.addEventListener('ended', enterSite);
+
+// autoplay失敗時だけ保険
+introVideo.play().catch(() => {
+  setTimeout(enterSite, 1200);
+});
+</script>
 const intro = document.getElementById('intro');
 const introVideo = document.getElementById('introVideo');
 const main = document.getElementById('main');
