@@ -37,22 +37,14 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  transition:opacity .9s ease, visibility .9s ease;
-}
-
-#intro.hidden{
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
 }
 
 #intro video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
   background:#000;
 }
-
 #skip{
   position:absolute;
   right:16px;
@@ -213,7 +205,7 @@ body{
 <body>
 
 <div id="intro">
-  <video id="introVideo" autoplay muted playsinline preload="auto">
+  <video id="introVideo" autoplay muted playsinline>
     <source src="door.mp4" type="video/mp4">
   </video>
   <button id="skip" type="button">SKIP</button>
@@ -225,7 +217,7 @@ body{
 
     <section class="hero">
       <!-- ここは後でGLB画像に差し替え可 -->
-      <img class="hero-logo" src="glb-hero.jpg" alt="GLB">
+      <img class="hero-logo" src="glb-hero.jpg" alt="">
 
       <h1>Break the Language Barrier</h1>
       <p>
@@ -266,21 +258,24 @@ const skip = document.getElementById('skip');
 function enterSite(){
   if (intro.classList.contains('hidden')) return;
   intro.classList.add('hidden');
-  main.classList.add('show');
+  if (main) main.classList.add('show');
   setTimeout(() => {
     intro.style.display = 'none';
   }, 900);
 }
 
 skip.addEventListener('click', enterSite);
+
+introVideo.addEventListener('timeupdate', () => {
+  if (introVideo.duration && introVideo.currentTime >= introVideo.duration - 0.15) {
+    enterSite();
+  }
+});
+
 introVideo.addEventListener('ended', enterSite);
 
-// 念のため。動画が長い・読込不良でも3.6秒で入る
-setTimeout(enterSite, 3600);
-
-// 自動再生失敗時
-introVideo.play().catch(() => {
-  setTimeout(enterSite, 1200);
+introVideo.play().catch((e) => {
+  console.log("video play failed", e);
 });
 </script>
 
