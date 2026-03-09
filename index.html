@@ -28,41 +28,30 @@ html,body{
 body{overflow-x:hidden}
 
 #intro{
-  position:fixed;
-  inset:0;
-  background:#000;
-  z-index:9999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:opacity .9s ease, visibility .9s ease;
-}
-
-#intro.hidden{
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
+position:fixed;
+inset:0;
+background:#000;
+z-index:9999;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
 #intro video{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
-  background:#000;
+width:100vw;
+height:100vh;
+object-fit:cover;
 }
 
-#skip{
-  position:absolute;
-  right:16px;
-  bottom:20px;
-  border:1px solid rgba(214,178,94,.55);
-  color:var(--gold);
-  background:rgba(0,0,0,.45);
-  padding:10px 14px;
-  border-radius:999px;
-  font-size:12px;
-  letter-spacing:.12em;
-  cursor:pointer;
+#skipIntro{
+position:absolute;
+bottom:40px;
+right:40px;
+padding:10px 20px;
+border:1px solid #d6b25e;
+background:transparent;
+color:#d6b25e;
+border-radius:20px;
 }
 
 #main{
@@ -189,10 +178,11 @@ body{overflow-x:hidden}
 <body>
 
 <div id="intro">
-  <video id="introVideo" autoplay muted playsinline preload="auto">
-    <source src="door.mp4" type="video/mp4">
-  </video>
-  <button id="skip" type="button">SKIP</button>
+<video id="introVideo" autoplay muted playsinline>
+  <source src="door.mp4" type="video/mp4">
+</video>
+
+<button id="skipIntro">SKIP</button>
 </div>
 
 <div id="main">
@@ -231,34 +221,22 @@ body{overflow-x:hidden}
 </div>
 
 <script>
-const intro = document.getElementById('intro');
-const introVideo = document.getElementById('introVideo');
-const main = document.getElementById('main');
-const skip = document.getElementById('skip');
 
-function enterSite(){
-  if (intro.classList.contains('hidden')) return;
-  intro.classList.add('hidden');
-  main.classList.add('show');
-  setTimeout(() => {
-    intro.style.display = 'none';
-  }, 900);
-}
+const video = document.getElementById("introVideo");
+const intro = document.getElementById("intro");
 
-skip.addEventListener('click', enterSite);
+video.onended = () => {
+intro.style.display = "none";
+};
 
-introVideo.addEventListener('timeupdate', () => {
-  if (introVideo.duration && introVideo.currentTime >= introVideo.duration - 0.15) {
-    enterSite();
-  }
-});
+setTimeout(()=>{
+intro.style.display="none";
+},10000);
 
-introVideo.addEventListener('ended', enterSite);
+document.getElementById("skipIntro").onclick = ()=>{
+intro.style.display="none";
+};
 
-introVideo.play().catch(() => {
-  setTimeout(enterSite, 1200);
-});
 </script>
-
 </body>
 </html>
