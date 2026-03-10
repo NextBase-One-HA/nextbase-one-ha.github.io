@@ -602,11 +602,30 @@ button.btn-primary:disabled{
     <select id="lang-from">
       <option value="ja">日本語</option>
       <option value="en">English</option>
-      <option value="zh">中文</option>
-      <option value="ko">한국어</option>
-      <option value="es">Español</option>
-      <option value="fr">Français</option>
-      <option value="de">Deutsch</option>
+      <option value="zh">中文 (中国語)</option>
+      <option value="ko">한국어 (韓国語)</option>
+      <option value="es">Español (スペイン語)</option>
+      <option value="fr">Français (フランス語)</option>
+      <option value="de">Deutsch (ドイツ語)</option>
+      <option value="it">Italiano (イタリア語)</option>
+      <option value="pt">Português (ポルトガル語)</option>
+      <option value="ru">Русский (ロシア語)</option>
+      <option value="ar">العربية (アラビア語)</option>
+      <option value="hi">हिन्दी (ヒンディー語)</option>
+      <option value="th">ไทย (タイ語)</option>
+      <option value="vi">Tiếng Việt (ベトナム語)</option>
+      <option value="id">Bahasa Indonesia (インドネシア語)</option>
+      <option value="tr">Türkçe (トルコ語)</option>
+      <option value="pl">Polski (ポーランド語)</option>
+      <option value="nl">Nederlands (オランダ語)</option>
+      <option value="sv">Svenska (スウェーデン語)</option>
+      <option value="no">Norsk (ノルウェー語)</option>
+      <option value="da">Dansk (デンマーク語)</option>
+      <option value="fi">Suomi (フィンランド語)</option>
+      <option value="el">Ελληνικά (ギリシャ語)</option>
+      <option value="cs">Čeština (チェコ語)</option>
+      <option value="hu">Magyar (ハンガリー語)</option>
+      <option value="ro">Română (ルーマニア語)</option>
     </select>
     <button class="swap-btn" id="swap-lang" title="言語を入れ替え">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -616,11 +635,30 @@ button.btn-primary:disabled{
     <select id="lang-to">
       <option value="en">English</option>
       <option value="ja">日本語</option>
-      <option value="zh">中文</option>
-      <option value="ko">한국어</option>
-      <option value="es">Español</option>
-      <option value="fr">Français</option>
-      <option value="de">Deutsch</option>
+      <option value="zh">中文 (中国語)</option>
+      <option value="ko">한국어 (韓国語)</option>
+      <option value="es">Español (スペイン語)</option>
+      <option value="fr">Français (フランス語)</option>
+      <option value="de">Deutsch (ドイツ語)</option>
+      <option value="it">Italiano (イタリア語)</option>
+      <option value="pt">Português (ポルトガル語)</option>
+      <option value="ru">Русский (ロシア語)</option>
+      <option value="ar">العربية (アラビア語)</option>
+      <option value="hi">हिन्दी (ヒンディー語)</option>
+      <option value="th">ไทย (タイ語)</option>
+      <option value="vi">Tiếng Việt (ベトナム語)</option>
+      <option value="id">Bahasa Indonesia (インドネシア語)</option>
+      <option value="tr">Türkçe (トルコ語)</option>
+      <option value="pl">Polski (ポーランド語)</option>
+      <option value="nl">Nederlands (オランダ語)</option>
+      <option value="sv">Svenska (スウェーデン語)</option>
+      <option value="no">Norsk (ノルウェー語)</option>
+      <option value="da">Dansk (デンマーク語)</option>
+      <option value="fi">Suomi (フィンランド語)</option>
+      <option value="el">Ελληνικά (ギリシャ語)</option>
+      <option value="cs">Čeština (チェコ語)</option>
+      <option value="hu">Magyar (ハンガリー語)</option>
+      <option value="ro">Română (ルーマニア語)</option>
     </select>
   </div>
 
@@ -1824,8 +1862,19 @@ voiceOutputBtn.addEventListener("click", () => {
   const text = answerEl.textContent;
   if (!text || answerEl.classList.contains("empty")) return;
   
+  // 音声合成の言語コードマッピング
+  const speechLangMap = {
+    "ja": "ja-JP", "en": "en-US", "zh": "zh-CN", "ko": "ko-KR",
+    "es": "es-ES", "fr": "fr-FR", "de": "de-DE", "it": "it-IT",
+    "pt": "pt-BR", "ru": "ru-RU", "ar": "ar-SA", "hi": "hi-IN",
+    "th": "th-TH", "vi": "vi-VN", "id": "id-ID", "tr": "tr-TR",
+    "pl": "pl-PL", "nl": "nl-NL", "sv": "sv-SE", "no": "no-NO",
+    "da": "da-DK", "fi": "fi-FI", "el": "el-GR", "cs": "cs-CZ",
+    "hu": "hu-HU", "ro": "ro-RO"
+  };
+  
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = langTo.value === "ja" ? "ja-JP" : langTo.value + "-" + langTo.value.toUpperCase();
+  utterance.lang = speechLangMap[langTo.value] || "en-US";
   synth.speak(utterance);
 });
 
@@ -1849,6 +1898,17 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   recognition.continuous = false;
   recognition.interimResults = false;
   
+  // 音声認識の言語コードマッピング
+  const recognitionLangMap = {
+    "ja": "ja-JP", "en": "en-US", "zh": "zh-CN", "ko": "ko-KR",
+    "es": "es-ES", "fr": "fr-FR", "de": "de-DE", "it": "it-IT",
+    "pt": "pt-BR", "ru": "ru-RU", "ar": "ar-SA", "hi": "hi-IN",
+    "th": "th-TH", "vi": "vi-VN", "id": "id-ID", "tr": "tr-TR",
+    "pl": "pl-PL", "nl": "nl-NL", "sv": "sv-SE", "no": "no-NO",
+    "da": "da-DK", "fi": "fi-FI", "el": "el-GR", "cs": "cs-CZ",
+    "hu": "hu-HU", "ro": "ro-RO"
+  };
+  
   recognition.onstart = () => {
     voiceInputBtn.classList.add("active");
   };
@@ -1865,7 +1925,7 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
   
   voiceInputBtn.addEventListener("click", () => {
     if (recognition) {
-      recognition.lang = langFrom.value === "ja" ? "ja-JP" : langFrom.value + "-" + langFrom.value.toUpperCase();
+      recognition.lang = recognitionLangMap[langFrom.value] || "en-US";
       recognition.start();
     }
   });
@@ -2172,9 +2232,21 @@ cameraInputBtn.addEventListener("click", async () => {
         canvas.toBlob(async (blob) => {
           try {
             // Tesseract.jsでOCR処理
-            const { data: { text } } = await Tesseract.recognize(
+              // Tesseract.jsの言語コードマッピング
+              const tesseractLangMap = {
+                "ja": "jpn", "en": "eng", "zh": "chi_sim", "ko": "kor",
+                "es": "spa", "fr": "fra", "de": "deu", "it": "ita",
+                "pt": "por", "ru": "rus", "ar": "ara", "hi": "hin",
+                "th": "tha", "vi": "vie", "id": "ind", "tr": "tur",
+                "pl": "pol", "nl": "nld", "sv": "swe", "no": "nor",
+                "da": "dan", "fi": "fin", "el": "ell", "cs": "ces",
+                "hu": "hun", "ro": "ron"
+              };
+              const tesseractLang = tesseractLangMap[currentFromLang] || "eng";
+              
+              const { data: { text } } = await Tesseract.recognize(
               blob,
-              currentFromLang === "ja" ? "jpn" : "eng", // 日本語または英語
+              tesseractLang,
               {
                 logger: (m) => {
                   if (m.status === "recognizing text") {
