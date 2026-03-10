@@ -2500,12 +2500,21 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
       updateStatus(`月間使用量上限到達 (${userPlan}プラン: $${quotaInfo.quota.toFixed(2)})`);
     }
     console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
+    
+    // 課金を促すモーダル表示（宣伝なしで自然に課金を促す）
+    showUpgradeModal();
+    
     return null;
   }
   
   // 使用量が80%を超えている場合は警告
   if (quotaInfo.usagePercent > 80 && updateStatus) {
     updateStatus(`使用量警告: ${quotaInfo.usagePercent.toFixed(1)}%使用中 (残り $${quotaInfo.remaining.toFixed(4)})`);
+    
+    // 80%到達時に軽い警告（課金を促す）
+    if (quotaInfo.usagePercent >= 80 && quotaInfo.usagePercent < 100) {
+      showUpgradeWarning(quotaInfo);
+    }
   }
   
   // API削減ロジック: キャッシュチェック（軽量版）
@@ -2781,6 +2790,8 @@ const performanceStatsBtn = document.getElementById("performance-stats-btn");
 const testGatewayBtn = document.getElementById("test-gateway");
 const setPlanBasicBtn = document.getElementById("set-plan-basic");
 const setPlanTravelerBtn = document.getElementById("set-plan-traveler");
+const upgradeModal = document.getElementById("upgrade-modal");
+const closeUpgradeModalBtn = document.getElementById("close-upgrade-modal");
 const realtimeToggle = document.getElementById("realtime-toggle");
 const realtimeCheckbox = document.getElementById("realtime-checkbox");
 const conversationToggle = document.getElementById("conversation-toggle");
