@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
@@ -1740,7 +1740,7 @@ const safetyInfo = {
 };
 
 // アプリUI言語
-let appLang = "ja";
+let appLang = "en";
 
 // UIテキストの多言語対応
 const uiTexts = {
@@ -3269,7 +3269,7 @@ appLangSelect.addEventListener("change", () => {
 });
 
 // アプリ言語の復元
-appLang = localStorage.getItem("glb_app_lang") || navigator.language.split("-")[0] || "ja";
+appLang = localStorage.getItem("glb_app_lang") || navigator.language.split("-")[0] || "en";
 if (appLangSelect) {
   appLangSelect.value = appLang;
   updateUITexts();
@@ -5109,8 +5109,8 @@ if (onboardingStartBtn) {
 // 「スキップ」ボタン
 if (onboardingSkipBtn) {
   onboardingSkipBtn.addEventListener('click', () => {
-  // デフォルト言語（日本語）を保存
-  localStorage.setItem('glb_app_lang', 'ja');
+  // デフォルト言語（英語）を保存
+  localStorage.setItem('glb_app_lang', 'en');
   localStorage.setItem('glb_onboarding_completed', 'true');
   
   // オンボーディングを非表示、メイン画面を表示
