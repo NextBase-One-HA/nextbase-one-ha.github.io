@@ -833,6 +833,18 @@ button.btn-primary:disabled{
       <button class="icon-btn" id="medical-info-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3);">
         🏥 医療情報
       </button>
+      <button class="icon-btn" id="timezone-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(139,92,246,.1); border:1px solid rgba(139,92,246,.3);">
+        🕐 時差計算
+      </button>
+      <button class="icon-btn" id="tip-calculator-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(236,72,153,.1); border:1px solid rgba(236,72,153,.3);">
+        💰 チップ計算
+      </button>
+      <button class="icon-btn" id="voltage-info-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(251,146,60,.1); border:1px solid rgba(251,146,60,.3);">
+        ⚡ 電圧・プラグ情報
+      </button>
+      <button class="icon-btn" id="cultural-info-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3);">
+        🌍 文化・マナー情報
+      </button>
     </div>
   </div>
 
@@ -1214,6 +1226,189 @@ const troubleGuides = {
   trouble_transportation: {
     ja: "【交通トラブル】\n1. タクシーの場合はメーターを確認\n2. 高額請求の場合は領収書を要求\n3. 遅延の場合は証明書を取得\n4. 問題がある場合は観光案内所に相談\n5. 旅行保険に連絡（必要に応じて）",
     en: "【Transportation Trouble】\n1. Check meter for taxis\n2. Request receipt for overcharge\n3. Get certificate for delays\n4. Consult tourist information for issues\n5. Contact travel insurance if needed"
+  }
+};
+
+// 旅行特化機能：時差計算（軽量版）
+function getTimezoneInfo(countryCode) {
+  const timezones = {
+    'US': { offset: -5, name: 'EST (UTC-5)' },
+    'UK': { offset: 0, name: 'GMT (UTC+0)' },
+    'JP': { offset: 9, name: 'JST (UTC+9)' },
+    'CN': { offset: 8, name: 'CST (UTC+8)' },
+    'KR': { offset: 9, name: 'KST (UTC+9)' },
+    'TH': { offset: 7, name: 'ICT (UTC+7)' },
+    'VN': { offset: 7, name: 'ICT (UTC+7)' },
+    'ID': { offset: 7, name: 'WIB (UTC+7)' },
+    'SG': { offset: 8, name: 'SGT (UTC+8)' },
+    'MY': { offset: 8, name: 'MYT (UTC+8)' },
+    'PH': { offset: 8, name: 'PHT (UTC+8)' },
+    'IN': { offset: 5.5, name: 'IST (UTC+5:30)' },
+    'AU': { offset: 10, name: 'AEST (UTC+10)' },
+    'NZ': { offset: 12, name: 'NZST (UTC+12)' },
+    'FR': { offset: 1, name: 'CET (UTC+1)' },
+    'DE': { offset: 1, name: 'CET (UTC+1)' },
+    'IT': { offset: 1, name: 'CET (UTC+1)' },
+    'ES': { offset: 1, name: 'CET (UTC+1)' },
+    'PT': { offset: 0, name: 'WET (UTC+0)' },
+    'GR': { offset: 2, name: 'EET (UTC+2)' },
+    'TR': { offset: 3, name: 'TRT (UTC+3)' },
+    'RU': { offset: 3, name: 'MSK (UTC+3)' },
+    'BR': { offset: -3, name: 'BRT (UTC-3)' },
+    'MX': { offset: -6, name: 'CST (UTC-6)' },
+    'AR': { offset: -3, name: 'ART (UTC-3)' },
+    'AE': { offset: 4, name: 'GST (UTC+4)' },
+    'SA': { offset: 3, name: 'AST (UTC+3)' },
+    'EG': { offset: 2, name: 'EET (UTC+2)' },
+    'ZA': { offset: 2, name: 'SAST (UTC+2)' }
+  };
+  
+  const localOffset = new Date().getTimezoneOffset() / -60; // ローカル時差
+  const target = timezones[countryCode];
+  
+  if (!target) return null;
+  
+  const diff = target.offset - localOffset;
+  const localTime = new Date();
+  const targetTime = new Date(localTime.getTime() + diff * 60 * 60 * 1000);
+  
+  return {
+    country: countryCode,
+    timezone: target.name,
+    localTime: localTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+    targetTime: targetTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+    diff: diff > 0 ? `+${diff}時間` : `${diff}時間`
+  };
+}
+
+// 旅行特化機能：チップ計算（軽量版）
+function calculateTip(amount, countryCode, serviceType = 'restaurant') {
+  const tipRates = {
+    'US': { restaurant: 0.15, hotel: 2, taxi: 0.15 },
+    'CA': { restaurant: 0.15, hotel: 2, taxi: 0.15 },
+    'MX': { restaurant: 0.10, hotel: 1, taxi: 0.10 },
+    'BR': { restaurant: 0.10, hotel: 1, taxi: 0.10 },
+    'UK': { restaurant: 0.10, hotel: 1, taxi: 0.10 },
+    'FR': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'DE': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'IT': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'ES': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'GR': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'TR': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'AE': { restaurant: 0.10, hotel: 2, taxi: 0 },
+    'SA': { restaurant: 0.10, hotel: 2, taxi: 0 },
+    'JP': { restaurant: 0, hotel: 0, taxi: 0 }, // チップ文化なし
+    'CN': { restaurant: 0, hotel: 0, taxi: 0 },
+    'KR': { restaurant: 0, hotel: 0, taxi: 0 },
+    'TH': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'VN': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'ID': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'SG': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'MY': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'PH': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'IN': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'AU': { restaurant: 0.10, hotel: 1, taxi: 0 },
+    'NZ': { restaurant: 0.10, hotel: 1, taxi: 0 }
+  };
+  
+  const rate = tipRates[countryCode]?.[serviceType] || 0;
+  const tip = amount * rate;
+  const total = amount + tip;
+  
+  return {
+    amount,
+    tip,
+    total,
+    rate: `${(rate * 100).toFixed(0)}%`,
+    note: rate === 0 ? 'チップ不要' : `チップ推奨: ${(rate * 100).toFixed(0)}%`
+  };
+}
+
+// 旅行特化機能：電圧・プラグ情報（軽量データ）
+const voltageInfo = {
+  'US': { voltage: '120V', plug: 'A/B', note: 'A型（2ピン）またはB型（3ピン）' },
+  'CA': { voltage: '120V', plug: 'A/B', note: 'A型（2ピン）またはB型（3ピン）' },
+  'MX': { voltage: '127V', plug: 'A/B', note: 'A型（2ピン）またはB型（3ピン）' },
+  'BR': { voltage: '127V/220V', plug: 'C/N', note: 'C型（2ピン）またはN型（3ピン）' },
+  'UK': { voltage: '230V', plug: 'G', note: 'G型（3ピン、大型）' },
+  'FR': { voltage: '230V', plug: 'C/E', note: 'C型（2ピン）またはE型（2ピン）' },
+  'DE': { voltage: '230V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'IT': { voltage: '230V', plug: 'C/F/L', note: 'C型、F型、またはL型（3ピン）' },
+  'ES': { voltage: '230V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'GR': { voltage: '230V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'TR': { voltage: '230V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'JP': { voltage: '100V', plug: 'A', note: 'A型（2ピン）' },
+  'CN': { voltage: '220V', plug: 'A/C/I', note: 'A型、C型、またはI型（3ピン）' },
+  'KR': { voltage: '220V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'TH': { voltage: '220V', plug: 'A/C', note: 'A型（2ピン）またはC型（2ピン）' },
+  'VN': { voltage: '220V', plug: 'A/C', note: 'A型（2ピン）またはC型（2ピン）' },
+  'ID': { voltage: '220V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'SG': { voltage: '230V', plug: 'G', note: 'G型（3ピン、大型）' },
+  'MY': { voltage: '240V', plug: 'G', note: 'G型（3ピン、大型）' },
+  'PH': { voltage: '220V', plug: 'A/C', note: 'A型（2ピン）またはC型（2ピン）' },
+  'IN': { voltage: '230V', plug: 'C/D/M', note: 'C型、D型、またはM型（3ピン）' },
+  'AU': { voltage: '230V', plug: 'I', note: 'I型（3ピン、斜め）' },
+  'NZ': { voltage: '230V', plug: 'I', note: 'I型（3ピン、斜め）' },
+  'AE': { voltage: '230V', plug: 'G', note: 'G型（3ピン、大型）' },
+  'SA': { voltage: '230V', plug: 'G', note: 'G型（3ピン、大型）' },
+  'EG': { voltage: '220V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' },
+  'ZA': { voltage: '230V', plug: 'C/M/D', note: 'C型、M型、またはD型（3ピン）' },
+  'RU': { voltage: '220V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' }
+};
+
+// 旅行特化機能：現地の文化・マナー情報（軽量データ）
+const culturalInfo = {
+  'JP': {
+    tips: ['靴を脱ぐ（家・寺社）', 'お辞儀をする', '名刺は両手で渡す', '箸を立てない', 'チップ不要'],
+    taboos: ['電車内で電話', '大声で話す', '食べ歩き（一部地域）', '写真撮影禁止（一部施設）']
+  },
+  'US': {
+    tips: ['チップ15-20%', '列に並ぶ', '「How are you?」は挨拶', '個人スペースを尊重'],
+    taboos: ['政治・宗教の話題', '人種差別発言', '公共の場での喫煙']
+  },
+  'UK': {
+    tips: ['チップ10-15%', '「Sorry」を多用', '列に並ぶ', 'パブではラウンド制'],
+    taboos: ['王室への批判', '階級の話題', 'EU離脱の話題']
+  },
+  'TH': {
+    tips: ['頭を触らない', '足を人に向けない', '寺院では肌を隠す', 'チップ不要（高級店以外）'],
+    taboos: ['王室への批判', '仏像への不敬', '頭を触る']
+  },
+  'CN': {
+    tips: ['箸を立てない', '茶碗を持って食べる', '年長者を敬う', 'チップ不要'],
+    taboos: ['4の数字（死を連想）', '政治の話題', '台湾の話題']
+  },
+  'KR': {
+    tips: ['年長者を敬う', '両手で物を受け取る', 'チップ不要', '靴を脱ぐ'],
+    taboos: ['箸を立てる', '4の数字（死を連想）', '日本統治時代の話題']
+  },
+  'FR': {
+    tips: ['チップ10%', '「Bonjour」で始める', '握手をする', '目を見て話す'],
+    taboos: ['英語で話しかける（まずフランス語）', 'パリの話題（混雑・高価）']
+  },
+  'DE': {
+    tips: ['チップ10%', '時間厳守', '握手をする', '「Guten Tag」で始める'],
+    taboos: ['ナチスの話題', '第二次世界大戦の話題']
+  },
+  'IT': {
+    tips: ['チップ10%', '「Ciao」で挨拶', '握手・キス（頬）', 'ジェスチャーが多い'],
+    taboos: ['マフィアの話題', '政治の話題']
+  },
+  'ES': {
+    tips: ['チップ10%', '「Hola」で挨拶', 'キス（頬）', 'シエスタ時間を尊重'],
+    taboos: ['フランコ時代の話題', 'カタルーニャ独立の話題']
+  },
+  'AE': {
+    tips: ['右手で食べる', '左手は不浄', 'イスラム教を尊重', 'チップ10%'],
+    taboos: ['アルコール（一部地域）', '豚肉', '公共の場でのキス', 'イスラム教への批判']
+  },
+  'SA': {
+    tips: ['右手で食べる', '左手は不浄', 'イスラム教を尊重', '女性は肌を隠す'],
+    taboos: ['アルコール', '豚肉', '公共の場でのキス', 'イスラム教への批判', '女性の運転（解禁されたが注意）']
+  },
+  'IN': {
+    tips: ['右手で食べる', '左手は不浄', '靴を脱ぐ（寺院）', '頭を触らない'],
+    taboos: ['牛肉（ヒンドゥー教）', '豚肉（イスラム教）', '公共の場でのキス']
   }
 };
 
