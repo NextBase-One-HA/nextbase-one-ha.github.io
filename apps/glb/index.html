@@ -805,6 +805,46 @@ button.btn-primary:disabled{
     <div class="history-panel" id="history-panel"></div>
   </div>
 
+  <div class="card" id="travel-safety-card">
+    <div class="label">🛡️ 旅行安全サポート</div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button class="icon-btn" id="emergency-contacts-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);">
+        🚨 緊急連絡先
+      </button>
+      <button class="icon-btn" id="emergency-phrases-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(212,175,55,.1); border:1px solid rgba(212,175,55,.3);">
+        📢 緊急フレーズ集（オフライン対応）
+      </button>
+      <button class="icon-btn" id="safety-info-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(74,222,128,.1); border:1px solid rgba(74,222,128,.3);">
+        ⚠️ 安全情報
+      </button>
+      <button class="icon-btn" id="medical-info-btn" style="width:100%; padding:12px; justify-content:center; background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3);">
+        🏥 医療情報
+      </button>
+    </div>
+  </div>
+
+  <!-- 緊急連絡先モーダル -->
+  <div id="emergency-contacts-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10002; display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--panel); border:2px solid var(--error); border-radius:16px; padding:24px; max-width:500px; width:100%; max-height:80vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0; color:var(--error);">🚨 緊急連絡先</h3>
+        <button id="close-emergency-contacts" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer;">×</button>
+      </div>
+      <div id="emergency-contacts-content" style="color:var(--text); line-height:1.8;"></div>
+    </div>
+  </div>
+
+  <!-- 緊急フレーズ集モーダル -->
+  <div id="emergency-phrases-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10002; display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--panel); border:2px solid var(--gold); border-radius:16px; padding:24px; max-width:600px; width:100%; max-height:80vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0; color:var(--gold);">📢 緊急フレーズ集（オフライン対応）</h3>
+        <button id="close-emergency-phrases" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer;">×</button>
+      </div>
+      <div id="emergency-phrases-content" style="color:var(--text); line-height:1.8;"></div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="label" data-i18n="dictManagement">辞書管理</div>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -888,6 +928,57 @@ let realtimeTimer = null;
 
 // ガイドモード
 let guideMode = false;
+
+// 旅行安全サポート（オフライン対応・軽量データ）
+const emergencyPhrases = {
+  ja: {
+    help: { ja: "助けて", en: "Help", zh: "救命", ko: "도와주세요", es: "Ayuda", fr: "Au secours", de: "Hilfe" },
+    hospital: { ja: "病院はどこですか", en: "Where is the hospital?", zh: "医院在哪里", ko: "병원이 어디에 있나요", es: "¿Dónde está el hospital?", fr: "Où est l'hôpital?", de: "Wo ist das Krankenhaus?" },
+    police: { ja: "警察を呼んでください", en: "Call the police", zh: "请叫警察", ko: "경찰을 불러주세요", es: "Llame a la policía", fr: "Appelez la police", de: "Rufen Sie die Polizei" },
+    ambulance: { ja: "救急車を呼んでください", en: "Call an ambulance", zh: "请叫救护车", ko: "구급차를 불러주세요", es: "Llame a una ambulancia", fr: "Appelez une ambulance", de: "Rufen Sie einen Krankenwagen" },
+    lost: { ja: "道に迷いました", en: "I'm lost", zh: "我迷路了", ko: "길을 잃었어요", es: "Estoy perdido", fr: "Je suis perdu", de: "Ich habe mich verlaufen" },
+    pain: { ja: "痛いです", en: "It hurts", zh: "很痛", ko: "아파요", es: "Me duele", fr: "J'ai mal", de: "Es tut weh" },
+    allergy: { ja: "アレルギーがあります", en: "I have an allergy", zh: "我有过敏", ko: "알레르기가 있어요", es: "Tengo alergia", fr: "J'ai une allergie", de: "Ich habe eine Allergie" },
+    passport: { ja: "パスポートをなくしました", en: "I lost my passport", zh: "我丢了护照", ko: "여권을 잃어버렸어요", es: "Perdí mi pasaporte", fr: "J'ai perdu mon passeport", de: "Ich habe meinen Pass verloren" }
+  }
+};
+
+// 緊急連絡先（国別・軽量データ）
+const emergencyContacts = {
+  default: {
+    police: "110",
+    ambulance: "119",
+    fire: "119"
+  },
+  us: {
+    police: "911",
+    ambulance: "911",
+    embassy: "+1-202-501-4444"
+  },
+  uk: {
+    police: "999",
+    ambulance: "999",
+    embassy: "+44-20-7499-9000"
+  },
+  eu: {
+    police: "112",
+    ambulance: "112"
+  }
+};
+
+// 安全情報（軽量データ）
+const safetyInfo = {
+  tips: [
+    "現地の緊急連絡先を事前に確認",
+    "パスポートのコピーを別の場所に保管",
+    "現金とカードを分けて保管",
+    "ホテルの住所をメモ",
+    "大使館の連絡先を保存",
+    "現地の治安情報を確認",
+    "夜間の一人歩きは避ける",
+    "貴重品は肌身離さず"
+  ]
+};
 
 // アプリUI言語
 let appLang = "ja";
@@ -1966,6 +2057,13 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
     if (response.ok) {
       const data = await response.json();
       if (data && data.reply) {
+        // API削減ロジック: 呼び出し記録（軽量版）
+        recordAPICall("prod_user_request");
+        
+        // API削減ロジック: キャッシュ保存（軽量版）
+        const result = { reply: data.reply, source: "gemini", alternatives: data.alternatives };
+        setCachedResult(inputHash, result);
+        
         // API使用量を記録（上手く分配して使う）
         recordAPIUsage();
         
@@ -1982,11 +2080,11 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
         
         // 複数候補がある場合は表示
         if (data.alternatives && Array.isArray(data.alternatives)) {
-          return { reply: data.reply, source: "gemini", alternatives: data.alternatives };
+          return result;
         }
         
         // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
-        return { reply: data.reply, source: "gemini" };
+        return result;
       }
     } else {
       const errorText = await response.text().catch(() => "");
@@ -2148,6 +2246,14 @@ const guideToggle = document.getElementById("guide-toggle");
 const guideCheckbox = document.getElementById("guide-checkbox");
 const closeGuideBtn = document.getElementById("close-guide");
 const cameraInputBtn = document.getElementById("camera-input");
+const emergencyContactsBtn = document.getElementById("emergency-contacts-btn");
+const emergencyPhrasesBtn = document.getElementById("emergency-phrases-btn");
+const safetyInfoBtn = document.getElementById("safety-info-btn");
+const medicalInfoBtn = document.getElementById("medical-info-btn");
+const emergencyContactsModal = document.getElementById("emergency-contacts-modal");
+const emergencyPhrasesModal = document.getElementById("emergency-phrases-modal");
+const closeEmergencyContactsBtn = document.getElementById("close-emergency-contacts");
+const closeEmergencyPhrasesBtn = document.getElementById("close-emergency-phrases");
 
 // 言語切り替え
 langFrom.addEventListener("change", () => {
@@ -2404,9 +2510,184 @@ guideToggle.addEventListener("click", () => {
   }
 });
 
+// API削減ロジック（軽量版・クライアント側のみ）
+// 注意: NEゲートウェイ、VOID系、NEシステム、レイヤーロック系は世界に出さない
+let apiCallCache = new Map(); // Exact Cache（軽量）
+let apiCooldown = new Map(); // クールダウン管理（軽量）
+const COOLDOWN_SECONDS = 5; // 軽量設定（5秒）
+const MAX_CALLS_PER_HOUR = 60; // レート制限（軽量）
+let apiCallHistory = []; // 呼び出し履歴（軽量）
+
+// API呼び出し前のチェック（軽量版）
+function checkAPICallAllowed(purpose = "prod_user_request") {
+  const now = Date.now();
+  const callerId = "glb_app";
+  const cacheKey = `${callerId}_${purpose}`;
+  
+  // クールダウンチェック
+  const lastCall = apiCooldown.get(cacheKey);
+  if (lastCall && (now - lastCall) < COOLDOWN_SECONDS * 1000) {
+    const remaining = Math.ceil((COOLDOWN_SECONDS * 1000 - (now - lastCall)) / 1000);
+    return { allowed: false, reason: `クールダウン中（残り${remaining}秒）`, useCache: true };
+  }
+  
+  // レート制限チェック
+  const oneHourAgo = now - 3600000;
+  const recentCalls = apiCallHistory.filter(t => t > oneHourAgo);
+  if (recentCalls.length >= MAX_CALLS_PER_HOUR) {
+    return { allowed: false, reason: "レート制限（1時間あたりの上限に達しました）", useCache: true };
+  }
+  
+  return { allowed: true };
+}
+
+// API呼び出し後の記録（軽量版）
+function recordAPICall(purpose = "prod_user_request") {
+  const now = Date.now();
+  const callerId = "glb_app";
+  const cacheKey = `${callerId}_${purpose}`;
+  
+  // クールダウン記録
+  apiCooldown.set(cacheKey, now);
+  
+  // レート制限記録
+  apiCallHistory.push(now);
+  apiCallHistory = apiCallHistory.filter(t => t > now - 3600000); // 1時間以上前は削除
+}
+
+// キャッシュチェック（軽量版）
+function getCachedResult(inputHash) {
+  return apiCallCache.get(inputHash);
+}
+
+// キャッシュ保存（軽量版）
+function setCachedResult(inputHash, result) {
+  // キャッシュサイズ制限（最大100件）
+  if (apiCallCache.size >= 100) {
+    const firstKey = apiCallCache.keys().next().value;
+    apiCallCache.delete(firstKey);
+  }
+  apiCallCache.set(inputHash, result);
+}
+
 // ガイドを閉じる
 closeGuideBtn.addEventListener("click", () => {
   document.getElementById("scene-guide").style.display = "none";
+});
+
+// 緊急連絡先表示
+emergencyContactsBtn.addEventListener("click", () => {
+  const content = document.getElementById("emergency-contacts-content");
+  const userLang = navigator.language || "ja";
+  const country = userLang.includes("en-US") ? "us" : userLang.includes("en-GB") ? "uk" : "default";
+  const contacts = emergencyContacts[country] || emergencyContacts.default;
+  
+  content.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:16px; font-weight:700; color:var(--error); margin-bottom:12px;">🚨 緊急時連絡先</div>
+      <div style="background:rgba(239,68,68,.1); padding:12px; border-radius:8px; margin-bottom:8px;">
+        <div style="font-weight:700; margin-bottom:4px;">警察</div>
+        <div style="font-size:24px; color:var(--error);">${contacts.police}</div>
+      </div>
+      <div style="background:rgba(239,68,68,.1); padding:12px; border-radius:8px; margin-bottom:8px;">
+        <div style="font-weight:700; margin-bottom:4px;">救急車</div>
+        <div style="font-size:24px; color:var(--error);">${contacts.ambulance}</div>
+      </div>
+      ${contacts.embassy ? `
+      <div style="background:rgba(212,175,55,.1); padding:12px; border-radius:8px; margin-bottom:8px;">
+        <div style="font-weight:700; margin-bottom:4px;">大使館</div>
+        <div style="font-size:18px; color:var(--gold);">${contacts.embassy}</div>
+      </div>
+      ` : ''}
+      <div style="margin-top:16px; padding:12px; background:rgba(0,0,0,.3); border-radius:8px; font-size:12px; color:var(--muted);">
+        💡 ヒント: これらの番号をスクリーンショットで保存するか、オフラインでも見られるようにしておきましょう
+      </div>
+    </div>
+  `;
+  emergencyContactsModal.style.display = "flex";
+});
+
+closeEmergencyContactsBtn.addEventListener("click", () => {
+  emergencyContactsModal.style.display = "none";
+});
+
+emergencyContactsModal.addEventListener("click", (e) => {
+  if (e.target === emergencyContactsModal) {
+    emergencyContactsModal.style.display = "none";
+  }
+});
+
+// 緊急フレーズ集表示（オフライン対応）
+emergencyPhrasesBtn.addEventListener("click", () => {
+  const content = document.getElementById("emergency-phrases-content");
+  const phrases = emergencyPhrases.ja;
+  const toLang = currentToLang;
+  
+  let html = '<div style="margin-bottom:20px;">';
+  html += '<div style="font-size:16px; font-weight:700; color:var(--gold); margin-bottom:12px;">📢 緊急フレーズ集（オフライン対応）</div>';
+  
+  for (const [key, translations] of Object.entries(phrases)) {
+    const phrase = translations[toLang] || translations.en;
+    const japanese = translations.ja;
+    
+    html += `
+      <div style="background:rgba(212,175,55,.1); padding:12px; border-radius:8px; margin-bottom:8px; cursor:pointer;" 
+           onclick="navigator.clipboard.writeText('${phrase}'); alert('コピーしました: ${phrase}');">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">${japanese}</div>
+        <div style="font-size:16px; font-weight:700; color:var(--gold);">${phrase}</div>
+      </div>
+    `;
+  }
+  
+  html += `
+    <div style="margin-top:16px; padding:12px; background:rgba(0,0,0,.3); border-radius:8px; font-size:12px; color:var(--muted);">
+      💡 ヒント: フレーズをタップするとコピーされます。オフラインでも使用可能です
+    </div>
+  </div>`;
+  
+  content.innerHTML = html;
+  emergencyPhrasesModal.style.display = "flex";
+});
+
+closeEmergencyPhrasesBtn.addEventListener("click", () => {
+  emergencyPhrasesModal.style.display = "none";
+});
+
+emergencyPhrasesModal.addEventListener("click", (e) => {
+  if (e.target === emergencyPhrasesModal) {
+    emergencyPhrasesModal.style.display = "none";
+  }
+});
+
+// 安全情報表示
+safetyInfoBtn.addEventListener("click", () => {
+  const tips = safetyInfo.tips;
+  alert(`⚠️ 安全情報\n\n${tips.join("\n")}\n\nこれらの情報を参考に、安全な旅行を心がけてください。`);
+});
+
+// 医療情報表示
+medicalInfoBtn.addEventListener("click", () => {
+  const content = `
+🏥 医療情報
+
+【病院の探し方】
+1. ホテルのフロントに聞く
+2. 現地の緊急連絡先（112/911）に電話
+3. 旅行保険のサポートに連絡
+
+【薬局の探し方】
+- 現地語で「pharmacy」または「薬局」と聞く
+- ホテル周辺の薬局を事前に確認
+
+【持病がある場合】
+- 薬の名前を現地語で書いたメモを携帯
+- アレルギー情報をカードに記載
+
+【旅行保険】
+- 保険証券番号をメモ
+- 24時間サポート電話を保存
+  `;
+  alert(content);
 });
 
 // リアルタイム翻訳処理（デバウンス）
