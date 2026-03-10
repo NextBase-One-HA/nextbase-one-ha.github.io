@@ -5068,9 +5068,13 @@ if (hasSeenOnboarding) {
   };
   
   const detectedLang = langMap[browserLang] || langMap[browserLang.split('-')[0]] || 'en';
-  if (onboardingLangSelect && onboardingLangSelect.querySelector(`option[value="${detectedLang}"]`)) {
-    onboardingLangSelect.value = detectedLang;
-    updateOnboardingLanguage(detectedLang);
+  if (onboardingLangSelect) {
+    if (onboardingLangSelect.querySelector(`option[value="${detectedLang}"]`)) {
+      onboardingLangSelect.value = detectedLang;
+    } else {
+      onboardingLangSelect.value = 'en'; // デフォルトは英語
+    }
+    updateOnboardingLanguage(onboardingLangSelect.value);
   }
 }
 
