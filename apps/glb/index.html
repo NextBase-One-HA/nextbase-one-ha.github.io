@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>GLB v1.0 - NEXT BASE | 瞬間GLB兵器</title>
+<!-- Tesseract.js OCR (動的読み込み) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 :root{
@@ -1760,8 +1762,13 @@ async function handleRealtimeTranslate() {
   }, 500); // 500msデバウンス
 }
 
-// カメラ翻訳（軽量OCR）
+// カメラ翻訳（OCR機能付き）
 cameraInputBtn.addEventListener("click", async () => {
+  // Tesseract.jsの読み込み確認
+  if (typeof Tesseract === "undefined") {
+    alert("OCR機能の読み込みに失敗しました。ページをリロードしてください。");
+    return;
+  }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     const video = document.createElement("video");
@@ -1772,10 +1779,13 @@ cameraInputBtn.addEventListener("click", async () => {
     const cameraModal = document.createElement("div");
     cameraModal.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;";
     cameraModal.innerHTML = `
-      <video id="camera-video" autoplay playsinline style="max-width:100%; max-height:70vh; border-radius:12px;"></video>
-      <div style="margin-top:20px; display:flex; gap:12px;">
-        <button id="capture-btn" style="padding:12px 24px; background:var(--gold); color:#000; border:none; border-radius:8px; font-weight:700; cursor:pointer;">撮影</button>
-        <button id="close-camera-btn" style="padding:12px 24px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; font-weight:700; cursor:pointer;">閉じる</button>
+      <video id="camera-video" autoplay playsinline style="max-width:100%; max-height:70vh; border-radius:12px; transform: scaleX(-1);"></video>
+      <div style="margin-top:20px; display:flex; gap:12px; flex-direction:column; align-items:center;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">カメラでテキストを撮影してください</div>
+        <div style="display:flex; gap:12px;">
+          <button id="capture-btn" style="padding:12px 24px; background:var(--gold); color:#000; border:none; border-radius:8px; font-weight:700; cursor:pointer;">📷 撮影してOCR</button>
+          <button id="close-camera-btn" style="padding:12px 24px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; font-weight:700; cursor:pointer;">閉じる</button>
+        </div>
       </div>
     `;
     document.body.appendChild(cameraModal);
@@ -1784,25 +1794,91 @@ cameraInputBtn.addEventListener("click", async () => {
     cameraVideo.srcObject = stream;
     
     document.getElementById("capture-btn").addEventListener("click", async () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = cameraVideo.videoWidth;
-      canvas.height = cameraVideo.videoHeight;
-      canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+      const captureBtn = document.getElementById("capture-btn");
+      captureBtn.disabled = true;
+      captureBtn.textContent = "OCR処理中...";
       
-      // 軽量OCR（Tesseract.jsまたは簡易実装）
-      // ここでは簡易実装として、画像をBase64に変換してAPIに送信
-      const imageData = canvas.toDataURL("image/jpeg", 0.8);
-      
-      // 実際のOCR処理はAPI経由で実装
-      statusEl.textContent = "カメラ翻訳: OCR処理中...";
-      
-      // ストリームを停止
-      stream.getTracks().forEach(track => track.stop());
-      document.body.removeChild(cameraModal);
-      
-      // OCR結果を入力欄に設定
-      inputEl.value = "[カメラ翻訳] テキストを認識中...";
-      handleSend();
+      try {
+        // 画像をキャプチャ
+        const canvas = document.createElement("canvas");
+        const maxWidth = 1920; // パフォーマンス最適化: 最大幅を制限
+        const maxHeight = 1080;
+        let width = cameraVideo.videoWidth;
+        let height = cameraVideo.videoHeight;
+        
+        // 画像サイズを最適化（大きすぎる場合は縮小）
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(cameraVideo, 0, 0, width, height);
+        
+        // ストリームを停止
+        stream.getTracks().forEach(track => track.stop());
+        
+        // OCR処理（Tesseract.js）
+        statusEl.textContent = "OCR処理中... テキストを認識しています";
+        statusEl.className = "status";
+        
+        // 画像をBlobに変換（Tesseract.js用）
+        canvas.toBlob(async (blob) => {
+          try {
+            // Tesseract.jsでOCR処理
+            const { data: { text } } = await Tesseract.recognize(
+              blob,
+              currentFromLang === "ja" ? "jpn" : "eng", // 日本語または英語
+              {
+                logger: (m) => {
+                  if (m.status === "recognizing text") {
+                    const progress = Math.floor(m.progress * 100);
+                    statusEl.textContent = `OCR処理中... ${progress}%`;
+                  }
+                }
+              }
+            );
+            
+            // モーダルを閉じる
+            document.body.removeChild(cameraModal);
+            
+            // OCR結果を入力欄に設定
+            const recognizedText = text.trim();
+            if (recognizedText) {
+              inputEl.value = recognizedText;
+              statusEl.textContent = `✓ OCR完了: ${recognizedText.length}文字を認識`;
+              statusEl.className = "status success";
+              
+              // 自動で翻訳実行（オプション）
+              setTimeout(() => {
+                handleSend();
+              }, 500);
+            } else {
+              inputEl.value = "";
+              statusEl.textContent = "OCR: テキストを認識できませんでした";
+              statusEl.className = "status error";
+            }
+          } catch (ocrError) {
+            console.error("OCRエラー:", ocrError);
+            document.body.removeChild(cameraModal);
+            statusEl.textContent = "OCR処理に失敗しました";
+            statusEl.className = "status error";
+            alert("OCR処理に失敗しました。もう一度お試しください。");
+          }
+        }, "image/jpeg", 0.8);
+        
+      } catch (e) {
+        console.error("キャプチャエラー:", e);
+        stream.getTracks().forEach(track => track.stop());
+        if (document.body.contains(cameraModal)) {
+          document.body.removeChild(cameraModal);
+        }
+        statusEl.textContent = "カメラキャプチャに失敗しました";
+        statusEl.className = "status error";
+      }
     });
     
     document.getElementById("close-camera-btn").addEventListener("click", () => {
