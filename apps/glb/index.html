@@ -802,6 +802,31 @@ button.btn-primary:disabled{
       </div>
     </div>
     
+    <!-- 感染力強化: シェア機能（自然に拡散させる） -->
+    <div class="card" style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold);">
+      <div class="label" style="color:var(--gold);">🌟 GLBをシェア</div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">友達にGLBを紹介すると、お互いに特典がもらえます</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="icon-btn" id="share-twitter" style="flex:1; min-width:100px; padding:10px; background:rgba(29,161,242,.1); border:1px solid rgba(29,161,242,.3);">
+          🐦 Twitter
+        </button>
+        <button class="icon-btn" id="share-facebook" style="flex:1; min-width:100px; padding:10px; background:rgba(24,119,242,.1); border:1px solid rgba(24,119,242,.3);">
+          📘 Facebook
+        </button>
+        <button class="icon-btn" id="share-line" style="flex:1; min-width:100px; padding:10px; background:rgba(0,195,0,.1); border:1px solid rgba(0,195,0,.3);">
+          💬 LINE
+        </button>
+        <button class="icon-btn" id="share-copy" style="flex:1; min-width:100px; padding:10px; background:rgba(212,175,55,.1); border:1px solid rgba(212,175,55,.3);">
+          📋 リンクをコピー
+        </button>
+      </div>
+      <div id="referral-code-display" style="margin-top:12px; padding:12px; background:var(--panel); border-radius:8px; font-size:11px; color:var(--muted); text-align:center; display:none;">
+        <div style="color:var(--gold); font-weight:700; margin-bottom:4px;">あなたの紹介コード</div>
+        <div id="referral-code" style="font-size:14px; font-weight:700; color:var(--text); font-family:monospace; letter-spacing:2px;"></div>
+        <div style="margin-top:4px; font-size:10px;">友達がこのコードで登録すると、お互いに特典がもらえます</div>
+      </div>
+    </div>
+
     <div class="premium-gate">
       <div class="label" data-i18n="premiumPass">PREMIUM PASS</div>
       <h3 data-i18n="worldDoor">世界の扉を開く</h3>
