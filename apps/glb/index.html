@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>GLB | Global Language Breaker</title>
+
+<style>
+:root{
+  --gold:#d6b25e;
+  --bg:#050505;
+  --panel:#0f0f0f;
+  --line:#222;
+  --text:#f2f2f2;
+  --muted:#9a9a9a;
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  min-height:100%;
+}
+
+.container{
+  max-width:720px;
+  margin:0 auto;
+  padding:28px 20px 56px;
+}
+
+.topbar{
+  text-align:center;
+  color:var(--gold);
+  letter-spacing:.38em;
+  font-weight:700;
+  font-size:13px;
+  padding:8px 0 24px;
+}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:28px;
+  box-shadow:0 24px 60px rgba(0,0,0,.28);
+  margin-bottom:20px;
+}
+
+.label{
+  color:var(--gold);
+  letter-spacing:.12em;
+  font-weight:700;
+  font-size:11px;
+  margin-bottom:8px;
+  text-transform:uppercase;
+}
+
+textarea{
+  width:100%;
+  min-height:120px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--text);
+  padding:14px;
+  font-size:15px;
+  resize:vertical;
+  font-family:inherit;
+}
+
+textarea:focus{
+  outline:none;
+  border-color:var(--gold);
+}
+
+button{
+  width:100%;
+  text-align:center;
+  border-radius:12px;
+  padding:17px 18px;
+  margin-top:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  transition:transform .15s ease, opacity .15s ease, background .15s ease;
+  border:none;
+  cursor:pointer;
+  font-size:15px;
+}
+
+button:hover{opacity:.92}
+button:active{transform:scale(.985)}
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.btn-primary{
+  background:var(--gold);
+  color:#000;
+}
+
+.status{
+  margin-top:12px;
+  font-size:12px;
+  color:var(--muted);
+  min-height:18px;
+  text-align:center;
+}
+
+.answer{
+  margin-top:18px;
+  padding:18px;
+  border-radius:12px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  white-space:pre-wrap;
+  font-size:15px;
+  line-height:1.7;
+  min-height:60px;
+}
+
+.answer.empty{
+  color:var(--muted);
+  font-style:italic;
+}
+
+@media (max-width:640px){
+  .container{padding:22px 16px 44px}
+  .card{padding:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="topbar">NEXT BASE | GLB</div>
+
+  <div class="card">
+    <div class="label">INPUT</div>
+    <textarea id="user-input" placeholder="質問や翻訳したい文章を入力してください..."></textarea>
+    <button id="send-btn" class="btn-primary">送信</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">REPLY</div>
+    <div id="answer" class="answer empty">回答がここに表示されます...</div>
+  </div>
+</div>
+
+<script>
+// NE GATEWAY DIRECT CONNECT
+// ★社長が実際のバックエンドURLとAPIキーに置き換える必要があります
+const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";  // 例: Cloud Functions / Cloud Run のURL
+const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";  // info@nextbase-japan.com の認証済みキー
+
+// 150k辞書のロード（バックエンド側で参照する想定）
+let dict150k = null;
+
+async function load150kDict() {
+  try {
+    const res = await fetch("../dictionary/150k.csv");
+    if (!res.ok) {
+      console.warn("150k.csv not found, using backend dictionary only");
+      return null;
+    }
+    const text = await res.text();
+    const map = new Map();
+    for (const line of text.split("\n")) {
+      const [k, v] = line.split(",");
+      if (!k || !v) continue;
+      map.set(k.trim(), v.trim());
+    }
+    return map;
+  } catch (e) {
+    console.warn("Failed to load 150k.csv:", e);
+    return null;
+  }
+}
+
+// 150k辞書検索（フロント側）
+function search150kDict(query) {
+  if (!dict150k) return null;
+  const normalized = query.trim().toLowerCase();
+  return dict150k.get(normalized) || dict150k.get(query.trim()) || null;
+}
+
+// ユーザーボールト保存（ローカルストレージ）
+function saveToUserVault(prompt, reply) {
+  try {
+    const key = "nb_user_vault";
+    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    existing.push({ prompt, reply, ts: Date.now() });
+    localStorage.setItem(key, JSON.stringify(existing));
+  } catch (e) {
+    console.warn("Failed to save to vault:", e);
+  }
+}
+
+// Gemini接続（NEゲートウェイ経由）
+async function askGemini(userInput) {
+  // 1. 150k辞書を先に確認
+  const localResult = search150kDict(userInput);
+  if (localResult) {
+    return { reply: localResult, source: "150k_dict" };
+  }
+
+  // 2. NEゲートウェイ経由でGemini
+  const response = await fetch(NE_GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-KEY": API_KEY
+    },
+    body: JSON.stringify({ prompt: userInput, mode: "low_cost_0.08" })
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`NE_GATEWAY_ERROR ${response.status}: ${text}`);
+  }
+
+  const data = await response.json();
+  if (!data || !data.reply) {
+    throw new Error("NE_GATEWAY_INVALID_RESPONSE");
+  }
+
+  // 3. 結果をボールトに保存
+  saveToUserVault(userInput, data.reply);
+  return data;
+}
+
+// UI接続
+const inputEl = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+const statusEl = document.getElementById("status");
+const answerEl = document.getElementById("answer");
+
+async function handleSend() {
+  const text = (inputEl.value || "").trim();
+  if (!text) return;
+
+  sendBtn.disabled = true;
+  statusEl.textContent = "Connecting NE Gateway...";
+  answerEl.classList.add("empty");
+  answerEl.textContent = "";
+
+  try {
+    const result = await askGemini(text);
+    answerEl.textContent = result.reply;
+    answerEl.classList.remove("empty");
+    statusEl.textContent = `OK: ${result.source || "gemini"} connected.`;
+  } catch (err) {
+    console.error(err);
+    answerEl.textContent = "";
+    answerEl.classList.add("empty");
+    answerEl.textContent = "エラー: " + err.message;
+    statusEl.textContent = "ERROR: " + err.message;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+sendBtn.addEventListener("click", handleSend);
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+// 初期化: 150k辞書をロード
+load150kDict().then(map => {
+  dict150k = map;
+  if (map) {
+    console.log("150k dictionary loaded:", map.size, "entries");
+  }
+});
+</script>
+
+</body>
+</html>
