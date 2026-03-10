@@ -763,7 +763,8 @@ button.btn-primary:disabled{
       Windows側NEゲートウェイ接続テスト
     </button>
     <p style="margin-top:12px; font-size:11px; color:var(--muted); text-align:center;">
-      ※コード内の NE_GATEWAY_URL と API_KEY をWindows側の値に設定してください
+      ※コード内の NE_GATEWAY_URL と API_KEY をWindows側の値に設定してください<br>
+      WindowsのIPアドレス確認: Windowsのターミナルで "ipconfig" を実行
     </p>
   </div>
 </div>
@@ -1279,15 +1280,16 @@ function importDictionary(file) {
 
 // Gemini GLB（NEゲートウェイ接続 - Windows側ゲートウェイ）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
-  // ★Windows側の安定版NEゲートウェイURLを設定してください
-  // 例: "https://your-windows-gateway.example.com/api/translate"
-  const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
+  // ★Windows側のNEゲートウェイURLを設定してください
+  // 例: "http://192.168.1.100:5000" (WindowsのIPアドレス:ポート)
+  // WindowsのIPアドレス確認方法: Windowsのターミナルで "ipconfig" を実行し、IPv4アドレスを確認
+  const NE_GATEWAY_URL = "http://YOUR_WINDOWS_IP:5000";
   
   // ★Windows側のAPIキーを設定してください
   // 例: "your-windows-api-key-here"
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
-  if (NE_GATEWAY_URL === "https://YOUR_BACKEND_ENDPOINT" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+  if (NE_GATEWAY_URL === "http://YOUR_WINDOWS_IP:5000" || NE_GATEWAY_URL.includes("YOUR_WINDOWS_IP") || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     if (updateStatus) {
       updateStatus("API未設定 - Windows側ゲートウェイURLを設定してください");
     }
@@ -1360,7 +1362,8 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-KEY": API_KEY
+        "X-API-KEY": API_KEY,
+        "X-Caller-ID": "noir"  // ノワール（NOIR）の人格指定
       },
       body: JSON.stringify({
         prompt: `${systemPrompt}\n\n${text}`,
@@ -1414,21 +1417,22 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
 
 // NEゲートウェイ接続テスト（Windows側）
 async function testGatewayConnection() {
-  const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
+  const NE_GATEWAY_URL = "http://YOUR_WINDOWS_IP:5000";
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
-  if (NE_GATEWAY_URL === "https://YOUR_BACKEND_ENDPOINT" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    alert("Windows側のNEゲートウェイURLとAPIキーを設定してください");
+  if (NE_GATEWAY_URL === "http://YOUR_WINDOWS_IP:5000" || NE_GATEWAY_URL.includes("YOUR_WINDOWS_IP") || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+    alert("Windows側のNEゲートウェイURLとAPIキーを設定してください\n\nWindowsのIPアドレス確認方法:\nWindowsのターミナルで \"ipconfig\" を実行し、IPv4アドレスを確認してください");
     return false;
   }
   
   try {
-    console.log("[接続テスト] Windows側NEゲートウェイに接続中...");
+    console.log("[接続テスト] Windows側NEゲートウェイ（ノワール）に接続中...");
     const response = await fetch(NE_GATEWAY_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-KEY": API_KEY
+        "X-API-KEY": API_KEY,
+        "X-Caller-ID": "noir"  // ノワール（NOIR）の人格指定
       },
       body: JSON.stringify({
         prompt: "test",
