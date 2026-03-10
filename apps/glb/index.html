@@ -2011,14 +2011,23 @@ async function getWordExplanation(word, fromLang, toLang) {
   return { explanation: "ごめん。わからない。", source: "不明" };
 }
 
-// API使用量管理（月間クォータ）
+// API使用量管理（月間クォータ・新仕様）
 const API_QUOTA = {
-  BASIC: 0.12,    // $1.99プラン: 月間$0.12相当
+  FREE: 0,        // 無料版: 0（150k辞書のみ、API使用不可）
+  BASIC: 0.5,    // $1.99プラン: 初回月間$0.5相当（登録から1ヶ月間）
+  BASIC_NORMAL: 0.12,  // $1.99プラン: 2ヶ月後から通常月間$0.12相当
   TRAVELER: 1.99  // $7.99プラン: 月間$1.99相当
 };
 
-// API使用量の推定（1回あたりのコスト）
-const API_COST_PER_REQUEST = 0.001; // 1リクエストあたり$0.001と仮定（実際の値に調整）
+// API使用量の推定（1回あたりのコスト・NEゲートウェイ計算）
+// NEゲートウェイ: API1回0.015円 ≈ $0.0001
+const API_COST_PER_REQUEST = 0.0001; // 1リクエストあたり$0.0001（0.015円）
+
+// 無料版の制限（絞る）
+const FREE_LIMIT = {
+  translations: 5,  // 無料版: 月間5回まで（150k辞書のみ、API使用不可）
+  features: ['150k_dict', 'emergency_phrases']  // 無料版で使える機能
+};
 
 let userPlan = "BASIC"; // デフォルト: BASIC
 let monthlyUsage = {
@@ -2114,17 +2123,46 @@ function recordAPIUsage() {
   updateUsageDisplay();
 }
 
-// API使用量が上限内かチェック
+// API使用量が上限内かチェック（新仕様対応）
 function checkAPIQuota() {
-  const quota = API_QUOTA[userPlan];
+  // 無料版: 翻訳回数で制限
+  if (userPlan === "FREE") {
+    const remaining = FREE_LIMIT.translations - monthlyUsage.freeTranslations;
+    return {
+      canUse: remaining > 0,
+      remaining: remaining,
+      usagePercent: (monthlyUsage.freeTranslations / FREE_LIMIT.translations) * 100,
+      quota: FREE_LIMIT.translations,
+      type: "FREE",
+      limit: FREE_LIMIT.translations
+    };
+  }
+  
+  // プレミアム無料日: 無制限
+  if (isPremiumFreeDay()) {
+    return {
+      canUse: true,
+      remaining: Infinity,
+      usagePercent: 0,
+      quota: Infinity,
+      type: "PREMIUM_FREE_DAY",
+      limit: null
+    };
+  }
+  
+  // 有料プラン: API使用量で制限
+  const quotaInfo = getCurrentQuota();
+  const quota = quotaInfo.quota;
   const remaining = quota - monthlyUsage.used;
-  const usagePercent = (monthlyUsage.used / quota) * 100;
+  const usagePercent = quota > 0 ? (monthlyUsage.used / quota) * 100 : 0;
   
   return {
     canUse: remaining > API_COST_PER_REQUEST,
     remaining: remaining,
     usagePercent: usagePercent,
-    quota: quota
+    quota: quota,
+    type: quotaInfo.type,
+    limit: quotaInfo.limit
   };
 }
 
@@ -2813,8 +2851,10 @@ const exportAllDataBtn = document.getElementById("export-all-data");
 const importAllDataInput = document.getElementById("import-all-data-input");
 const performanceStatsBtn = document.getElementById("performance-stats-btn");
 const testGatewayBtn = document.getElementById("test-gateway");
+const setPlanFreeBtn = document.getElementById("set-plan-free");
 const setPlanBasicBtn = document.getElementById("set-plan-basic");
 const setPlanTravelerBtn = document.getElementById("set-plan-traveler");
+const changePremiumDaysBtn = document.getElementById("change-premium-days");
 const upgradeModal = document.getElementById("upgrade-modal");
 const closeUpgradeModalBtn = document.getElementById("close-upgrade-modal");
 const realtimeToggle = document.getElementById("realtime-toggle");
@@ -4115,6 +4155,20 @@ importDictInput.addEventListener("change", (e) => {
 });
 
 // プラン設定
+setPlanFreeBtn.addEventListener("click", () => {
+  userPlan = "FREE";
+  saveUserPlanAndUsage();
+  updateUsageDisplay();
+  setPlanFreeBtn.style.background = "var(--gold)";
+  setPlanFreeBtn.style.color = "#000";
+  setPlanBasicBtn.style.background = "";
+  setPlanBasicBtn.style.color = "";
+  setPlanTravelerBtn.style.background = "";
+  setPlanTravelerBtn.style.color = "";
+  
+  alert("無料版に切り替えました。\n\n【制限】\n• 月間5回まで（150k辞書のみ）\n• API使用不可");
+});
+
 setPlanBasicBtn.addEventListener("click", () => {
   userPlan = "BASIC";
   saveUserPlanAndUsage();
