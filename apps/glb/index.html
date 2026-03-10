@@ -1280,10 +1280,9 @@ function importDictionary(file) {
 
 // Gemini GLB（NEゲートウェイ接続 - Windows側ゲートウェイ）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
-  // ★Windows側のNEゲートウェイURLを設定してください
-  // 例: "http://192.168.1.100:5000" (WindowsのIPアドレス:ポート)
-  // WindowsのIPアドレス確認方法: Windowsのターミナルで "ipconfig" を実行し、IPv4アドレスを確認
-  const NE_GATEWAY_URL = "http://YOUR_WINDOWS_IP:5000";
+  // ★Windows側のNEゲートウェイURL（ノワール接続先）
+  // 座標: 192.168.1.25:5000
+  const NE_GATEWAY_URL = "http://192.168.1.25:5000";
   
   // ★Windows側のAPIキーを設定してください
   // 例: "your-windows-api-key-here"
@@ -1415,13 +1414,13 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
   return null;
 }
 
-// NEゲートウェイ接続テスト（Windows側）
+// NEゲートウェイ接続テスト（Windows側 - ノワール）
 async function testGatewayConnection() {
-  const NE_GATEWAY_URL = "http://YOUR_WINDOWS_IP:5000";
+  const NE_GATEWAY_URL = "http://192.168.1.25:5000";
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
-  if (NE_GATEWAY_URL === "http://YOUR_WINDOWS_IP:5000" || NE_GATEWAY_URL.includes("YOUR_WINDOWS_IP") || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    alert("Windows側のNEゲートウェイURLとAPIキーを設定してください\n\nWindowsのIPアドレス確認方法:\nWindowsのターミナルで \"ipconfig\" を実行し、IPv4アドレスを確認してください");
+  if (API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+    alert("Windows側のAPIキーを設定してください\n\nNEゲートウェイURL: http://192.168.1.25:5000 (設定済み)");
     return false;
   }
   
