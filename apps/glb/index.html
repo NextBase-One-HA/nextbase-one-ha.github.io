@@ -2029,13 +2029,24 @@ const FREE_LIMIT = {
   features: ['150k_dict', 'emergency_phrases']  // 無料版で使える機能
 };
 
-let userPlan = "BASIC"; // デフォルト: BASIC
+let userPlan = "FREE"; // デフォルト: FREE（無料版）
 let monthlyUsage = {
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear(),
   used: 0, // 使用量（ドル）
-  requests: 0 // リクエスト数
+  requests: 0, // リクエスト数
+  freeTranslations: 0  // 無料版の翻訳回数
 };
+
+// $1.99プラン: 登録から1ヶ月間の好きな2日間全開放（旅行予定日をゲット）
+let premiumFreeDays = {
+  registrationDate: null,  // 登録日
+  selectedDays: [],  // 選択した2日間（例: ['2025-01-15', '2025-01-20']）
+  usedDays: []  // 使用済みの日（例: ['2025-01-15']）
+};
+
+// プラン登録月数（2ヶ月後から通常料金に）
+let planMonths = 0;  // 登録からの月数
 
 // 内蔵簡易GLBテーブル
 const fallbackDict = new Map([
@@ -2105,20 +2116,37 @@ function loadUserPlanAndUsage() {
   }
 }
 
-// ユーザープランとAPI使用量の保存
+// ユーザープランとAPI使用量の保存（新仕様対応）
 function saveUserPlanAndUsage() {
   try {
-    localStorage.setItem("glb_user_plan", userPlan);
-    localStorage.setItem("glb_api_usage", JSON.stringify(monthlyUsage));
+    localStorage.setItem("glb_user_plan_usage", JSON.stringify({
+      plan: userPlan,
+      usage: monthlyUsage,
+      premiumFreeDays: premiumFreeDays,
+      planMonths: planMonths
+    }));
   } catch (e) {
     console.error("ユーザープラン・使用量保存失敗:", e);
   }
 }
 
-// API使用量を記録
+// API使用量を記録（新仕様対応）
 function recordAPIUsage() {
+  // プレミアム無料日は記録しない（無制限）
+  if (isPremiumFreeDay()) {
+    console.log("[API使用量] プレミアム無料日: 使用量を記録しません（無制限）");
+    return;
+  }
+  
   monthlyUsage.used += API_COST_PER_REQUEST;
   monthlyUsage.requests += 1;
+  saveUserPlanAndUsage();
+  updateUsageDisplay();
+}
+
+// 無料版の翻訳回数を記録
+function recordFreeTranslation() {
+  monthlyUsage.freeTranslations += 1;
   saveUserPlanAndUsage();
   updateUsageDisplay();
 }
@@ -2758,6 +2786,55 @@ async function testGatewayConnection() {
 
 // GLB実行（15万語アセット → オンデバイス辞書 → NEゲートウェイ接続）
 async function translate(text, fromLang, toLang, updateStatus) {
+  // 無料版の制限チェック（感染力強化: 無料版を絞る）
+  if (userPlan === "FREE") {
+    const quotaInfo = checkAPIQuota();
+    if (!quotaInfo.canUse) {
+      if (updateStatus) {
+        updateStatus(`無料版の上限に達しました（${FREE_LIMIT.translations}回/月）。BASICプラン（$1.99/月）で無制限に使えます`);
+      }
+      showUpgradeModal();
+      return null;
+    }
+    
+    // 無料版: 150k辞書のみ（API使用不可）
+    if (updateStatus) {
+      updateStatus("15万語アセットを確認しています...（無料版: 150k辞書のみ）");
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    const dictResult = searchDict(text, fromLang, toLang);
+    if (dictResult) {
+      // 無料版の翻訳回数を記録
+      recordFreeTranslation();
+      
+      const result = { reply: dictResult.result, source: dictResult.source };
+      
+      // 会話モード: 文脈に追加
+      if (conversationMode) {
+        conversationContext.push({
+          from: "user",
+          text: text,
+          to: result.reply,
+          timestamp: Date.now()
+        });
+        if (conversationContext.length > 10) conversationContext.shift();
+      }
+      
+      // 辞書結果もオンデバイス辞書に保存
+      saveToUserDict(text, result.reply, fromLang, toLang);
+      
+      return result;
+    } else {
+      // 無料版: 150k辞書にない場合はAPI使用不可
+      if (updateStatus) {
+        updateStatus(`無料版では見つかりませんでした。BASICプラン（$1.99/月）でAI翻訳が使えます`);
+      }
+      showUpgradeModal();
+      return null;
+    }
+  }
+  
   // 会話モード: 文脈を追加
   if (conversationMode && conversationContext.length > 0) {
     const contextText = conversationContext.slice(-3).map(c => `${c.from}: ${c.text}`).join("\n");
@@ -2786,10 +2863,30 @@ async function translate(text, fromLang, toLang, updateStatus) {
       if (conversationContext.length > 10) conversationContext.shift();
     }
     
+    // 辞書結果もオンデバイス辞書に保存
+    saveToUserDict(text, result.reply, fromLang, toLang);
+    
     return result;
   }
   
   // 2. 15万語アセットにもオンデバイス辞書にもない場合、NEゲートウェイ接続
+  // API使用量チェック（新仕様対応）
+  const quotaInfo = checkAPIQuota();
+  if (!quotaInfo.canUse) {
+    if (updateStatus) {
+      updateStatus(`月間使用量上限到達 (${userPlan}プラン: $${quotaInfo.quota.toFixed(2)})`);
+    }
+    console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
+    showUpgradeModal();
+    return null;
+  }
+  
+  // 使用量が80%を超えている場合は警告
+  if (quotaInfo.usagePercent > 80 && updateStatus) {
+    updateStatus(`使用量警告: ${quotaInfo.usagePercent.toFixed(1)}%使用中 (残り $${quotaInfo.remaining.toFixed(4)})`);
+    showUpgradeWarning(quotaInfo);
+  }
+  
   if (updateStatus) {
     updateStatus("探しています...");
     await new Promise(resolve => setTimeout(resolve, 200));
