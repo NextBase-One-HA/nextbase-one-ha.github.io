@@ -921,6 +921,17 @@ button.btn-primary:disabled{
     </p>
   </div>
 
+  <!-- アップグレードモーダル（課金を促す） -->
+  <div id="upgrade-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10004; display:flex; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--panel); border:2px solid var(--gold); border-radius:16px; padding:24px; max-width:500px; width:100%;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0; color:var(--gold);">💎 アップグレードで無制限に</h3>
+        <button id="close-upgrade-modal" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer;">×</button>
+      </div>
+      <div id="upgrade-modal-content" style="color:var(--text); line-height:1.8;"></div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="label">API使用量管理</div>
     <div id="api-usage-display" style="margin-bottom:16px;"></div>
@@ -3509,6 +3520,70 @@ importAllDataInput.addEventListener("change", (e) => {
     importTranslationData(file);
   }
   e.target.value = ''; // リセット
+});
+
+// アップグレードモーダル表示（課金を促す）
+function showUpgradeModal() {
+  const content = document.getElementById("upgrade-modal-content");
+  const quotaInfo = checkAPIQuota();
+  
+  content.innerHTML = `
+    <p style="margin-bottom:16px;">今月の使用量上限に達しました。</p>
+    <p style="margin-bottom:16px; color:var(--gold); font-weight:700;">BASICプラン（$1.99/月）で無制限に使えます</p>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+        BASIC $1.99
+      </a>
+      <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+        TRAVELER $7.99
+      </a>
+    </div>
+  `;
+  
+  upgradeModal.style.display = "flex";
+}
+
+// アップグレード警告表示（80%到達時）
+function showUpgradeWarning(quotaInfo) {
+  // 軽い通知（1回だけ表示）
+  if (localStorage.getItem('upgrade_warning_shown') === 'true') return;
+  
+  const warning = document.createElement("div");
+  warning.style.cssText = `
+    position:fixed; top:20px; left:50%; transform:translateX(-50%); 
+    z-index:10003; background:var(--gold); color:#000; 
+    padding:12px 20px; border-radius:8px; font-size:12px; font-weight:700;
+    box-shadow:0 4px 12px rgba(212,175,55,.4);
+  `;
+  warning.innerHTML = `⚠️ 使用量${quotaInfo.usagePercent.toFixed(0)}% - BASICプラン（$1.99/月）で無制限に`;
+  warning.onclick = () => {
+    showUpgradeModal();
+    document.body.removeChild(warning);
+  };
+  
+  document.body.appendChild(warning);
+  
+  setTimeout(() => {
+    if (document.body.contains(warning)) {
+      document.body.removeChild(warning);
+    }
+  }, 5000);
+  
+  localStorage.setItem('upgrade_warning_shown', 'true');
+  setTimeout(() => {
+    localStorage.removeItem('upgrade_warning_shown');
+  }, 3600000); // 1時間後にリセット
+}
+
+// アップグレードモーダルを閉じる
+closeUpgradeModalBtn.addEventListener("click", () => {
+  upgradeModal.style.display = "none";
+});
+
+upgradeModal.addEventListener("click", (e) => {
+  if (e.target === upgradeModal) {
+    upgradeModal.style.display = "none";
+  }
 });
 
 // パフォーマンス統計表示
