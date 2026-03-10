@@ -4246,6 +4246,9 @@ async function handleRealtimeTranslate() {
     const text = (inputEl.value || "").trim();
     if (text.length < 3) return; // 3文字未満は翻訳しない
     
+    // ユーザーがアプリを使ったことを記録（初回アクセス時の課金バナーを防ぐ）
+    localStorage.setItem('glb_has_used_app', 'true');
+    
     try {
       const [fromLang, toLang] = currentFromLang === "ja" ? ["ja", "en"] : ["en", "ja"];
       const result = await translate(text, fromLang, toLang, null);
