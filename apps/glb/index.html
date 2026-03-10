@@ -5017,15 +5017,79 @@ function triggerDictLoad() {
 inputEl.addEventListener("focus", triggerDictLoad, { once: true });
 sendBtn.addEventListener("click", triggerDictLoad, { once: true });
 
-// GLB独自オンボーディング画面の処理
-const onboarding = document.getElementById('onboarding');
-const mainContainer = document.getElementById('main-container');
-const onboardingStartBtn = document.getElementById('onboarding-start');
-const onboardingSkipBtn = document.getElementById('onboarding-skip');
-const onboardingLangSelect = document.getElementById('onboarding-lang');
+// GLB独自オンボーディング画面の処理（DOMContentLoadedで実行）
+document.addEventListener('DOMContentLoaded', () => {
+  const onboarding = document.getElementById('onboarding');
+  const mainContainer = document.getElementById('main-container');
+  const onboardingStartBtn = document.getElementById('onboarding-start');
+  const onboardingSkipBtn = document.getElementById('onboarding-skip');
+  const onboardingLangSelect = document.getElementById('onboarding-lang');
 
-// 初回起動チェック
-const hasSeenOnboarding = localStorage.getItem('glb_onboarding_completed') === 'true';
+  if (!onboarding || !mainContainer) return; // 要素が存在しない場合は終了
+
+  // オンボーディング画面用の多言語テキスト
+  const onboardingTexts = {
+    ja: {
+      title: "GLBトラベル",
+      subtitle: "世界の言葉の壁を、瞬間で突破する",
+      selectLang: "まず、アプリの表示言語を選んでください",
+      howToUseTitle: "使い方は簡単",
+      howToUseDesc: "1. 翻訳したい言語を選ぶ<br>2. テキストを入力するか、カメラで撮影<br>3. 瞬間で翻訳結果が表示されます",
+      translationMethodsTitle: "3つの翻訳方法",
+      translationMethodsDesc: "📚 15万語のオフライン辞書（最速）<br>💾 あなた専用のオンデバイス辞書<br>🤖 AI翻訳（Gemini 1.5）",
+      startBtn: "始める",
+      skipBtn: "スキップ"
+    },
+    en: {
+      title: "GLB Travel",
+      subtitle: "Break the language barrier in an instant",
+      selectLang: "First, select your app display language",
+      howToUseTitle: "Easy to use",
+      howToUseDesc: "1. Select the languages you want to translate<br>2. Enter text or take a photo with the camera<br>3. Translation results appear instantly",
+      translationMethodsTitle: "3 Translation Methods",
+      translationMethodsDesc: "📚 150k offline dictionary (fastest)<br>💾 Your personal on-device dictionary<br>🤖 AI translation (Gemini 1.5)",
+      startBtn: "Start",
+      skipBtn: "Skip"
+    },
+    zh: {
+      title: "GLB旅行",
+      subtitle: "瞬间突破世界的语言障碍",
+      selectLang: "首先，请选择应用的显示语言",
+      howToUseTitle: "使用简单",
+      howToUseDesc: "1. 选择要翻译的语言<br>2. 输入文本或用相机拍摄<br>3. 翻译结果瞬间显示",
+      translationMethodsTitle: "3种翻译方法",
+      translationMethodsDesc: "📚 15万词离线词典（最快）<br>💾 您专用的设备词典<br>🤖 AI翻译（Gemini 1.5）",
+      startBtn: "开始",
+      skipBtn: "跳过"
+    },
+    ko: {
+      title: "GLB 트래블",
+      subtitle: "세계의 언어 장벽을 순간에 돌파하다",
+      selectLang: "먼저 앱 표시 언어를 선택하세요",
+      howToUseTitle: "사용하기 쉬움",
+      howToUseDesc: "1. 번역할 언어 선택<br>2. 텍스트 입력 또는 카메라로 촬영<br>3. 번역 결과가 즉시 표시됩니다",
+      translationMethodsTitle: "3가지 번역 방법",
+      translationMethodsDesc: "📚 15만 단어 오프라인 사전（가장 빠름）<br>💾 당신 전용 온디바이스 사전<br>🤖 AI 번역（Gemini 1.5）",
+      startBtn: "시작",
+      skipBtn: "건너뛰기"
+    }
+  };
+
+  // オンボーディング画面の言語を更新
+  function updateOnboardingLanguage(lang) {
+    const texts = onboardingTexts[lang] || onboardingTexts.en;
+    const elements = document.querySelectorAll('[data-i18n-onboarding]');
+    
+    elements.forEach(el => {
+      const key = el.getAttribute('data-i18n-onboarding');
+      if (texts[key]) {
+        el.innerHTML = texts[key];
+      }
+    });
+  }
+
+  // 初回起動チェック
+  const hasSeenOnboarding = localStorage.getItem('glb_onboarding_completed') === 'true';
 
 if (hasSeenOnboarding) {
   // 既に見た場合はメイン画面を表示
@@ -5126,6 +5190,7 @@ if (onboardingSkipBtn) {
   }, 300);
   });
 }
+}); // DOMContentLoaded終了
 </script>
 
 </body>
