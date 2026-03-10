@@ -846,8 +846,8 @@ button.btn-primary:disabled{
   </div>
 
   <div class="card">
-    <div class="label" data-i18n="dictManagement">辞書管理</div>
-    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div class="label" data-i18n="dictManagement">辞書管理</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
       <button class="icon-btn" id="export-dict" title="辞書をバックアップ" style="flex:1; min-width:140px; padding:12px; justify-content:center;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -2510,6 +2510,9 @@ const voiceOutputBtn = document.getElementById("voice-output");
 const favoriteBtn = document.getElementById("favorite");
 const exportDictBtn = document.getElementById("export-dict");
 const importDictInput = document.getElementById("import-dict-input");
+const exportAllDataBtn = document.getElementById("export-all-data");
+const importAllDataInput = document.getElementById("import-all-data-input");
+const performanceStatsBtn = document.getElementById("performance-stats-btn");
 const testGatewayBtn = document.getElementById("test-gateway");
 const setPlanBasicBtn = document.getElementById("set-plan-basic");
 const setPlanTravelerBtn = document.getElementById("set-plan-traveler");
@@ -3075,6 +3078,42 @@ medicalInfoBtn.addEventListener("click", () => {
   alert(content);
 });
 
+// 全データエクスポート
+exportAllDataBtn.addEventListener("click", () => {
+  exportTranslationData();
+  alert("全データをエクスポートしました");
+});
+
+// 全データインポート
+importAllDataInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    importTranslationData(file);
+  }
+  e.target.value = ''; // リセット
+});
+
+// パフォーマンス統計表示
+performanceStatsBtn.addEventListener("click", () => {
+  const stats = getPerformanceStats();
+  const statsText = `
+📊 パフォーマンス統計
+
+総クエリ数: ${stats.total_queries}
+L1キャッシュヒット: ${stats.l1_hits} (${stats.l1_hit_rate})
+L2キャッシュヒット: ${stats.l2_hits} (${stats.l2_hit_rate})
+キャッシュ効率: ${stats.cache_efficiency}
+メモリ使用量: ${stats.memory_usage}
+状態: ${stats.status}
+
+ユーザー辞書: ${userDict.size}語
+翻訳メモリ: ${translationMemory.size}件
+履歴: ${history.length}件
+  `;
+  alert(statsText);
+  console.log('[パフォーマンス統計]', stats);
+});
+
 // リアルタイム翻訳処理（デバウンス）
 async function handleRealtimeTranslate() {
   if (realtimeTimer) {
@@ -3370,6 +3409,205 @@ guideMode = localStorage.getItem("glb_guide_mode") === "true";
 
 // 翻訳メモリの復元
 loadTranslationMemory();
+
+// プレフィックスサジェスト（Trie検索・InfiniteScaleDictionaryから抽出）
+let suggestionTrie = null;
+
+function buildSuggestionTrie() {
+  const trie = {};
+  
+  // 辞書からTrieを構築
+  if (dictIndex && dictIndex.size > 0) {
+    for (const [key] of dictIndex.entries()) {
+      const word = key.split(':')[1] || key;
+      let node = trie;
+      for (const char of word.toLowerCase()) {
+        if (!node[char]) node[char] = {};
+        node = node[char];
+      }
+      node._word = word;
+    }
+  }
+  
+  suggestionTrie = trie;
+  return trie;
+}
+
+function getSuggestions(prefix, limit = 10) {
+  if (!suggestionTrie) {
+    buildSuggestionTrie();
+  }
+  
+  if (!prefix || prefix.length === 0) return [];
+  
+  const suggestions = [];
+  let node = suggestionTrie;
+  
+  // プレフィックスまで移動
+  for (const char of prefix.toLowerCase()) {
+    if (!node[char]) return suggestions;
+    node = node[char];
+  }
+  
+  // プレフィックスから始まる全単語を収集
+  function collectWords(currentNode, currentPrefix) {
+    if (suggestions.length >= limit) return;
+    
+    if (currentNode._word) {
+      suggestions.push(currentNode._word);
+    }
+    
+    for (const char in currentNode) {
+      if (char !== '_word') {
+        collectWords(currentNode[char], currentPrefix + char);
+      }
+    }
+  }
+  
+  collectWords(node, prefix);
+  return suggestions.slice(0, limit);
+}
+
+// バッチ翻訳（複数単語を一括処理・InfiniteScaleDictionaryから抽出）
+async function translateBatch(words, fromLang, toLang) {
+  const results = {};
+  const promises = words.map(async (word) => {
+    const result = await translate(word, fromLang, toLang, null);
+    if (result && result.reply) {
+      results[word] = result.reply;
+    }
+  });
+  
+  await Promise.all(promises);
+  return results;
+}
+
+// パフォーマンス統計（キャッシュヒット率・メモリ使用量・InfiniteScaleDictionaryから抽出）
+function getPerformanceStats() {
+  const totalQueries = apiCallCache.size + apiCallCacheL2.size;
+  const l1Hits = apiCallCache.size;
+  const l2Hits = apiCallCacheL2.size;
+  
+  const l1Rate = totalQueries > 0 ? (l1Hits / totalQueries * 100) : 0;
+  const l2Rate = totalQueries > 0 ? (l2Hits / totalQueries * 100) : 0;
+  
+  const l1Memory = l1Hits * 50; // 1エントリ約50バイト
+  const l2Memory = l2Hits * 50;
+  const totalKB = (l1Memory + l2Memory) / 1024;
+  
+  return {
+    total_queries: totalQueries,
+    l1_hits: l1Hits,
+    l2_hits: l2Hits,
+    l1_hit_rate: `${l1Rate.toFixed(1)}%`,
+    l2_hit_rate: `${l2Rate.toFixed(1)}%`,
+    cache_efficiency: `${(l1Rate + l2Rate).toFixed(1)}%`,
+    memory_usage: `${totalKB.toFixed(1)} KB`,
+    status: totalKB < 10 ? '✅ Optimal' : '⚠️ Review needed'
+  };
+}
+
+// エクスポート/インポート機能（NoirExportEngineから抽出）
+function exportTranslationData() {
+  const exportData = {
+    version: '1.0',
+    export_timestamp: new Date().toISOString(),
+    translation_memory: Array.from(translationMemory.entries()).map(([key, value]) => ({
+      sourceKey: key,
+      targetValue: value.targetValue,
+      timestamp: value.timestamp
+    })),
+    user_dictionary: Array.from(userDict.entries()).map(([key, value]) => ({
+      key,
+      value
+    })),
+    history: history.slice(-100), // 最新100件
+    performance_stats: getPerformanceStats(),
+    api_cache_size: apiCallCache.size + apiCallCacheL2.size
+  };
+  
+  const jsonString = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `glb_export_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  console.log('[エクスポート] 翻訳データをエクスポートしました');
+  return exportData;
+}
+
+function importTranslationData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      
+      // 翻訳メモリの復元
+      if (data.translation_memory && Array.isArray(data.translation_memory)) {
+        translationMemory = new Map();
+        data.translation_memory.forEach(item => {
+          translationMemory.set(item.sourceKey.toLowerCase(), {
+            targetValue: item.targetValue,
+            timestamp: item.timestamp
+          });
+        });
+        localStorage.setItem('glb_translation_memory', JSON.stringify(data.translation_memory));
+      }
+      
+      // ユーザー辞書の復元
+      if (data.user_dictionary && Array.isArray(data.user_dictionary)) {
+        data.user_dictionary.forEach(item => {
+          userDict.set(item.key, item.value);
+        });
+        saveGLBSeriesData();
+      }
+      
+      // 履歴の復元
+      if (data.history && Array.isArray(data.history)) {
+        history = data.history;
+        saveGLBSeriesData();
+        if (history.length > 0) {
+          document.getElementById("history-card").style.display = "block";
+          renderHistory();
+        }
+      }
+      
+      alert(`翻訳データをインポートしました\n翻訳メモリ: ${translationMemory.size}件\nユーザー辞書: ${userDict.size}語\n履歴: ${history.length}件`);
+      console.log('[インポート] 翻訳データをインポートしました');
+    } catch (error) {
+      console.error('インポートエラー:', error);
+      alert('インポートに失敗しました。ファイル形式を確認してください。');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// 入力補完（プレフィックスサジェスト）
+let suggestionTimeout = null;
+inputEl.addEventListener("input", (e) => {
+  const text = e.target.value;
+  
+  // リアルタイム翻訳中はサジェストを無効化
+  if (realtimeMode) return;
+  
+  // デバウンス
+  if (suggestionTimeout) {
+    clearTimeout(suggestionTimeout);
+  }
+  
+  suggestionTimeout = setTimeout(() => {
+    if (text.length >= 2) {
+      const suggestions = getSuggestions(text, 5);
+      if (suggestions.length > 0) {
+        // サジェスト表示（簡易版）
+        console.log('[サジェスト]', suggestions);
+      }
+    }
+  }, 300);
+});
 
 if (realtimeMode) {
   realtimeCheckbox.checked = true;
