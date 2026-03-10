@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>GLB v1.0 - NEXT BASE | 瞬間GLB兵器</title>
+<title>GLBトラベル v1.0 - NEXT BASE | 旅行翻訳アプリ</title>
 <!-- Tesseract.js OCR (動的読み込み) -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -607,8 +607,8 @@ button.btn-primary:disabled{
 
 <div class="container">
   <div class="hero-section">
-    <h1 class="hero-title">GLB v1.0</h1>
-    <p class="hero-subtitle">NEXT BASE 瞬間GLB兵器</p>
+    <h1 class="hero-title">GLBトラベル v1.0</h1>
+    <p class="hero-subtitle">NEXT BASE 旅行翻訳アプリ</p>
     <!-- 機能一覧を追加（ユーザーに見える機能を強調） -->
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-top:20px; padding:16px; background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; backdrop-filter:blur(10px);">
       <div style="text-align:center; padding:12px; background:rgba(212,175,55,.05); border-radius:8px; border:1px solid rgba(212,175,55,.2);">
@@ -2296,26 +2296,35 @@ function checkAPIQuota() {
 function updateUsageDisplay() {
   const quotaInfo = checkAPIQuota();
   const usageEl = document.getElementById("api-usage-display");
-  if (usageEl) {
-    let displayText = '';
-    
-    if (quotaInfo.type === "FREE") {
-      // 無料版: プラン誘導のみ
-      if (quotaInfo.remaining <= 0) {
-        displayText = `
-          <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-            <div style="font-size:14px; font-weight:700; color:var(--gold); margin-bottom:8px;">🌟 BASICプランで無制限に</div>
-            <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">$1.99/月で全機能が使えます</p>
-            <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
-              BASIC $1.99 を始める
-            </a>
-          </div>
-        `;
-      } else {
-        // まだ使える場合は何も表示しない
-        usageEl.style.display = 'none';
-        return;
-      }
+  if (!usageEl) return; // 要素が存在しない場合は何もしない
+  
+  // ユーザーが実際にアプリを使っている場合のみ表示（初回アクセス時は非表示）
+  const hasUsedApp = localStorage.getItem('glb_has_used_app') === 'true';
+  if (!hasUsedApp) {
+    // 初回アクセス時は何も表示しない
+    usageEl.style.display = 'none';
+    return;
+  }
+  
+  let displayText = '';
+  
+  if (quotaInfo.type === "FREE") {
+    // 無料版: プラン誘導のみ（上限到達時のみ）
+    if (quotaInfo.remaining <= 0) {
+      displayText = `
+        <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
+          <div style="font-size:14px; font-weight:700; color:var(--gold); margin-bottom:8px;">🌟 BASICプランで無制限に</div>
+          <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">$1.99/月で全機能が使えます</p>
+          <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
+            BASIC $1.99 を始める
+          </a>
+        </div>
+      `;
+    } else {
+      // まだ使える場合は何も表示しない
+      usageEl.style.display = 'none';
+      return;
+    }
     } else if (quotaInfo.type === "PREMIUM_FREE_DAY") {
       // プレミアム無料日: 特典表示のみ
       displayText = `
@@ -2379,12 +2388,12 @@ function initializeEmptyDict() {
         metadata: {
           created: Date.now(),
           updated: Date.now(),
-          app: "GLB"
+          app: "GLBトラベル"
         }
       };
       localStorage.setItem(GLB_SERIES_KEY, JSON.stringify(emptyData));
       localStorage.setItem("glb_user_dict", JSON.stringify([])); // 後方互換性
-      console.log("[初回ダウンロード] 空の辞書をユーザー端末に初期化しました");
+      console.log("[GLBトラベル 初回ダウンロード] 空のオンデバイス辞書をユーザー端末に初期化しました");
     }
   } catch (e) {
     console.warn("空の辞書初期化失敗:", e);
@@ -2400,7 +2409,7 @@ function loadUserDict() {
       const data = JSON.parse(seriesData);
       if (data.user_dict && Array.isArray(data.user_dict)) {
         userDict = new Map(data.user_dict);
-        console.log("[GLBシリーズ標準] ユーザー辞書読み込み完了:", userDict.size, "語");
+        console.log("[GLBトラベル] オンデバイス辞書読み込み完了:", userDict.size, "語");
         return;
       }
     }
@@ -3923,6 +3932,10 @@ function showUpgradeModal() {
 
 // アップグレード警告表示（80%到達時・プラン誘導のみ）
 function showUpgradeWarning(quotaInfo) {
+  // ユーザーが実際にアプリを使っている場合のみ表示（初回アクセス時は非表示）
+  const hasUsedApp = localStorage.getItem('glb_has_used_app') === 'true';
+  if (!hasUsedApp) return; // 初回アクセス時は表示しない
+  
   // 軽い通知（1回だけ表示、API使用量は見せない）
   if (localStorage.getItem('upgrade_warning_shown') === 'true') return;
 
