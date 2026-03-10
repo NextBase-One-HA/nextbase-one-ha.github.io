@@ -802,7 +802,7 @@ button.btn-primary:disabled{
     <div class="premium-gate">
       <div class="label" data-i18n="premiumPass">PREMIUM PASS</div>
       <h3 data-i18n="worldDoor">世界の扉を開く</h3>
-      <p>Gemini Pro の高精度GLBと無制限アクセスを解放</p>
+      <p>Gemini Pro の高精度GLBと全機能を解放</p>
       <div class="premium-buttons">
         <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium">BASIC $1.99</a>
         <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro">TRAVELER $7.99</a>
@@ -953,7 +953,7 @@ button.btn-primary:disabled{
   <div id="upgrade-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10004; display:flex; align-items:center; justify-content:center; padding:20px;">
     <div style="background:var(--panel); border:2px solid var(--gold); border-radius:16px; padding:24px; max-width:500px; width:100%;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="margin:0; color:var(--gold);">💎 アップグレードで無制限に</h3>
+        <h3 style="margin:0; color:var(--primary);">💎 アップグレードで全機能が使えます</h3>
         <button id="close-upgrade-modal" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer;">×</button>
       </div>
       <div id="upgrade-modal-content" style="color:var(--text); line-height:1.8;"></div>
@@ -2242,8 +2242,8 @@ function updateUsageDisplay() {
     if (quotaInfo.remaining <= 0) {
       displayText = `
         <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-          <div style="font-size:14px; font-weight:700; color:var(--gold); margin-bottom:8px;">🌟 BASICプランで無制限に</div>
-          <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">$1.99/月で全機能が使えます</p>
+          <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 BASICプランで全機能が使えます</div>
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$1.99/月でAI翻訳と全機能が使えます</p>
           <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
             BASIC $1.99 を始める
           </a>
@@ -2275,8 +2275,8 @@ function updateUsageDisplay() {
       if (userPlan === "FREE") {
         displayText = `
           <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-            <div style="font-size:14px; font-weight:700; color:var(--gold); margin-bottom:8px;">🌟 BASICプランで無制限に</div>
-            <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">$1.99/月で全機能が使えます</p>
+            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 BASICプランで全機能が使えます</div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$1.99/月でAI翻訳と全機能が使えます</p>
             <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
               BASIC $1.99 を始める
             </a>
@@ -2285,8 +2285,8 @@ function updateUsageDisplay() {
       } else if (userPlan === "BASIC") {
         displayText = `
           <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-            <div style="font-size:14px; font-weight:700; color:var(--gold); margin-bottom:8px;">🌟 TRAVELERプランでさらに無制限に</div>
-            <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">$7.99/月で全機能が無制限で使えます</p>
+            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 TRAVELERプランでさらに使えます</div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$7.99/月でより多くのAI翻訳と全機能が使えます</p>
             <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
               TRAVELER $7.99 にアップグレード
             </a>
@@ -2685,9 +2685,9 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
       // 無料版/BASICプラン: 次プランへ誘導
       if (updateStatus) {
         if (userPlan === "FREE") {
-          updateStatus("BASICプランで無制限に使えます");
+          updateStatus("BASICプランで全機能が使えます");
         } else {
-          updateStatus("TRAVELERプランでさらに無制限に");
+          updateStatus("TRAVELERプランでさらに使えます");
         }
       }
       console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
@@ -2891,7 +2891,7 @@ async function translate(text, fromLang, toLang, updateStatus) {
     const quotaInfo = checkAPIQuota();
     if (!quotaInfo.canUse) {
       if (updateStatus) {
-        updateStatus(`無料版の上限に達しました（${FREE_LIMIT.translations}回/月）。BASICプラン（$1.99/月）で無制限に使えます`);
+        updateStatus(`無料版の上限に達しました（${FREE_LIMIT.translations}回/月）。BASICプラン（$1.99/月）で全機能が使えます`);
       }
       showUpgradeModal();
       return null;
@@ -2985,9 +2985,9 @@ async function translate(text, fromLang, toLang, updateStatus) {
       // 無料版/BASICプラン: 次プランへ誘導
       if (updateStatus) {
         if (userPlan === "FREE") {
-          updateStatus("BASICプランで無制限に使えます");
+          updateStatus("BASICプランで全機能が使えます");
         } else {
-          updateStatus("TRAVELERプランでさらに無制限に");
+          updateStatus("TRAVELERプランでさらに使えます");
         }
       }
       console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
@@ -3826,8 +3826,8 @@ function showUpgradeModal() {
   if (userPlan === "FREE") {
     content.innerHTML = `
       <p style="margin-bottom:16px; font-size:14px;">無料版の制限に達しました。</p>
-      <p style="margin-bottom:16px; color:var(--gold); font-weight:700; font-size:16px;">🌟 BASICプラン（$1.99/月）で無制限に使えます</p>
-      <p style="margin-bottom:16px; font-size:12px; color:var(--muted);">• 登録から1ヶ月間の好きな2日間が全開放<br>• AI翻訳が無制限<br>• 全機能が使えます</p>
+      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 BASICプラン（$1.99/月）で全機能が使えます</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• 登録から1ヶ月間の好きな2日間が全開放<br>• AI翻訳が使えます<br>• 全機能が使えます</p>
       <div style="display:flex; gap:12px; margin-top:20px;">
         <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
           BASIC $1.99 を始める
@@ -3840,8 +3840,8 @@ function showUpgradeModal() {
   } else if (userPlan === "BASIC") {
     content.innerHTML = `
       <p style="margin-bottom:16px; font-size:14px;">BASICプランの制限に達しました。</p>
-      <p style="margin-bottom:16px; color:var(--gold); font-weight:700; font-size:16px;">🌟 TRAVELERプラン（$7.99/月）でさらに無制限に</p>
-      <p style="margin-bottom:16px; font-size:12px; color:var(--muted);">• 全機能が無制限<br>• 優先サポート<br>• 最新機能をいち早く</p>
+      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 TRAVELERプラン（$7.99/月）でさらに使えます</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• より多くのAI翻訳が使えます<br>• 優先サポート<br>• 最新機能をいち早く</p>
       <div style="display:flex; gap:12px; margin-top:20px;">
         <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
           TRAVELER $7.99 にアップグレード
@@ -3879,9 +3879,9 @@ function showUpgradeWarning(quotaInfo) {
   
   // ユーザーにはAPI使用量を見せない、プラン誘導のみ
   if (userPlan === "FREE") {
-    warning.innerHTML = `🌟 BASICプラン（$1.99/月）で無制限に使えます`;
+    warning.innerHTML = `🌟 BASICプラン（$1.99/月）で全機能が使えます`;
   } else if (userPlan === "BASIC") {
-    warning.innerHTML = `🌟 TRAVELERプラン（$7.99/月）でさらに無制限に`;
+    warning.innerHTML = `🌟 TRAVELERプラン（$7.99/月）でさらに使えます`;
   } else {
     return; // TRAVELERプランでは警告を表示しない
   }
