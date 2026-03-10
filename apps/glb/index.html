@@ -801,19 +801,22 @@ async function load150kDict() {
   }
 }
 
-// 辞書検索
+// 辞書検索（優先順位: 15万語アセット → オンデバイス辞書 → フォールバック）
 function searchDict(query, fromLang, toLang) {
   const normalized = query.trim().toLowerCase();
   const key = `${fromLang}-${toLang}:${normalized}`;
   
-  if (userDict.has(key)) {
-    return { result: userDict.get(key), source: "user_dict" };
-  }
-  
+  // 1. 15万語アセット（150k辞書）を最初に確認
   if (dictIndex.has(key)) {
     return { result: dictIndex.get(key), source: "150k_dict" };
   }
   
+  // 2. オンデバイス辞書（ユーザー辞書）を確認
+  if (userDict.has(key)) {
+    return { result: userDict.get(key), source: "user_dict" };
+  }
+  
+  // 3. フォールバック辞書
   const fallbackKey = fromLang === "ja" ? normalized : normalized;
   if (fallbackDict.has(fallbackKey)) {
     return { result: fallbackDict.get(fallbackKey), source: "fallback" };
@@ -914,21 +917,21 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
   return null;
 }
 
-// GLB実行（オンデバイス辞書最優先 → NEゲートウェイ接続）
+// GLB実行（15万語アセット → オンデバイス辞書 → NEゲートウェイ接続）
 async function translate(text, fromLang, toLang, updateStatus) {
-  // 1. オンデバイス辞書を最初に確認
+  // 1. 15万語アセット（150k辞書）を最初に確認
   if (updateStatus) {
-    updateStatus("オンデバイス辞書を確認しています...");
-    await new Promise(resolve => setTimeout(resolve, 300)); // ユーザーに確認中を表示
+    updateStatus("15万語アセットを確認しています...");
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
-    // オンデバイス辞書で見つかった
+    // 15万語アセットまたはオンデバイス辞書で見つかった
     return { reply: dictResult.result, source: dictResult.source };
   }
   
-  // 2. オンデバイス辞書にない場合、NEゲートウェイ接続
+  // 2. 15万語アセットにもオンデバイス辞書にもない場合、NEゲートウェイ接続
   if (updateStatus) {
     updateStatus("探しています...");
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -937,9 +940,9 @@ async function translate(text, fromLang, toLang, updateStatus) {
   
   const geminiResult = await translateWithGemini(text, fromLang, toLang, updateStatus);
   if (geminiResult) {
-    // API翻訳結果をオンデバイス辞書に保存（空の辞書に記録）
+    // API翻訳結果をユーザー辞書（オンデバイス辞書）に記録
     saveToUserDict(text, geminiResult.reply, fromLang, toLang);
-    console.log(`[オンデバイス辞書に記録] "${text}" → "${geminiResult.reply}"`);
+    console.log(`[ユーザー辞書に記録] "${text}" → "${geminiResult.reply}"`);
     return geminiResult;
   }
   
@@ -1081,9 +1084,9 @@ async function handleSend() {
     answerActions.style.display = "flex";
     
     const sourceNames = {
-      "user_dict": "あなたの辞書（オンデバイス）",
-      "150k_dict": "150k辞書",
-      "gemini": "Gemini Pro（オンデバイス辞書に記録済み）",
+      "150k_dict": "15万語アセット",
+      "user_dict": "オンデバイス辞書",
+      "gemini": "Gemini Pro（ユーザー辞書に記録済み）",
       "fallback": "System Reconnecting..."
     };
     
@@ -1093,8 +1096,9 @@ async function handleSend() {
     // 履歴に保存
     saveHistory(text, result.reply, currentFromLang, currentToLang);
     
-    // 150k辞書やフォールバックから取得した場合もオンデバイス辞書に保存
-    if (result.source === "150k_dict" || result.source === "fallback") {
+    // API（Gemini）から取得した場合は既にユーザー辞書に記録済み
+    // フォールバックから取得した場合もユーザー辞書に保存
+    if (result.source === "fallback") {
       saveToUserDict(text, result.reply, currentFromLang, currentToLang);
     }
   } catch (err) {
