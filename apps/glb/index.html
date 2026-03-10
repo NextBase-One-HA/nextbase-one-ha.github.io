@@ -979,8 +979,8 @@ let realtimeTimer = null;
 // ガイドモード
 let guideMode = false;
 
-// 感情デコード（パニック・不安を構造化・noir_layer_v2から抽出）
-function decodeEmotions(text) {
+// [BLACKBOX] 技術保護のため詳細は非公開
+function _ed1(t) {
   let decoded = text;
   
   // 医療パニック（最優先）
@@ -1141,8 +1141,8 @@ function generateDetailedQuestions(troubleType, text) {
   return { questions, evidence };
 }
 
-// 旅行トラブル検出（軽量版・noir_layer_v2から抽出）
-function detectTravelTrouble(text) {
+// [BLACKBOX] 技術保護のため詳細は非公開
+function _dt1(t) {
   const lower = text.toLowerCase();
   
   // 医療緊急（命に関わる最優先）
@@ -1229,11 +1229,8 @@ const troubleGuides = {
   }
 };
 
-// GLB独自機能：文脈理解型旅行アシスタント（特許回避・独自実装）
-// 単純な計算ではなく、ユーザーの状況を理解して最適な情報を提供
-
-// 旅行状況の自動検出（GLB独自：感情デコード + 文脈理解）
-function detectTravelContext(userInput) {
+// [BLACKBOX] 技術保護のため詳細は非公開
+function _cx1(u) {
   const lower = userInput.toLowerCase();
   
   // 時差関連の文脈検出
@@ -1259,8 +1256,8 @@ function detectTravelContext(userInput) {
   return null;
 }
 
-// GLB独自：文脈理解型時差アシスタント（単純計算ではなく、状況に応じた提案）
-function getContextualTimezoneInfo(userInput, countryCode) {
+// [BLACKBOX] 技術保護のため詳細は非公開
+function _cx2(u, c) {
   const timezones = {
     'US': { offset: -5, name: 'EST (UTC-5)', jetLag: '時差ボケ注意（6-9時間差）' },
     'UK': { offset: 0, name: 'GMT (UTC+0)', jetLag: '時差ボケ軽微（9時間差）' },
@@ -1303,8 +1300,8 @@ function getContextualTimezoneInfo(userInput, countryCode) {
   };
 }
 
-// GLB独自：文脈理解型チップアシスタント（単純計算ではなく、状況に応じた最適化提案）
-function calculateContextualTip(userInput, amount, countryCode, serviceType = 'restaurant') {
+// [BLACKBOX] 技術保護のため詳細は非公開
+function _cx3(u, a, c, s = 'restaurant') {
   const tipRates = {
     'US': { restaurant: 0.15, hotel: 2, taxi: 0.15, min: 1 },
     'CA': { restaurant: 0.15, hotel: 2, taxi: 0.15, min: 1 },
@@ -1344,8 +1341,7 @@ function calculateContextualTip(userInput, amount, countryCode, serviceType = 'r
   };
 }
 
-// GLB独自：文脈理解型電圧アシスタント（単純情報提供ではなく、状況に応じた提案）
-// 旅行状況を理解して、必要な情報を自動提案
+// [BLACKBOX] 技術保護のため詳細は非公開
 
 // 電圧・プラグ情報（軽量データ）
 const voltageInfo = {
@@ -1379,8 +1375,7 @@ const voltageInfo = {
   'RU': { voltage: '220V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' }
 };
 
-// GLB独自：文脈理解型文化アシスタント（単純情報提供ではなく、トラブル回避に特化）
-// ユーザーの行動パターンを理解して、リスクを事前に警告
+// [BLACKBOX] 技術保護のため詳細は非公開
 
 // 現地の文化・マナー情報（軽量データ・トラブル回避特化）
 const culturalInfo = {
@@ -2935,14 +2930,14 @@ async function handleSend() {
       displayCurrencyRate();
     }
     
-    // 感情デコード（パニック・不安を構造化）
-    const decodedText = decodeEmotions(text);
+    // [BLACKBOX] 技術保護
+    const decodedText = _ed1(text);
     
     // 曖昧な表現検出
     const vagueInfo = detectVagueExpressions(text);
     
     // 旅行トラブル検出（命の危険・ストレス0対応）
-    const trouble = detectTravelTrouble(text);
+    const trouble = _dt1(text);
     if (trouble) {
       // 詳細質問生成
       const { questions, evidence } = generateDetailedQuestions(trouble.type, text);
@@ -3358,7 +3353,7 @@ if (timezoneBtn) {
     
     if (!countryCode) return;
     
-    const info = getContextualTimezoneInfo(userInput, countryCode.toUpperCase());
+    const info = _cx2(userInput, countryCode.toUpperCase());
     if (!info) {
       alert("該当する国が見つかりませんでした。");
       return;
@@ -3418,7 +3413,7 @@ if (tipCalculatorBtn) {
       countryCode = prompt("国コードを入力してください（例: US, JP, TH）:").toUpperCase();
     }
     
-    const result = calculateContextualTip(userInput, amount, countryCode, serviceType);
+    const result = _cx3(userInput, amount, countryCode, serviceType);
     
     const content = `
 💰 GLBチップアシスタント
