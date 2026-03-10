@@ -1288,11 +1288,11 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   // 例: "your-windows-api-key-here"
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
-  if (NE_GATEWAY_URL === "http://YOUR_WINDOWS_IP:5000" || NE_GATEWAY_URL.includes("YOUR_WINDOWS_IP") || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+  if (API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     if (updateStatus) {
-      updateStatus("API未設定 - Windows側ゲートウェイURLを設定してください");
+      updateStatus("API未設定 - Windows側APIキーを設定してください (URL: http://192.168.1.25:5000 設定済み)");
     }
-    console.warn("[NEゲートウェイ] Windows側のURLとAPIキーを設定してください");
+    console.warn("[NEゲートウェイ] Windows側のAPIキーを設定してください (URLは設定済み)");
     return null;
   }
   
