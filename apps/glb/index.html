@@ -2080,7 +2080,11 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
         recordAPICall("prod_user_request");
         
         // API削減ロジック: キャッシュ保存（軽量版）
-        const result = { reply: data.reply, source: "gemini", alternatives: data.alternatives };
+        const result = { 
+          reply: data.reply, 
+          source: "gemini",
+          alternatives: data.alternatives && Array.isArray(data.alternatives) ? data.alternatives : undefined
+        };
         setCachedResult(inputHash, result);
         
         // API使用量を記録（上手く分配して使う）
@@ -2097,10 +2101,8 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
           if (conversationContext.length > 10) conversationContext.shift();
         }
         
-        // 複数候補がある場合は表示
-        if (data.alternatives && Array.isArray(data.alternatives)) {
-          return result;
-        }
+        // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
+        return result;
         
         // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
         return result;
