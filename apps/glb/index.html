@@ -598,6 +598,39 @@ button.btn-primary:disabled{
     <p class="hero-subtitle">NEXT BASE 瞬間GLB兵器</p>
   </div>
 
+  <div class="card" style="margin-bottom:20px;">
+    <div class="label">アプリ言語設定</div>
+    <select id="app-lang" style="width:100%; padding:12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; color:var(--text); font-size:14px;">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="ko">한국어</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="it">Italiano</option>
+      <option value="pt">Português</option>
+      <option value="ru">Русский</option>
+      <option value="ar">العربية</option>
+      <option value="hi">हिन्दी</option>
+      <option value="th">ไทย</option>
+      <option value="vi">Tiếng Việt</option>
+      <option value="id">Bahasa Indonesia</option>
+      <option value="tr">Türkçe</option>
+      <option value="pl">Polski</option>
+      <option value="nl">Nederlands</option>
+      <option value="sv">Svenska</option>
+      <option value="no">Norsk</option>
+      <option value="da">Dansk</option>
+      <option value="fi">Suomi</option>
+      <option value="el">Ελληνικά</option>
+      <option value="cs">Čeština</option>
+      <option value="hu">Magyar</option>
+      <option value="ro">Română</option>
+    </select>
+    <p style="margin-top:8px; font-size:11px; color:var(--muted); text-align:center;">アプリの表示言語を選択</p>
+  </div>
+
   <div class="lang-selector">
     <select id="lang-from">
       <option value="ja">日本語</option>
@@ -663,7 +696,7 @@ button.btn-primary:disabled{
   </div>
 
   <div class="card">
-    <div class="label">INPUT</div>
+    <div class="label" data-i18n="input">INPUT</div>
     <div style="display:flex; gap:8px; margin-bottom:12px;">
       <label class="icon-btn" style="flex:1; padding:10px; font-size:12px; cursor:pointer; ${localStorage.getItem('glb_realtime_mode') === 'true' ? 'background:var(--gold); color:#000;' : ''}" id="realtime-toggle">
         <input type="checkbox" id="realtime-checkbox" style="display:none;">
@@ -679,7 +712,7 @@ button.btn-primary:disabled{
       </label>
     </div>
     <div class="input-wrapper">
-      <textarea id="user-input" placeholder="GLBしたい文章を入力してください..."></textarea>
+      <textarea id="user-input" data-i18n-placeholder="placeholder" placeholder="GLBしたい文章を入力してください..."></textarea>
       <div class="input-actions">
         <button class="icon-btn" id="camera-input" title="カメラ翻訳">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -703,14 +736,14 @@ button.btn-primary:disabled{
         </button>
       </div>
     </div>
-    <button id="send-btn" class="btn-primary glb-button">GLB実行</button>
+    <button id="send-btn" class="btn-primary glb-button" data-i18n="glbExecute">GLB実行</button>
     <div id="status" class="status"></div>
   </div>
 
   <div class="card">
-    <div class="label">REPLY</div>
+    <div class="label" data-i18n="reply">REPLY</div>
     <div class="answer-wrapper">
-      <div id="answer" class="answer empty">GLB結果がここに表示されます...</div>
+      <div id="answer" class="answer empty" data-i18n="answerPlaceholder">GLB結果がここに表示されます...</div>
       <div id="currency-display" style="display:none; margin-top:12px; padding:12px; background:rgba(212,175,55,.1); border-radius:8px; border:1px solid var(--gold);">
         <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">💱 通貨レート（撮影時）</div>
         <div id="currency-info" style="font-size:14px; color:var(--gold);"></div>
@@ -757,8 +790,8 @@ button.btn-primary:disabled{
     </div>
     
     <div class="premium-gate">
-      <div class="label">PREMIUM PASS</div>
-      <h3>世界の扉を開く</h3>
+      <div class="label" data-i18n="premiumPass">PREMIUM PASS</div>
+      <h3 data-i18n="worldDoor">世界の扉を開く</h3>
       <p>Gemini Pro の高精度GLBと無制限アクセスを解放</p>
       <div class="premium-buttons">
         <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium">BASIC $1.99</a>
@@ -768,12 +801,12 @@ button.btn-primary:disabled{
   </div>
 
   <div class="card" id="history-card" style="display:none;">
-    <div class="label">履歴</div>
+    <div class="label" data-i18n="history">履歴</div>
     <div class="history-panel" id="history-panel"></div>
   </div>
 
   <div class="card">
-    <div class="label">辞書管理</div>
+    <div class="label" data-i18n="dictManagement">辞書管理</div>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
       <button class="icon-btn" id="export-dict" title="辞書をバックアップ" style="flex:1; min-width:140px; padding:12px; justify-content:center;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
@@ -855,6 +888,286 @@ let realtimeTimer = null;
 
 // ガイドモード
 let guideMode = false;
+
+// アプリUI言語
+let appLang = "ja";
+
+// UIテキストの多言語対応
+const uiTexts = {
+  ja: {
+    input: "INPUT",
+    reply: "REPLY",
+    glbExecute: "GLB実行",
+    history: "履歴",
+    dictManagement: "辞書管理",
+    premiumPass: "PREMIUM PASS",
+    worldDoor: "世界の扉を開く",
+    realtimeGLB: "⚡ リアルタイムGLB",
+    conversationMode: "💬 会話モード",
+    guide: "📖 ガイド",
+    backup: "バックアップ",
+    restore: "リストア",
+    apiUsage: "API使用量管理",
+    neGateway: "NEゲートウェイ設定",
+    cameraTranslate: "カメラ翻訳",
+    voiceInput: "音声入力",
+    voiceOutput: "音声出力",
+    copy: "コピー",
+    favorite: "お気に入り",
+    clear: "クリア",
+    clearHistory: "履歴をクリア",
+    appLangSetting: "アプリ言語設定",
+    selectAppLang: "アプリの表示言語を選択",
+    placeholder: "GLBしたい文章を入力してください...",
+    answerPlaceholder: "GLB結果がここに表示されます...",
+    basic: "BASIC",
+    traveler: "TRAVELER",
+    month: "月",
+    usage: "今月の使用量",
+    remaining: "残り",
+    limitReached: "上限到達"
+  },
+  en: {
+    input: "INPUT",
+    reply: "REPLY",
+    glbExecute: "Execute GLB",
+    history: "History",
+    dictManagement: "Dictionary Management",
+    premiumPass: "PREMIUM PASS",
+    worldDoor: "Open the Door to the World",
+    realtimeGLB: "⚡ Real-time GLB",
+    conversationMode: "💬 Conversation Mode",
+    guide: "📖 Guide",
+    backup: "Backup",
+    restore: "Restore",
+    apiUsage: "API Usage Management",
+    neGateway: "NE Gateway Settings",
+    cameraTranslate: "Camera Translate",
+    voiceInput: "Voice Input",
+    voiceOutput: "Voice Output",
+    copy: "Copy",
+    favorite: "Favorite",
+    clear: "Clear",
+    clearHistory: "Clear History",
+    appLangSetting: "App Language Settings",
+    selectAppLang: "Select app display language",
+    placeholder: "Enter text to GLB...",
+    answerPlaceholder: "GLB results will appear here...",
+    basic: "BASIC",
+    traveler: "TRAVELER",
+    month: "month",
+    usage: "Monthly Usage",
+    remaining: "Remaining",
+    limitReached: "Limit Reached"
+  },
+  zh: {
+    input: "输入",
+    reply: "回复",
+    glbExecute: "执行GLB",
+    history: "历史",
+    dictManagement: "词典管理",
+    premiumPass: "高级通行证",
+    worldDoor: "打开世界之门",
+    realtimeGLB: "⚡ 实时GLB",
+    conversationMode: "💬 对话模式",
+    guide: "📖 指南",
+    backup: "备份",
+    restore: "恢复",
+    apiUsage: "API使用量管理",
+    neGateway: "NE网关设置",
+    cameraTranslate: "相机翻译",
+    voiceInput: "语音输入",
+    voiceOutput: "语音输出",
+    copy: "复制",
+    favorite: "收藏",
+    clear: "清除",
+    clearHistory: "清除历史",
+    appLangSetting: "应用语言设置",
+    selectAppLang: "选择应用显示语言",
+    placeholder: "输入要GLB的文本...",
+    answerPlaceholder: "GLB结果将显示在这里...",
+    basic: "基础版",
+    traveler: "旅行者版",
+    month: "月",
+    usage: "本月使用量",
+    remaining: "剩余",
+    limitReached: "达到上限"
+  },
+  ko: {
+    input: "입력",
+    reply: "응답",
+    glbExecute: "GLB 실행",
+    history: "기록",
+    dictManagement: "사전 관리",
+    premiumPass: "프리미엄 패스",
+    worldDoor: "세계의 문을 열다",
+    realtimeGLB: "⚡ 실시간 GLB",
+    conversationMode: "💬 대화 모드",
+    guide: "📖 가이드",
+    backup: "백업",
+    restore: "복원",
+    apiUsage: "API 사용량 관리",
+    neGateway: "NE 게이트웨이 설정",
+    cameraTranslate: "카메라 번역",
+    voiceInput: "음성 입력",
+    voiceOutput: "음성 출력",
+    copy: "복사",
+    favorite: "즐겨찾기",
+    clear: "지우기",
+    clearHistory: "기록 지우기",
+    appLangSetting: "앱 언어 설정",
+    selectAppLang: "앱 표시 언어 선택",
+    placeholder: "GLB할 텍스트를 입력하세요...",
+    answerPlaceholder: "GLB 결과가 여기에 표시됩니다...",
+    basic: "베이직",
+    traveler: "트래블러",
+    month: "월",
+    usage: "이번 달 사용량",
+    remaining: "남음",
+    limitReached: "한도 도달"
+  },
+  es: {
+    input: "ENTRADA",
+    reply: "RESPUESTA",
+    glbExecute: "Ejecutar GLB",
+    history: "Historial",
+    dictManagement: "Gestión de Diccionario",
+    premiumPass: "PASE PREMIUM",
+    worldDoor: "Abre la Puerta al Mundo",
+    realtimeGLB: "⚡ GLB en Tiempo Real",
+    conversationMode: "💬 Modo Conversación",
+    guide: "📖 Guía",
+    backup: "Respaldo",
+    restore: "Restaurar",
+    apiUsage: "Gestión de Uso de API",
+    neGateway: "Configuración de NE Gateway",
+    cameraTranslate: "Traducir con Cámara",
+    voiceInput: "Entrada de Voz",
+    voiceOutput: "Salida de Voz",
+    copy: "Copiar",
+    favorite: "Favorito",
+    clear: "Limpiar",
+    clearHistory: "Limpiar Historial",
+    appLangSetting: "Configuración de Idioma de la App",
+    selectAppLang: "Selecciona el idioma de visualización de la app",
+    placeholder: "Ingresa el texto para GLB...",
+    answerPlaceholder: "Los resultados de GLB aparecerán aquí...",
+    basic: "BÁSICO",
+    traveler: "VIAJERO",
+    month: "mes",
+    usage: "Uso Mensual",
+    remaining: "Restante",
+    limitReached: "Límite Alcanzado"
+  },
+  fr: {
+    input: "ENTRÉE",
+    reply: "RÉPONSE",
+    glbExecute: "Exécuter GLB",
+    history: "Historique",
+    dictManagement: "Gestion du Dictionnaire",
+    premiumPass: "PASSE PREMIUM",
+    worldDoor: "Ouvrir la Porte du Monde",
+    realtimeGLB: "⚡ GLB en Temps Réel",
+    conversationMode: "💬 Mode Conversation",
+    guide: "📖 Guide",
+    backup: "Sauvegarde",
+    restore: "Restaurer",
+    apiUsage: "Gestion de l'Utilisation de l'API",
+    neGateway: "Paramètres NE Gateway",
+    cameraTranslate: "Traduire avec Caméra",
+    voiceInput: "Entrée Vocale",
+    voiceOutput: "Sortie Vocale",
+    copy: "Copier",
+    favorite: "Favori",
+    clear: "Effacer",
+    clearHistory: "Effacer l'Historique",
+    appLangSetting: "Paramètres de Langue de l'App",
+    selectAppLang: "Sélectionnez la langue d'affichage de l'app",
+    placeholder: "Entrez le texte à GLB...",
+    answerPlaceholder: "Les résultats GLB apparaîtront ici...",
+    basic: "BASIQUE",
+    traveler: "VOYAGEUR",
+    month: "mois",
+    usage: "Utilisation Mensuelle",
+    remaining: "Restant",
+    limitReached: "Limite Atteinte"
+  },
+  de: {
+    input: "EINGABE",
+    reply: "ANTWORT",
+    glbExecute: "GLB Ausführen",
+    history: "Verlauf",
+    dictManagement: "Wörterbuch-Verwaltung",
+    premiumPass: "PREMIUM PASS",
+    worldDoor: "Öffne die Tür zur Welt",
+    realtimeGLB: "⚡ Echtzeit-GLB",
+    conversationMode: "💬 Gesprächsmodus",
+    guide: "📖 Führer",
+    backup: "Sicherung",
+    restore: "Wiederherstellen",
+    apiUsage: "API-Nutzungsverwaltung",
+    neGateway: "NE Gateway-Einstellungen",
+    cameraTranslate: "Kamera-Übersetzung",
+    voiceInput: "Spracheingabe",
+    voiceOutput: "Sprachausgabe",
+    copy: "Kopieren",
+    favorite: "Favorit",
+    clear: "Löschen",
+    clearHistory: "Verlauf Löschen",
+    appLangSetting: "App-Spracheinstellungen",
+    selectAppLang: "App-Anzeigesprache auswählen",
+    placeholder: "Text zum GLB eingeben...",
+    answerPlaceholder: "GLB-Ergebnisse werden hier angezeigt...",
+    basic: "BASIS",
+    traveler: "REISENDER",
+    month: "Monat",
+    usage: "Monatliche Nutzung",
+    remaining: "Verbleibend",
+    limitReached: "Limit Erreicht"
+  }
+};
+
+// その他の言語は英語をフォールバック
+for (const lang of ["it", "pt", "ru", "ar", "hi", "th", "vi", "id", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "cs", "hu", "ro"]) {
+  uiTexts[lang] = uiTexts.en;
+}
+
+// UIテキストを更新
+function updateUITexts() {
+  const texts = uiTexts[appLang] || uiTexts.en;
+  
+  // data-i18n属性を持つ要素を更新
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (texts[key]) {
+      el.textContent = texts[key];
+    }
+  });
+  
+  // data-i18n-placeholder属性を持つ要素を更新
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (texts[key]) {
+      el.placeholder = texts[key];
+    }
+  });
+  
+  // 特定の要素を直接更新
+  const sendBtn = document.getElementById("send-btn");
+  if (sendBtn && texts.glbExecute) {
+    sendBtn.textContent = texts.glbExecute;
+  }
+  
+  const answerEl = document.getElementById("answer");
+  if (answerEl && answerEl.classList.contains("empty") && texts.answerPlaceholder) {
+    answerEl.textContent = texts.answerPlaceholder;
+  }
+  
+  const inputEl = document.getElementById("user-input");
+  if (inputEl && texts.placeholder) {
+    inputEl.placeholder = texts.placeholder;
+  }
+}
 
 // カメラ撮影時の通貨レート
 let cameraCurrencyRate = null;
@@ -1799,9 +2112,24 @@ const sendBtn = document.getElementById("send-btn");
 const statusEl = document.getElementById("status");
 const answerEl = document.getElementById("answer");
 const answerActions = document.getElementById("answer-actions");
+const appLangSelect = document.getElementById("app-lang");
 const langFrom = document.getElementById("lang-from");
 const langTo = document.getElementById("lang-to");
 const swapBtn = document.getElementById("swap-lang");
+
+// アプリ言語設定
+appLangSelect.addEventListener("change", () => {
+  appLang = appLangSelect.value;
+  localStorage.setItem("glb_app_lang", appLang);
+  updateUITexts();
+});
+
+// アプリ言語の復元
+appLang = localStorage.getItem("glb_app_lang") || navigator.language.split("-")[0] || "ja";
+if (appLangSelect) {
+  appLangSelect.value = appLang;
+  updateUITexts();
+}
 const voiceInputBtn = document.getElementById("voice-input");
 const clearInputBtn = document.getElementById("clear-input");
 const copyAnswerBtn = document.getElementById("copy-answer");
