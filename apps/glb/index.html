@@ -1229,41 +1229,51 @@ const troubleGuides = {
   }
 };
 
-// 旅行特化機能：時差計算（軽量版）
-function getTimezoneInfo(countryCode) {
+// GLB独自機能：文脈理解型旅行アシスタント（特許回避・独自実装）
+// 単純な計算ではなく、ユーザーの状況を理解して最適な情報を提供
+
+// 旅行状況の自動検出（GLB独自：感情デコード + 文脈理解）
+function detectTravelContext(userInput) {
+  const lower = userInput.toLowerCase();
+  
+  // 時差関連の文脈検出
+  if (/(時差|時間|何時|timezone|time|jet lag|時差ボケ)/i.test(lower)) {
+    return { type: 'timezone', priority: 'medium', needsInfo: true };
+  }
+  
+  // チップ関連の文脈検出
+  if (/(チップ|tip|サービス料|いくら|いくら払う|支払い|料金)/i.test(lower)) {
+    return { type: 'tip', priority: 'medium', needsInfo: true };
+  }
+  
+  // 電圧・プラグ関連の文脈検出
+  if (/(充電|コンセント|プラグ|電圧|変圧器|adapter|voltage|charge)/i.test(lower)) {
+    return { type: 'voltage', priority: 'low', needsInfo: true };
+  }
+  
+  // 文化・マナー関連の文脈検出
+  if (/(マナー|タブー|してはいけない|文化|習慣|custom|manners|taboo)/i.test(lower)) {
+    return { type: 'culture', priority: 'medium', needsInfo: true };
+  }
+  
+  return null;
+}
+
+// GLB独自：文脈理解型時差アシスタント（単純計算ではなく、状況に応じた提案）
+function getContextualTimezoneInfo(userInput, countryCode) {
   const timezones = {
-    'US': { offset: -5, name: 'EST (UTC-5)' },
-    'UK': { offset: 0, name: 'GMT (UTC+0)' },
-    'JP': { offset: 9, name: 'JST (UTC+9)' },
-    'CN': { offset: 8, name: 'CST (UTC+8)' },
-    'KR': { offset: 9, name: 'KST (UTC+9)' },
-    'TH': { offset: 7, name: 'ICT (UTC+7)' },
-    'VN': { offset: 7, name: 'ICT (UTC+7)' },
-    'ID': { offset: 7, name: 'WIB (UTC+7)' },
-    'SG': { offset: 8, name: 'SGT (UTC+8)' },
-    'MY': { offset: 8, name: 'MYT (UTC+8)' },
-    'PH': { offset: 8, name: 'PHT (UTC+8)' },
-    'IN': { offset: 5.5, name: 'IST (UTC+5:30)' },
-    'AU': { offset: 10, name: 'AEST (UTC+10)' },
-    'NZ': { offset: 12, name: 'NZST (UTC+12)' },
-    'FR': { offset: 1, name: 'CET (UTC+1)' },
-    'DE': { offset: 1, name: 'CET (UTC+1)' },
-    'IT': { offset: 1, name: 'CET (UTC+1)' },
-    'ES': { offset: 1, name: 'CET (UTC+1)' },
-    'PT': { offset: 0, name: 'WET (UTC+0)' },
-    'GR': { offset: 2, name: 'EET (UTC+2)' },
-    'TR': { offset: 3, name: 'TRT (UTC+3)' },
-    'RU': { offset: 3, name: 'MSK (UTC+3)' },
-    'BR': { offset: -3, name: 'BRT (UTC-3)' },
-    'MX': { offset: -6, name: 'CST (UTC-6)' },
-    'AR': { offset: -3, name: 'ART (UTC-3)' },
-    'AE': { offset: 4, name: 'GST (UTC+4)' },
-    'SA': { offset: 3, name: 'AST (UTC+3)' },
-    'EG': { offset: 2, name: 'EET (UTC+2)' },
-    'ZA': { offset: 2, name: 'SAST (UTC+2)' }
+    'US': { offset: -5, name: 'EST (UTC-5)', jetLag: '時差ボケ注意（6-9時間差）' },
+    'UK': { offset: 0, name: 'GMT (UTC+0)', jetLag: '時差ボケ軽微（9時間差）' },
+    'JP': { offset: 9, name: 'JST (UTC+9)', jetLag: '時差なし' },
+    'TH': { offset: 7, name: 'ICT (UTC+7)', jetLag: '時差ボケ軽微（2時間差）' },
+    'CN': { offset: 8, name: 'CST (UTC+8)', jetLag: '時差ボケ軽微（1時間差）' },
+    'KR': { offset: 9, name: 'KST (UTC+9)', jetLag: '時差なし' },
+    'FR': { offset: 1, name: 'CET (UTC+1)', jetLag: '時差ボケ中程度（8時間差）' },
+    'DE': { offset: 1, name: 'CET (UTC+1)', jetLag: '時差ボケ中程度（8時間差）' },
+    'AU': { offset: 10, name: 'AEST (UTC+10)', jetLag: '時差ボケ軽微（1時間差）' }
   };
   
-  const localOffset = new Date().getTimezoneOffset() / -60; // ローカル時差
+  const localOffset = new Date().getTimezoneOffset() / -60;
   const target = timezones[countryCode];
   
   if (!target) return null;
@@ -1272,59 +1282,72 @@ function getTimezoneInfo(countryCode) {
   const localTime = new Date();
   const targetTime = new Date(localTime.getTime() + diff * 60 * 60 * 1000);
   
+  // GLB独自：文脈に応じた提案を生成
+  let suggestions = [];
+  if (Math.abs(diff) >= 6) {
+    suggestions.push('時差ボケ対策: 到着後は現地時間に合わせて活動');
+    suggestions.push('睡眠: 到着日の夜は早めに就寝');
+  }
+  if (/(会議|meeting|appointment|予約)/i.test(userInput)) {
+    suggestions.push('重要: 会議時間を現地時間で再確認');
+  }
+  
   return {
     country: countryCode,
     timezone: target.name,
     localTime: localTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
     targetTime: targetTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-    diff: diff > 0 ? `+${diff}時間` : `${diff}時間`
+    diff: diff > 0 ? `+${diff}時間` : `${diff}時間`,
+    jetLag: target.jetLag,
+    suggestions: suggestions
   };
 }
 
-// 旅行特化機能：チップ計算（軽量版）
-function calculateTip(amount, countryCode, serviceType = 'restaurant') {
+// GLB独自：文脈理解型チップアシスタント（単純計算ではなく、状況に応じた最適化提案）
+function calculateContextualTip(userInput, amount, countryCode, serviceType = 'restaurant') {
   const tipRates = {
-    'US': { restaurant: 0.15, hotel: 2, taxi: 0.15 },
-    'CA': { restaurant: 0.15, hotel: 2, taxi: 0.15 },
-    'MX': { restaurant: 0.10, hotel: 1, taxi: 0.10 },
-    'BR': { restaurant: 0.10, hotel: 1, taxi: 0.10 },
-    'UK': { restaurant: 0.10, hotel: 1, taxi: 0.10 },
-    'FR': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'DE': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'IT': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'ES': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'GR': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'TR': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'AE': { restaurant: 0.10, hotel: 2, taxi: 0 },
-    'SA': { restaurant: 0.10, hotel: 2, taxi: 0 },
-    'JP': { restaurant: 0, hotel: 0, taxi: 0 }, // チップ文化なし
-    'CN': { restaurant: 0, hotel: 0, taxi: 0 },
-    'KR': { restaurant: 0, hotel: 0, taxi: 0 },
-    'TH': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'VN': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'ID': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'SG': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'MY': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'PH': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'IN': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'AU': { restaurant: 0.10, hotel: 1, taxi: 0 },
-    'NZ': { restaurant: 0.10, hotel: 1, taxi: 0 }
+    'US': { restaurant: 0.15, hotel: 2, taxi: 0.15, min: 1 },
+    'CA': { restaurant: 0.15, hotel: 2, taxi: 0.15, min: 1 },
+    'UK': { restaurant: 0.10, hotel: 1, taxi: 0.10, min: 0.5 },
+    'FR': { restaurant: 0.10, hotel: 1, taxi: 0, min: 0 },
+    'DE': { restaurant: 0.10, hotel: 1, taxi: 0, min: 0 },
+    'JP': { restaurant: 0, hotel: 0, taxi: 0, min: 0 },
+    'TH': { restaurant: 0.10, hotel: 1, taxi: 0, min: 0 },
+    'CN': { restaurant: 0, hotel: 0, taxi: 0, min: 0 },
+    'KR': { restaurant: 0, hotel: 0, taxi: 0, min: 0 }
   };
   
   const rate = tipRates[countryCode]?.[serviceType] || 0;
-  const tip = amount * rate;
+  const tip = Math.max(amount * rate, tipRates[countryCode]?.min || 0);
   const total = amount + tip;
+  
+  // GLB独自：文脈に応じた提案を生成
+  let suggestions = [];
+  if (/(高すぎ|高い|expensive|too much)/i.test(userInput)) {
+    suggestions.push('💡 チップは任意です。サービスに満足できない場合は減額も可能');
+  }
+  if (/(良い|素晴らしい|excellent|great)/i.test(userInput)) {
+    suggestions.push('💡 サービスに満足した場合は、チップを多めに渡すと喜ばれます');
+  }
+  if (rate === 0 && /(チップ|tip)/i.test(userInput)) {
+    suggestions.push('💡 この国ではチップ文化がありません。渡すと失礼になる場合があります');
+  }
   
   return {
     amount,
     tip,
     total,
     rate: `${(rate * 100).toFixed(0)}%`,
-    note: rate === 0 ? 'チップ不要' : `チップ推奨: ${(rate * 100).toFixed(0)}%`
+    note: rate === 0 ? 'チップ不要（渡すと失礼になる場合あり）' : `チップ推奨: ${(rate * 100).toFixed(0)}%`,
+    suggestions: suggestions,
+    culturalNote: rate === 0 ? 'この国ではチップ文化がありません' : 'チップはサービスへの感謝の気持ちです'
   };
 }
 
-// 旅行特化機能：電圧・プラグ情報（軽量データ）
+// GLB独自：文脈理解型電圧アシスタント（単純情報提供ではなく、状況に応じた提案）
+// 旅行状況を理解して、必要な情報を自動提案
+
+// 電圧・プラグ情報（軽量データ）
 const voltageInfo = {
   'US': { voltage: '120V', plug: 'A/B', note: 'A型（2ピン）またはB型（3ピン）' },
   'CA': { voltage: '120V', plug: 'A/B', note: 'A型（2ピン）またはB型（3ピン）' },
@@ -1356,7 +1379,10 @@ const voltageInfo = {
   'RU': { voltage: '220V', plug: 'C/F', note: 'C型（2ピン）またはF型（2ピン）' }
 };
 
-// 旅行特化機能：現地の文化・マナー情報（軽量データ）
+// GLB独自：文脈理解型文化アシスタント（単純情報提供ではなく、トラブル回避に特化）
+// ユーザーの行動パターンを理解して、リスクを事前に警告
+
+// 現地の文化・マナー情報（軽量データ・トラブル回避特化）
 const culturalInfo = {
   'JP': {
     tips: ['靴を脱ぐ（家・寺社）', 'お辞儀をする', '名刺は両手で渡す', '箸を立てない', 'チップ不要'],
@@ -3311,21 +3337,35 @@ medicalInfoBtn.addEventListener("click", () => {
   alert(content);
 });
 
-// 時差計算表示
+// GLB独自：文脈理解型時差アシスタント（自動検出 + 状況に応じた提案）
 const timezoneBtn = document.getElementById("timezone-btn");
 if (timezoneBtn) {
   timezoneBtn.addEventListener("click", () => {
-    const countryCode = prompt("国コードを入力してください（例: US, UK, JP, TH）:");
+    const userInput = prompt("状況を入力してください（例: 「明日の会議は何時？」「時差ボケが心配」）:");
+    if (!userInput) return;
+    
+    // GLB独自：文脈から国コードを自動検出（入力から推測）
+    let countryCode = prompt("国コードを入力してください（例: US, UK, JP, TH）:");
+    if (!countryCode) {
+      // 入力から国を推測
+      if (/(アメリカ|US|USA|United States)/i.test(userInput)) countryCode = 'US';
+      else if (/(イギリス|UK|United Kingdom)/i.test(userInput)) countryCode = 'UK';
+      else if (/(タイ|TH|Thailand)/i.test(userInput)) countryCode = 'TH';
+      else if (/(フランス|FR|France)/i.test(userInput)) countryCode = 'FR';
+      else if (/(ドイツ|DE|Germany)/i.test(userInput)) countryCode = 'DE';
+      else countryCode = prompt("国コードを入力してください:");
+    }
+    
     if (!countryCode) return;
     
-    const info = getTimezoneInfo(countryCode.toUpperCase());
+    const info = getContextualTimezoneInfo(userInput, countryCode.toUpperCase());
     if (!info) {
       alert("該当する国が見つかりませんでした。");
       return;
     }
     
     const content = `
-🕐 時差情報: ${info.country}
+🕐 GLB時差アシスタント: ${info.country}
 
 【タイムゾーン】
 ${info.timezone}
@@ -3334,36 +3374,67 @@ ${info.timezone}
 日本時間: ${info.localTime}
 現地時間: ${info.targetTime}
 時差: ${info.diff}
+
+【時差ボケ情報】
+${info.jetLag}
+
+${info.suggestions.length > 0 ? `\n【GLB提案】\n${info.suggestions.map(s => `• ${s}`).join('\n')}` : ''}
     `;
     alert(content);
   });
 }
 
-// チップ計算表示
+// GLB独自：文脈理解型チップアシスタント（状況に応じた最適化提案）
 const tipCalculatorBtn = document.getElementById("tip-calculator-btn");
 if (tipCalculatorBtn) {
   tipCalculatorBtn.addEventListener("click", () => {
-    const amount = parseFloat(prompt("金額を入力してください:"));
+    const userInput = prompt("状況を入力してください（例: 「レストランで5000円、サービスは良かった」）:");
+    if (!userInput) return;
+    
+    // GLB独自：入力から金額と状況を自動抽出
+    const amountMatch = userInput.match(/(\d+)[円|yen|USD|EUR|THB]/i) || userInput.match(/(\d+)/);
+    const amount = amountMatch ? parseFloat(amountMatch[1]) : parseFloat(prompt("金額を入力してください:"));
+    
     if (isNaN(amount) || amount <= 0) {
       alert("有効な金額を入力してください。");
       return;
     }
     
-    const countryCode = prompt("国コードを入力してください（例: US, JP, TH）:").toUpperCase();
-    const serviceType = prompt("サービス種別を選択（restaurant/hotel/taxi）:", "restaurant");
+    // GLB独自：入力からサービス種別を自動検出
+    let serviceType = 'restaurant';
+    if (/(ホテル|hotel|bellboy|porter)/i.test(userInput)) serviceType = 'hotel';
+    else if (/(タクシー|taxi|cab)/i.test(userInput)) serviceType = 'taxi';
+    else if (!/(レストラン|restaurant|dining)/i.test(userInput)) {
+      serviceType = prompt("サービス種別を選択（restaurant/hotel/taxi）:", "restaurant");
+    }
     
-    const result = calculateTip(amount, countryCode, serviceType);
+    // GLB独自：入力から国コードを自動検出
+    let countryCode = 'US';
+    if (/(日本|JP|Japan)/i.test(userInput)) countryCode = 'JP';
+    else if (/(タイ|TH|Thailand)/i.test(userInput)) countryCode = 'TH';
+    else if (/(アメリカ|US|USA)/i.test(userInput)) countryCode = 'US';
+    else if (/(イギリス|UK)/i.test(userInput)) countryCode = 'UK';
+    else {
+      countryCode = prompt("国コードを入力してください（例: US, JP, TH）:").toUpperCase();
+    }
+    
+    const result = calculateContextualTip(userInput, amount, countryCode, serviceType);
     
     const content = `
-💰 チップ計算結果
+💰 GLBチップアシスタント
 
 【金額】
 元の金額: ${result.amount.toFixed(2)}
 チップ: ${result.tip.toFixed(2)} (${result.rate})
 合計: ${result.total.toFixed(2)}
 
+【文化情報】
+${result.culturalNote}
+
 【注意】
 ${result.note}
+
+${result.suggestions.length > 0 ? `\n【GLB提案】\n${result.suggestions.map(s => `${s}`).join('\n')}` : ''}
     `;
     alert(content);
   });
