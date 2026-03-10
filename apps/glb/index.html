@@ -47,25 +47,25 @@ body::before{
 }
 
 .container{
-  max-width:800px;
+  max-width:900px;
   margin:0 auto;
-  padding:32px 24px 64px;
+  padding:24px 20px 64px;
   position:relative;
   z-index:1;
 }
 
 .hero-section{
   text-align:center;
-  margin-bottom:40px;
-  padding:24px 0;
+  margin-bottom:32px;
+  padding:20px 0;
 }
 
 .hero-title{
   color:var(--gold);
-  font-size:clamp(32px,7vw,52px);
+  font-size:clamp(28px,6vw,48px);
   font-weight:900;
   letter-spacing:-.02em;
-  margin:0 0 12px;
+  margin:0 0 8px;
   text-shadow:0 0 30px var(--gold-glow),
               0 4px 20px rgba(0,0,0,.5);
   background:linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
@@ -76,70 +76,77 @@ body::before{
 
 .hero-subtitle{
   color:var(--muted);
-  font-size:15px;
+  font-size:13px;
   font-weight:500;
-  letter-spacing:.1em;
+  letter-spacing:.12em;
   margin:0;
   text-transform:uppercase;
 }
 
-.lang-toggle{
+.lang-selector{
   display:flex;
-  gap:8px;
-  margin-bottom:32px;
+  align-items:center;
+  gap:12px;
+  margin-bottom:24px;
   background:var(--panel);
   border:1px solid var(--panel-border);
-  border-radius:16px;
-  padding:6px;
+  border-radius:18px;
+  padding:8px;
   backdrop-filter:blur(10px);
   box-shadow:0 8px 32px rgba(0,0,0,.4);
 }
 
-.lang-toggle button{
+.lang-selector select{
   flex:1;
-  padding:14px 20px;
+  padding:14px 16px;
   border:none;
-  background:transparent;
-  color:var(--muted);
+  background:rgba(0,0,0,.4);
+  color:var(--text-bright);
   border-radius:12px;
-  font-weight:700;
-  font-size:14px;
+  font-size:15px;
+  font-weight:600;
   cursor:pointer;
-  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing:.05em;
-  position:relative;
-  overflow:hidden;
+  outline:none;
+  transition:all .3s;
 }
 
-.lang-toggle button::before{
-  content:"";
-  position:absolute;
-  top:0;
-  left:-100%;
-  width:100%;
-  height:100%;
-  background:linear-gradient(90deg, transparent, rgba(212,175,55,.1), transparent);
-  transition:left .5s;
+.lang-selector select:focus{
+  background:rgba(0,0,0,.6);
+  box-shadow:0 0 0 2px var(--gold-glow);
 }
 
-.lang-toggle button:hover::before{
-  left:100%;
+.swap-btn{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  border:2px solid var(--gold);
+  background:transparent;
+  color:var(--gold);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .3s;
+  flex-shrink:0;
 }
 
-.lang-toggle button.active{
-  background:linear-gradient(135deg, var(--gold) 0%, #FFD700 100%);
+.swap-btn:hover{
+  background:var(--gold);
   color:#000;
-  box-shadow:0 4px 20px var(--gold-glow),
-             0 0 0 1px rgba(212,175,55,.3);
-  transform:scale(1.02);
+  transform:rotate(180deg);
+}
+
+.swap-btn svg{
+  width:20px;
+  height:20px;
 }
 
 .card{
   background:var(--panel);
   border:1px solid var(--panel-border);
   border-radius:24px;
-  padding:32px;
-  margin-bottom:24px;
+  padding:28px;
+  margin-bottom:20px;
   backdrop-filter:blur(20px);
   box-shadow:0 20px 60px rgba(0,0,0,.5),
              0 0 0 1px rgba(212,175,55,.1);
@@ -169,7 +176,7 @@ body::before{
   letter-spacing:.15em;
   font-weight:800;
   font-size:11px;
-  margin-bottom:16px;
+  margin-bottom:12px;
   text-transform:uppercase;
   display:flex;
   align-items:center;
@@ -184,6 +191,10 @@ body::before{
   opacity:.3;
 }
 
+.input-wrapper{
+  position:relative;
+}
+
 textarea{
   width:100%;
   min-height:160px;
@@ -191,7 +202,7 @@ textarea{
   border:2px solid var(--line);
   background:rgba(0,0,0,.4);
   color:var(--text-bright);
-  padding:20px;
+  padding:20px 60px 20px 20px;
   font-size:16px;
   line-height:1.7;
   resize:vertical;
@@ -215,12 +226,61 @@ textarea::placeholder{
   opacity:.6;
 }
 
+.input-actions{
+  position:absolute;
+  top:12px;
+  right:12px;
+  display:flex;
+  gap:8px;
+}
+
+.icon-btn{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  border:none;
+  background:rgba(212,175,55,.15);
+  color:var(--gold);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .3s;
+  backdrop-filter:blur(10px);
+}
+
+.icon-btn:hover{
+  background:var(--gold);
+  color:#000;
+  transform:scale(1.1);
+}
+
+.icon-btn:active{
+  transform:scale(.95);
+}
+
+.icon-btn.active{
+  background:var(--error);
+  color:#fff;
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:.7; }
+}
+
+.icon-btn svg{
+  width:18px;
+  height:18px;
+}
+
 button.btn-primary{
   width:100%;
   text-align:center;
   border-radius:16px;
   padding:20px 32px;
-  margin-top:20px;
+  margin-top:16px;
   font-weight:800;
   letter-spacing:.08em;
   transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -271,7 +331,7 @@ button.btn-primary:disabled{
 }
 
 .status{
-  margin-top:16px;
+  margin-top:12px;
   font-size:13px;
   color:var(--muted);
   min-height:20px;
@@ -288,9 +348,13 @@ button.btn-primary:disabled{
   color:var(--error);
 }
 
+.answer-wrapper{
+  position:relative;
+}
+
 .answer{
   margin-top:20px;
-  padding:24px;
+  padding:24px 60px 24px 24px;
   border-radius:16px;
   background:rgba(0,0,0,.4);
   border:1px solid var(--line);
@@ -317,9 +381,17 @@ button.btn-primary:disabled{
   box-shadow:inset 0 0 20px rgba(212,175,55,.05);
 }
 
+.answer-actions{
+  position:absolute;
+  top:12px;
+  right:12px;
+  display:flex;
+  gap:8px;
+}
+
 .premium-gate{
-  margin-top:32px;
-  padding:28px;
+  margin-top:28px;
+  padding:24px;
   background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%);
   border:2px solid var(--gold);
   border-radius:20px;
@@ -346,30 +418,30 @@ button.btn-primary:disabled{
 
 .premium-gate .label{
   color:var(--gold);
-  font-size:13px;
-  margin-bottom:12px;
+  font-size:12px;
+  margin-bottom:10px;
   text-transform:uppercase;
   letter-spacing:.2em;
 }
 
 .premium-gate h3{
   color:var(--text-bright);
-  font-size:20px;
+  font-size:18px;
   font-weight:800;
-  margin:0 0 8px;
+  margin:0 0 6px;
   letter-spacing:.05em;
 }
 
 .premium-gate p{
   color:var(--muted);
-  font-size:13px;
-  margin:0 0 20px;
+  font-size:12px;
+  margin:0 0 18px;
   line-height:1.6;
 }
 
 .premium-buttons{
   display:flex;
-  gap:12px;
+  gap:10px;
   flex-wrap:wrap;
   justify-content:center;
   position:relative;
@@ -378,11 +450,11 @@ button.btn-primary:disabled{
 
 .premium-buttons a{
   display:inline-block;
-  padding:16px 32px;
+  padding:14px 28px;
   border-radius:14px;
   text-decoration:none;
   font-weight:800;
-  font-size:14px;
+  font-size:13px;
   transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing:.06em;
   text-transform:uppercase;
@@ -448,14 +520,51 @@ button.btn-primary:disabled{
   to{ transform:rotate(360deg); }
 }
 
+.history-panel{
+  max-height:300px;
+  overflow-y:auto;
+  margin-top:16px;
+}
+
+.history-item{
+  padding:12px;
+  border-radius:12px;
+  background:rgba(0,0,0,.3);
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:all .3s;
+  border:1px solid transparent;
+}
+
+.history-item:hover{
+  background:rgba(212,175,55,.1);
+  border-color:var(--gold);
+  transform:translateX(4px);
+}
+
+.history-item .source{
+  color:var(--text-bright);
+  font-size:14px;
+  margin-bottom:4px;
+}
+
+.history-item .target{
+  color:var(--gold);
+  font-size:13px;
+}
+
 @media (max-width:640px){
-  .container{padding:24px 16px 48px}
-  .card{padding:24px}
+  .container{padding:20px 16px 48px}
+  .card{padding:20px}
   .premium-buttons{
     flex-direction:column;
   }
   .premium-buttons a{
     width:100%;
+  }
+  textarea{
+    padding:16px 50px 16px 16px;
+    font-size:15px;
   }
 }
 </style>
@@ -468,21 +577,81 @@ button.btn-primary:disabled{
     <p class="hero-subtitle">NEXT BASE 瞬間翻訳兵器</p>
   </div>
 
-  <div class="lang-toggle">
-    <button id="lang-ja-en" class="active">日本語 → 英語</button>
-    <button id="lang-en-ja">英語 → 日本語</button>
+  <div class="lang-selector">
+    <select id="lang-from">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="ko">한국어</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+    </select>
+    <button class="swap-btn" id="swap-lang" title="言語を入れ替え">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+      </svg>
+    </button>
+    <select id="lang-to">
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+      <option value="zh">中文</option>
+      <option value="ko">한국어</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+    </select>
   </div>
 
   <div class="card">
     <div class="label">INPUT</div>
-    <textarea id="user-input" placeholder="翻訳したい文章を入力してください..."></textarea>
+    <div class="input-wrapper">
+      <textarea id="user-input" placeholder="翻訳したい文章を入力してください..."></textarea>
+      <div class="input-actions">
+        <button class="icon-btn" id="voice-input" title="音声入力">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="clear-input" title="クリア">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
     <button id="send-btn" class="btn-primary">翻訳実行</button>
     <div id="status" class="status"></div>
   </div>
 
   <div class="card">
     <div class="label">REPLY</div>
-    <div id="answer" class="answer empty">翻訳結果がここに表示されます...</div>
+    <div class="answer-wrapper">
+      <div id="answer" class="answer empty">翻訳結果がここに表示されます...</div>
+      <div class="answer-actions" style="display:none;" id="answer-actions">
+        <button class="icon-btn" id="copy-answer" title="コピー">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="voice-output" title="音声出力">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="favorite" title="お気に入りに保存">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
     
     <div class="premium-gate">
       <div class="label">PREMIUM PASS</div>
@@ -494,13 +663,26 @@ button.btn-primary:disabled{
       </div>
     </div>
   </div>
+
+  <div class="card" id="history-card" style="display:none;">
+    <div class="label">履歴</div>
+    <div class="history-panel" id="history-panel"></div>
+  </div>
 </div>
 
 <script>
 // 言語設定
-let currentLang = "ja-en";
+let currentFromLang = "ja";
+let currentToLang = "en";
 
-// 内蔵簡易翻訳テーブル（フォールバック用）
+// 音声認識・合成
+let recognition = null;
+let synth = window.speechSynthesis;
+
+// 履歴管理
+let history = [];
+
+// 内蔵簡易翻訳テーブル
 const fallbackDict = new Map([
   ["おはよう", "Good morning"],
   ["こんにちは", "Hello"],
@@ -514,10 +696,10 @@ const fallbackDict = new Map([
   ["good evening", "こんばんは"]
 ]);
 
-// 150k辞書（検索インデックスとして常駐）
+// 150k辞書
 let dict150k = null;
 let dictLoaded = false;
-let dictIndex = new Map(); // 高速検索用インデックス
+let dictIndex = new Map();
 
 // ユーザー辞書（オンデバイス）
 let userDict = new Map();
@@ -536,7 +718,56 @@ function loadUserDict() {
   }
 }
 
-// 150k辞書のロード（検索インデックスとして最適化）
+// 履歴のロード
+function loadHistory() {
+  try {
+    const stored = localStorage.getItem("glb_history");
+    if (stored) {
+      history = JSON.parse(stored);
+      if (history.length > 0) {
+        document.getElementById("history-card").style.display = "block";
+        renderHistory();
+      }
+    }
+  } catch (e) {
+    console.warn("履歴読み込み失敗:", e);
+  }
+}
+
+// 履歴の保存
+function saveHistory(source, target, fromLang, toLang) {
+  history.unshift({
+    source,
+    target,
+    fromLang,
+    toLang,
+    timestamp: Date.now()
+  });
+  if (history.length > 50) history = history.slice(0, 50);
+  localStorage.setItem("glb_history", JSON.stringify(history));
+  document.getElementById("history-card").style.display = "block";
+  renderHistory();
+}
+
+// 履歴の表示
+function renderHistory() {
+  const panel = document.getElementById("history-panel");
+  panel.innerHTML = history.slice(0, 10).map(item => `
+    <div class="history-item" data-source="${item.source}" data-target="${item.target}">
+      <div class="source">${item.source}</div>
+      <div class="target">${item.target}</div>
+    </div>
+  `).join("");
+  
+  panel.querySelectorAll(".history-item").forEach(item => {
+    item.addEventListener("click", () => {
+      document.getElementById("user-input").value = item.dataset.source;
+      handleSend();
+    });
+  });
+}
+
+// 150k辞書のロード
 async function load150kDict() {
   if (dictLoaded) return dict150k;
   
@@ -550,7 +781,6 @@ async function load150kDict() {
     const text = await res.text();
     const lines = text.split("\n");
     
-    // 検索インデックスを構築
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
@@ -571,22 +801,19 @@ async function load150kDict() {
   }
 }
 
-// 辞書検索（最適化済み）
+// 辞書検索
 function searchDict(query, fromLang, toLang) {
   const normalized = query.trim().toLowerCase();
   const key = `${fromLang}-${toLang}:${normalized}`;
   
-  // 1. ユーザー辞書（最優先）
   if (userDict.has(key)) {
     return { result: userDict.get(key), source: "user_dict" };
   }
   
-  // 2. 150k辞書インデックス
   if (dictIndex.has(key)) {
     return { result: dictIndex.get(key), source: "150k_dict" };
   }
   
-  // 3. フォールバック
   const fallbackKey = fromLang === "ja" ? normalized : normalized;
   if (fallbackDict.has(fallbackKey)) {
     return { result: fallbackDict.get(fallbackKey), source: "fallback" };
@@ -595,7 +822,7 @@ function searchDict(query, fromLang, toLang) {
   return null;
 }
 
-// ユーザー辞書に保存（オンデバイス）
+// ユーザー辞書に保存
 function saveToUserDict(source, target, fromLang, toLang) {
   try {
     const key = `${fromLang}-${toLang}:${source.trim().toLowerCase()}`;
@@ -604,7 +831,6 @@ function saveToUserDict(source, target, fromLang, toLang) {
     const data = Array.from(userDict.entries());
     localStorage.setItem("glb_user_dict", JSON.stringify(data));
     
-    console.log(`[オンデバイス保存] "${source}" → "${target}"`);
     return true;
   } catch (e) {
     console.error("オンデバイス保存失敗:", e);
@@ -612,36 +838,7 @@ function saveToUserDict(source, target, fromLang, toLang) {
   }
 }
 
-// API同期（非同期）
-async function syncUserDictToAPI(source, target, fromLang, toLang) {
-  const API_SYNC_URL = "https://YOUR_BACKEND_ENDPOINT/api/user-dict";
-  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
-  
-  if (API_SYNC_URL === "https://YOUR_BACKEND_ENDPOINT/api/user-dict") {
-    return;
-  }
-  
-  try {
-    await fetch(API_SYNC_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": API_KEY
-      },
-      body: JSON.stringify({
-        source: source.trim(),
-        target: target.trim(),
-        from: fromLang,
-        to: toLang,
-        timestamp: Date.now()
-      })
-    });
-  } catch (e) {
-    console.warn("API同期失敗:", e);
-  }
-}
-
-// Gemini翻訳（辞書データを組み込んだプロンプト）
+// Gemini翻訳
 async function translateWithGemini(text, fromLang, toLang) {
   const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
@@ -651,13 +848,12 @@ async function translateWithGemini(text, fromLang, toLang) {
   }
   
   try {
-    // 150k辞書の関連エントリを取得（プロンプトに組み込む）
     const dictContext = [];
     const queryWords = text.toLowerCase().split(/\s+/);
     let contextCount = 0;
     
     for (const [key, value] of dictIndex.entries()) {
-      if (contextCount >= 10) break; // 最大10エントリ
+      if (contextCount >= 10) break;
       if (key.includes(`${fromLang}-${toLang}:`)) {
         const dictWord = key.split(":")[1];
         if (queryWords.some(w => dictWord.includes(w) || w.includes(dictWord))) {
@@ -690,9 +886,7 @@ Translate the following text from ${fromLang} to ${toLang} with natural, context
     if (response.ok) {
       const data = await response.json();
       if (data && data.reply) {
-        // オンデバイスに保存
         saveToUserDict(text, data.reply, fromLang, toLang);
-        syncUserDictToAPI(text, data.reply, fromLang, toLang);
         return { reply: data.reply, source: "gemini" };
       }
     }
@@ -705,23 +899,20 @@ Translate the following text from ${fromLang} to ${toLang} with natural, context
 
 // 翻訳実行
 async function translate(text, fromLang, toLang) {
-  // 1. 辞書検索（最優先）
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
     return { reply: dictResult.result, source: dictResult.source };
   }
   
-  // 2. Gemini API（辞書データ組み込み）
   const geminiResult = await translateWithGemini(text, fromLang, toLang);
   if (geminiResult) {
     return geminiResult;
   }
   
-  // 3. フォールバック
   if (fromLang === "ja") {
-    return { reply: `[System Reconnecting...] "${text}" の英語翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
+    return { reply: `[System Reconnecting...] "${text}" の翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
   } else {
-    return { reply: `[System Reconnecting...] "${text}" の日本語翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
+    return { reply: `[System Reconnecting...] "${text}" の翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
   }
 }
 
@@ -730,23 +921,105 @@ const inputEl = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
 const statusEl = document.getElementById("status");
 const answerEl = document.getElementById("answer");
-const langJaEn = document.getElementById("lang-ja-en");
-const langEnJa = document.getElementById("lang-en-ja");
+const answerActions = document.getElementById("answer-actions");
+const langFrom = document.getElementById("lang-from");
+const langTo = document.getElementById("lang-to");
+const swapBtn = document.getElementById("swap-lang");
+const voiceInputBtn = document.getElementById("voice-input");
+const clearInputBtn = document.getElementById("clear-input");
+const copyAnswerBtn = document.getElementById("copy-answer");
+const voiceOutputBtn = document.getElementById("voice-output");
+const favoriteBtn = document.getElementById("favorite");
 
 // 言語切り替え
-langJaEn.addEventListener("click", () => {
-  currentLang = "ja-en";
-  langJaEn.classList.add("active");
-  langEnJa.classList.remove("active");
-  inputEl.placeholder = "翻訳したい日本語を入力してください...";
+langFrom.addEventListener("change", () => {
+  currentFromLang = langFrom.value;
 });
 
-langEnJa.addEventListener("click", () => {
-  currentLang = "en-ja";
-  langJaEn.classList.remove("active");
-  langEnJa.classList.add("active");
-  inputEl.placeholder = "Enter text to translate...";
+langTo.addEventListener("change", () => {
+  currentToLang = langTo.value;
 });
+
+// スワップ
+swapBtn.addEventListener("click", () => {
+  [currentFromLang, currentToLang] = [currentToLang, currentFromLang];
+  langFrom.value = currentFromLang;
+  langTo.value = currentToLang;
+});
+
+// クリア
+clearInputBtn.addEventListener("click", () => {
+  inputEl.value = "";
+  inputEl.focus();
+});
+
+// コピー
+copyAnswerBtn.addEventListener("click", async () => {
+  const text = answerEl.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    copyAnswerBtn.style.background = "var(--success)";
+    setTimeout(() => {
+      copyAnswerBtn.style.background = "";
+    }, 1000);
+  } catch (e) {
+    console.error("コピー失敗:", e);
+  }
+});
+
+// 音声出力
+voiceOutputBtn.addEventListener("click", () => {
+  const text = answerEl.textContent;
+  if (!text || answerEl.classList.contains("empty")) return;
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = langTo.value === "ja" ? "ja-JP" : langTo.value + "-" + langTo.value.toUpperCase();
+  synth.speak(utterance);
+});
+
+// お気に入り
+favoriteBtn.addEventListener("click", () => {
+  const source = inputEl.value;
+  const target = answerEl.textContent;
+  if (!source || !target || answerEl.classList.contains("empty")) return;
+  
+  saveHistory(source, target, currentFromLang, currentToLang);
+  favoriteBtn.style.background = "var(--gold)";
+  setTimeout(() => {
+    favoriteBtn.style.background = "";
+  }, 1000);
+});
+
+// 音声入力
+if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  
+  recognition.onstart = () => {
+    voiceInputBtn.classList.add("active");
+  };
+  
+  recognition.onend = () => {
+    voiceInputBtn.classList.remove("active");
+  };
+  
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    inputEl.value = transcript;
+    handleSend();
+  };
+  
+  voiceInputBtn.addEventListener("click", () => {
+    if (recognition) {
+      recognition.lang = langFrom.value === "ja" ? "ja-JP" : langFrom.value + "-" + langFrom.value.toUpperCase();
+      recognition.start();
+    }
+  });
+} else {
+  voiceInputBtn.style.display = "none";
+}
 
 // 送信処理
 async function handleSend() {
@@ -758,13 +1031,14 @@ async function handleSend() {
   statusEl.className = "status";
   answerEl.classList.add("empty");
   answerEl.textContent = "";
+  answerActions.style.display = "none";
 
   try {
-    const [fromLang, toLang] = currentLang === "ja-en" ? ["ja", "en"] : ["en", "ja"];
-    const result = await translate(text, fromLang, toLang);
+    const result = await translate(text, currentFromLang, currentToLang);
     
     answerEl.textContent = result.reply;
     answerEl.classList.remove("empty");
+    answerActions.style.display = "flex";
     
     const sourceNames = {
       "user_dict": "あなたの辞書（オンデバイス）",
@@ -776,9 +1050,10 @@ async function handleSend() {
     statusEl.textContent = `✓ ${sourceNames[result.source] || "翻訳完了"}`;
     statusEl.className = result.source === "fallback" ? "status error" : "status success";
     
-    // 辞書から取得した場合も保存（次回最優先）
+    saveHistory(text, result.reply, currentFromLang, currentToLang);
+    
     if (result.source === "150k_dict" || result.source === "fallback") {
-      saveToUserDict(text, result.reply, fromLang, toLang);
+      saveToUserDict(text, result.reply, currentFromLang, currentToLang);
     }
   } catch (err) {
     console.error(err);
@@ -801,6 +1076,7 @@ inputEl.addEventListener("keydown", (e) => {
 
 // 初期化
 loadUserDict();
+loadHistory();
 load150kDict().then(() => {
   const userCount = userDict.size;
   if (dictIndex.size > 0) {
