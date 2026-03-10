@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>GLB v1.0 - NEXT BASE | 瞬間翻訳兵器</title>
+<title>GLB v1.0 - NEXT BASE | 瞬間GLB兵器</title>
 
 <style>
 :root{
@@ -574,7 +574,7 @@ button.btn-primary:disabled{
 <div class="container">
   <div class="hero-section">
     <h1 class="hero-title">GLB v1.0</h1>
-    <p class="hero-subtitle">NEXT BASE 瞬間翻訳兵器</p>
+    <p class="hero-subtitle">NEXT BASE 瞬間GLB兵器</p>
   </div>
 
   <div class="lang-selector">
@@ -606,7 +606,7 @@ button.btn-primary:disabled{
   <div class="card">
     <div class="label">INPUT</div>
     <div class="input-wrapper">
-      <textarea id="user-input" placeholder="翻訳したい文章を入力してください..."></textarea>
+      <textarea id="user-input" placeholder="GLBしたい文章を入力してください..."></textarea>
       <div class="input-actions">
         <button class="icon-btn" id="voice-input" title="音声入力">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -624,14 +624,14 @@ button.btn-primary:disabled{
         </button>
       </div>
     </div>
-    <button id="send-btn" class="btn-primary">翻訳実行</button>
+    <button id="send-btn" class="btn-primary glb-button">GLB実行</button>
     <div id="status" class="status"></div>
   </div>
 
   <div class="card">
     <div class="label">REPLY</div>
     <div class="answer-wrapper">
-      <div id="answer" class="answer empty">翻訳結果がここに表示されます...</div>
+      <div id="answer" class="answer empty">GLB結果がここに表示されます...</div>
       <div class="answer-actions" style="display:none;" id="answer-actions">
         <button class="icon-btn" id="copy-answer" title="コピー">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -656,7 +656,7 @@ button.btn-primary:disabled{
     <div class="premium-gate">
       <div class="label">PREMIUM PASS</div>
       <h3>世界の扉を開く</h3>
-      <p>Gemini Pro の高精度翻訳と無制限アクセスを解放</p>
+      <p>Gemini Pro の高精度GLBと無制限アクセスを解放</p>
       <div class="premium-buttons">
         <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium">BASIC $1.99</a>
         <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro">TRAVELER $7.99</a>
@@ -682,7 +682,7 @@ let synth = window.speechSynthesis;
 // 履歴管理
 let history = [];
 
-// 内蔵簡易翻訳テーブル
+// 内蔵簡易GLBテーブル
 const fallbackDict = new Map([
   ["おはよう", "Good morning"],
   ["こんにちは", "Hello"],
@@ -838,7 +838,7 @@ function saveToUserDict(source, target, fromLang, toLang) {
   }
 }
 
-// Gemini翻訳
+// Gemini GLB
 async function translateWithGemini(text, fromLang, toLang) {
   const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
@@ -863,11 +863,11 @@ async function translateWithGemini(text, fromLang, toLang) {
       }
     }
     
-    const systemPrompt = `You are a professional translator with access to a 150,000-word dictionary. 
-Use the following dictionary entries as context for the best translation:
+    const systemPrompt = `You are GLB (Global Language Breaker), a professional translator with access to a 150,000-word dictionary. 
+Use the following dictionary entries as context for the best GLB:
 ${dictContext.length > 0 ? dictContext.join("\n") : "No direct matches, use your knowledge."}
 
-Translate the following text from ${fromLang} to ${toLang} with natural, context-aware translation:`;
+GLB the following text from ${fromLang} to ${toLang} with natural, context-aware GLB:`;
     
     const response = await fetch(NE_GATEWAY_URL, {
       method: "POST",
@@ -897,7 +897,7 @@ Translate the following text from ${fromLang} to ${toLang} with natural, context
   return null;
 }
 
-// 翻訳実行
+// GLB実行
 async function translate(text, fromLang, toLang) {
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
@@ -910,9 +910,9 @@ async function translate(text, fromLang, toLang) {
   }
   
   if (fromLang === "ja") {
-    return { reply: `[System Reconnecting...] "${text}" の翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
+    return { reply: `[System Reconnecting...] "${text}" のGLBを準備中です。PREMIUM PASSで高精度GLBを解放できます。`, source: "fallback" };
   } else {
-    return { reply: `[System Reconnecting...] "${text}" の翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
+    return { reply: `[System Reconnecting...] "${text}" のGLBを準備中です。PREMIUM PASSで高精度GLBを解放できます。`, source: "fallback" };
   }
 }
 
@@ -1027,7 +1027,7 @@ async function handleSend() {
   if (!text) return;
 
   sendBtn.disabled = true;
-  statusEl.innerHTML = '<span class="loading"></span>翻訳中...';
+  statusEl.innerHTML = '<span class="loading"></span>GLB中...';
   statusEl.className = "status";
   answerEl.classList.add("empty");
   answerEl.textContent = "";
@@ -1047,7 +1047,7 @@ async function handleSend() {
       "fallback": "System Reconnecting..."
     };
     
-    statusEl.textContent = `✓ ${sourceNames[result.source] || "翻訳完了"}`;
+    statusEl.textContent = `✓ ${sourceNames[result.source] || "GLB完了"}`;
     statusEl.className = result.source === "fallback" ? "status error" : "status success";
     
     saveHistory(text, result.reply, currentFromLang, currentToLang);
