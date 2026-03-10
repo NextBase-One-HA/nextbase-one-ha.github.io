@@ -196,9 +196,48 @@ body{
   margin:0 10px;
 }
 
+/* 言語選択UI */
+.lang-selector-top{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:1000;
+}
+
+.lang-selector-top select{
+  padding:10px 16px;
+  background:rgba(0,0,0,.6);
+  border:1px solid rgba(214,178,94,.4);
+  border-radius:8px;
+  color:var(--gold);
+  font-size:13px;
+  cursor:pointer;
+  backdrop-filter:blur(10px);
+  transition:all .3s;
+}
+
+.lang-selector-top select:hover{
+  background:rgba(0,0,0,.8);
+  border-color:var(--gold);
+}
+
+.lang-selector-top select:focus{
+  outline:none;
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px rgba(214,178,94,.2);
+}
+
 @media (max-width:640px){
   .container{padding:22px 16px 44px}
   .product{padding:22px}
+  .lang-selector-top{
+    top:12px;
+    right:12px;
+  }
+  .lang-selector-top select{
+    padding:8px 12px;
+    font-size:12px;
+  }
 }
 </style>
 </head>
@@ -212,15 +251,47 @@ body{
 </div>
 
 <div id="main">
+  <!-- 言語選択（右上固定） -->
+  <div class="lang-selector-top">
+    <select id="top-lang-select">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="ko">한국어</option>
+      <option value="es">Español</option>
+      <option value="fr">Français</option>
+      <option value="de">Deutsch</option>
+      <option value="it">Italiano</option>
+      <option value="pt">Português</option>
+      <option value="ru">Русский</option>
+      <option value="ar">العربية</option>
+      <option value="hi">हिन्दी</option>
+      <option value="th">ไทย</option>
+      <option value="vi">Tiếng Việt</option>
+      <option value="id">Bahasa Indonesia</option>
+      <option value="tr">Türkçe</option>
+      <option value="pl">Polski</option>
+      <option value="nl">Nederlands</option>
+      <option value="sv">Svenska</option>
+      <option value="no">Norsk</option>
+      <option value="da">Dansk</option>
+      <option value="fi">Suomi</option>
+      <option value="el">Ελληνικά</option>
+      <option value="cs">Čeština</option>
+      <option value="hu">Magyar</option>
+      <option value="ro">Română</option>
+    </select>
+  </div>
+
   <div class="container">
-    <div class="topbar">NEXT BASE</div>
+    <div class="topbar" data-i18n="topbar">NEXT BASE</div>
 
     <section class="hero">
       <!-- ここは後でGLB画像に差し替え可 -->
       <img class="hero-logo" src="glb-hero.jpg" alt="">
 
-      <h1>NEXT BASE Apps</h1>
-      <p>
+      <h1 data-i18n="title">NEXT BASE Apps</h1>
+      <p data-i18n="subtitle">
         Break the language barrier.<br>
         Fast, simple, and built for real situations.
       </p>
@@ -230,9 +301,9 @@ body{
         
         <!-- GLBトラベル -->
         <div class="product" style="margin-bottom:32px;">
-          <div class="eyebrow">GLBトラベル / GLOBAL LANGUAGE BREAKER TRAVEL</div>
+          <div class="eyebrow" data-i18n="glbTravelEyebrow">GLBトラベル / GLOBAL LANGUAGE BREAKER TRAVEL</div>
           <div class="price">$1.99 / $7.99</div>
-          <div class="desc">
+          <div class="desc" data-i18n="glbTravelDesc">
             旅行特化の翻訳アプリ<br>
             Offline dictionary + AI fallback.<br>
             Built for travelers who need answers now.
@@ -262,29 +333,29 @@ body{
             </div>
           </div>
           
-          <div style="text-align:center; padding:12px; background:rgba(214,178,94,.05); border-radius:8px; margin-bottom:16px; font-size:12px; color:var(--muted);">
+          <div style="text-align:center; padding:12px; background:rgba(214,178,94,.05); border-radius:8px; margin-bottom:16px; font-size:12px; color:var(--muted);" data-i18n="basicPlanBonus">
             🌟 BASICプラン特典: 登録から1ヶ月間の好きな2日間が全開放
           </div>
 
-          <a class="btn btn-basic" href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01">GET BASIC</a>
-          <a class="btn btn-pro" href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02">GET TRAVELER</a>
-          <a class="btn btn-launch" href="apps/glb/index.html">LAUNCH APP</a>
+          <a class="btn btn-basic" href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" data-i18n="getBasic">GET BASIC</a>
+          <a class="btn btn-pro" href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" data-i18n="getTraveler">GET TRAVELER</a>
+          <a class="btn btn-launch" href="apps/glb/index.html" data-i18n="launchApp">LAUNCH APP</a>
         </div>
 
         <!-- 今後追加予定のアプリ（プレースホルダー） -->
         <div style="text-align:center; padding:40px 20px; color:var(--muted); border-top:1px solid var(--line); margin-top:40px;">
-          <div style="font-size:14px; margin-bottom:8px;">More apps coming soon...</div>
-          <div style="font-size:12px;">GLBビジネス、GLB学習、GLB日常など</div>
+          <div style="font-size:14px; margin-bottom:8px;" data-i18n="comingSoon">More apps coming soon...</div>
+          <div style="font-size:12px;" data-i18n="comingSoonDesc">GLBビジネス、GLB学習、GLB日常など</div>
         </div>
         
       </div>
     </section>
 
     <div class="legal">
-      <a href="legal.html">Legal</a>
-      <a href="terms.html">Terms</a>
-      <a href="privacy.html">Privacy</a>
-      <a href="support.html">Support</a>
+      <a href="legal.html" data-i18n="legal">Legal</a>
+      <a href="terms.html" data-i18n="terms">Terms</a>
+      <a href="privacy.html" data-i18n="privacy">Privacy</a>
+      <a href="support.html" data-i18n="support">Support</a>
       <div style="margin-top:14px;">© 2026 NEXT BASE</div>
     </div>
   </div>
@@ -314,6 +385,113 @@ setTimeout(enterSite, 10900);
 introVideo.play().catch(() => {
   setTimeout(enterSite, 1200);
 });
+
+// 多言語対応
+const topLangTexts = {
+  ja: {
+    topbar: "NEXT BASE",
+    title: "NEXT BASE Apps",
+    subtitle: "言葉の壁を突破する。<br>速く、シンプルに、実用的に。",
+    glbTravelEyebrow: "GLBトラベル / GLOBAL LANGUAGE BREAKER TRAVEL",
+    glbTravelDesc: "旅行特化の翻訳アプリ<br>オフライン辞書 + AIフォールバック<br>今すぐ答えが必要な旅行者のために作られました。",
+    basicPlanBonus: "🌟 BASICプラン特典: 登録から1ヶ月間の好きな2日間が全開放",
+    getBasic: "GET BASIC",
+    getTraveler: "GET TRAVELER",
+    launchApp: "アプリを起動",
+    comingSoon: "さらに多くのアプリが近日公開...",
+    comingSoonDesc: "GLBビジネス、GLB学習、GLB日常など",
+    legal: "法的表示",
+    terms: "利用規約",
+    privacy: "プライバシー",
+    support: "サポート"
+  },
+  en: {
+    topbar: "NEXT BASE",
+    title: "NEXT BASE Apps",
+    subtitle: "Break the language barrier.<br>Fast, simple, and built for real situations.",
+    glbTravelEyebrow: "GLB Travel / GLOBAL LANGUAGE BREAKER TRAVEL",
+    glbTravelDesc: "Travel-focused translation app<br>Offline dictionary + AI fallback.<br>Built for travelers who need answers now.",
+    basicPlanBonus: "🌟 BASIC Plan Bonus: 2 full-access days within 1 month of registration",
+    getBasic: "GET BASIC",
+    getTraveler: "GET TRAVELER",
+    launchApp: "LAUNCH APP",
+    comingSoon: "More apps coming soon...",
+    comingSoonDesc: "GLB Business, GLB Learning, GLB Daily, and more",
+    legal: "Legal",
+    terms: "Terms",
+    privacy: "Privacy",
+    support: "Support"
+  },
+  zh: {
+    topbar: "NEXT BASE",
+    title: "NEXT BASE 应用",
+    subtitle: "打破语言障碍。<br>快速、简单，专为实际场景打造。",
+    glbTravelEyebrow: "GLB旅行 / 全球语言突破者旅行版",
+    glbTravelDesc: "专为旅行设计的翻译应用<br>离线词典 + AI备用方案<br>为需要即时答案的旅行者打造。",
+    basicPlanBonus: "🌟 BASIC套餐福利：注册后1个月内任选2天全开放",
+    getBasic: "获取BASIC",
+    getTraveler: "获取TRAVELER",
+    launchApp: "启动应用",
+    comingSoon: "更多应用即将推出...",
+    comingSoonDesc: "GLB商务、GLB学习、GLB日常等",
+    legal: "法律声明",
+    terms: "服务条款",
+    privacy: "隐私",
+    support: "支持"
+  },
+  ko: {
+    topbar: "NEXT BASE",
+    title: "NEXT BASE 앱",
+    subtitle: "언어의 장벽을 깨다.<br>빠르고, 간단하며, 실제 상황을 위해 만들어졌습니다.",
+    glbTravelEyebrow: "GLB 트래블 / 글로벌 언어 브레이커 트래블",
+    glbTravelDesc: "여행 특화 번역 앱<br>오프라인 사전 + AI 폴백<br>지금 답이 필요한 여행자를 위해 만들어졌습니다.",
+    basicPlanBonus: "🌟 BASIC 플랜 특전: 등록 후 1개월 내 원하는 2일간 전체 오픈",
+    getBasic: "BASIC 받기",
+    getTraveler: "TRAVELER 받기",
+    launchApp: "앱 실행",
+    comingSoon: "더 많은 앱이 곧 출시됩니다...",
+    comingSoonDesc: "GLB 비즈니스, GLB 학습, GLB 일상 등",
+    legal: "법적 고지",
+    terms: "이용약관",
+    privacy: "개인정보",
+    support: "지원"
+  }
+};
+
+// その他の言語は英語をフォールバック
+const topLangSelect = document.getElementById('top-lang-select');
+
+function updateTopPageLanguage(lang) {
+  const texts = topLangTexts[lang] || topLangTexts.en;
+  const elements = document.querySelectorAll('[data-i18n]');
+  
+  elements.forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (texts[key]) {
+      if (el.tagName === 'A' || el.tagName === 'BUTTON') {
+        el.textContent = texts[key];
+      } else {
+        el.innerHTML = texts[key];
+      }
+    }
+  });
+  
+  localStorage.setItem('nextbase_top_lang', lang);
+}
+
+// 初期言語設定
+const savedTopLang = localStorage.getItem('nextbase_top_lang');
+const browserLang = (navigator.language || navigator.userLanguage).split('-')[0];
+const initialLang = savedTopLang || (topLangTexts[browserLang] ? browserLang : 'en');
+
+if (topLangSelect) {
+  topLangSelect.value = initialLang;
+  updateTopPageLanguage(initialLang);
+  
+  topLangSelect.addEventListener('change', (e) => {
+    updateTopPageLanguage(e.target.value);
+  });
+}
 </script>
 
 </body>
