@@ -102,6 +102,11 @@ button:disabled{
   color:#000;
 }
 
+a.btn-primary{
+  display:inline-block;
+  text-decoration:none;
+}
+
 .status{
   margin-top:12px;
   font-size:12px;
@@ -149,6 +154,12 @@ button:disabled{
     <div class="label">REPLY</div>
     <div id="answer" class="answer empty">回答がここに表示されます...</div>
   </div>
+
+  <div class="card" style="text-align:center; padding:24px;">
+    <div class="label" style="margin-bottom:16px;">UPGRADE</div>
+    <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-primary" style="display:inline-block; width:auto; padding:14px 32px; margin:8px; text-decoration:none;">GET BASIC ($1.99)</a>
+    <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-primary" style="display:inline-block; width:auto; padding:14px 32px; margin:8px; text-decoration:none; background:var(--gold); color:#000;">GET TRAVELER ($7.99)</a>
+  </div>
 </div>
 
 <script>
@@ -162,7 +173,7 @@ let dict150k = null;
 
 async function load150kDict() {
   try {
-    const res = await fetch("../dictionary/150k.csv");
+    const res = await fetch("../../dictionary/150k.csv");
     if (!res.ok) {
       console.warn("150k.csv not found, using backend dictionary only");
       return null;
