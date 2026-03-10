@@ -702,6 +702,22 @@ button.btn-primary:disabled{
       辞書データをJSONファイルとして保存・読み込みできます（GLBシリーズ互換）
     </p>
   </div>
+
+  <div class="card">
+    <div class="label">NEゲートウェイ設定</div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+      Windows側の安定版NEゲートウェイURLとAPIキーを設定してください
+    </p>
+    <button class="icon-btn" id="test-gateway" title="接続テスト" style="width:100%; padding:12px; justify-content:center;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      Windows側NEゲートウェイ接続テスト
+    </button>
+    <p style="margin-top:12px; font-size:11px; color:var(--muted); text-align:center;">
+      ※コード内の NE_GATEWAY_URL と API_KEY をWindows側の値に設定してください
+    </p>
+  </div>
 </div>
 
 <script>
@@ -1032,15 +1048,21 @@ function importDictionary(file) {
   }
 }
 
-// Gemini GLB（NEゲートウェイ接続）
+// Gemini GLB（NEゲートウェイ接続 - Windows側ゲートウェイ）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
+  // ★Windows側の安定版NEゲートウェイURLを設定してください
+  // 例: "https://your-windows-gateway.example.com/api/translate"
   const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
+  
+  // ★Windows側のAPIキーを設定してください
+  // 例: "your-windows-api-key-here"
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
   if (NE_GATEWAY_URL === "https://YOUR_BACKEND_ENDPOINT" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     if (updateStatus) {
-      updateStatus("API未設定 - オンデバイス辞書のみ使用中");
+      updateStatus("API未設定 - Windows側ゲートウェイURLを設定してください");
     }
+    console.warn("[NEゲートウェイ] Windows側のURLとAPIキーを設定してください");
     return null;
   }
   
@@ -1094,18 +1116,64 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
         return { reply: data.reply, source: "gemini" };
       }
     } else {
+      const errorText = await response.text().catch(() => "");
+      console.error(`[NEゲートウェイ] 接続エラー ${response.status}:`, errorText);
       if (updateStatus) {
-        updateStatus("NEゲートウェイ接続エラー");
+        updateStatus(`NEゲートウェイ接続エラー (${response.status})`);
       }
     }
   } catch (e) {
-    console.warn("Gemini API error:", e);
+    console.error("[NEゲートウェイ] 接続エラー:", e);
     if (updateStatus) {
-      updateStatus("接続エラー - もう一度お試しください");
+      updateStatus("接続エラー - Windows側ゲートウェイを確認してください");
     }
   }
   
   return null;
+}
+
+// NEゲートウェイ接続テスト（Windows側）
+async function testGatewayConnection() {
+  const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
+  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  
+  if (NE_GATEWAY_URL === "https://YOUR_BACKEND_ENDPOINT" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+    alert("Windows側のNEゲートウェイURLとAPIキーを設定してください");
+    return false;
+  }
+  
+  try {
+    console.log("[接続テスト] Windows側NEゲートウェイに接続中...");
+    const response = await fetch(NE_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": API_KEY
+      },
+      body: JSON.stringify({
+        prompt: "test",
+        mode: "low_cost_0.08",
+        from: "ja",
+        to: "en"
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log("[接続テスト] 成功:", data);
+      alert("Windows側NEゲートウェイへの接続に成功しました！");
+      return true;
+    } else {
+      const errorText = await response.text().catch(() => "");
+      console.error("[接続テスト] 失敗:", response.status, errorText);
+      alert(`接続テスト失敗 (${response.status}): ${errorText.substring(0, 100)}`);
+      return false;
+    }
+  } catch (e) {
+    console.error("[接続テスト] エラー:", e);
+    alert(`接続テストエラー: ${e.message}`);
+    return false;
+  }
 }
 
 // GLB実行（15万語アセット → オンデバイス辞書 → NEゲートウェイ接続）
@@ -1161,6 +1229,7 @@ const voiceOutputBtn = document.getElementById("voice-output");
 const favoriteBtn = document.getElementById("favorite");
 const exportDictBtn = document.getElementById("export-dict");
 const importDictInput = document.getElementById("import-dict-input");
+const testGatewayBtn = document.getElementById("test-gateway");
 
 // 言語切り替え
 langFrom.addEventListener("change", () => {
@@ -1320,6 +1389,20 @@ importDictInput.addEventListener("change", (e) => {
     importDictionary(e.target.files[0]);
     e.target.value = ""; // リセット
   }
+});
+
+// NEゲートウェイ接続テスト
+testGatewayBtn.addEventListener("click", async () => {
+  testGatewayBtn.disabled = true;
+  testGatewayBtn.textContent = "テスト中...";
+  const result = await testGatewayConnection();
+  testGatewayBtn.disabled = false;
+  testGatewayBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+    Windows側NEゲートウェイ接続テスト
+  `;
 });
 
 // 初期化
