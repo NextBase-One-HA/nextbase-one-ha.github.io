@@ -3311,6 +3311,125 @@ medicalInfoBtn.addEventListener("click", () => {
   alert(content);
 });
 
+// 時差計算表示
+const timezoneBtn = document.getElementById("timezone-btn");
+if (timezoneBtn) {
+  timezoneBtn.addEventListener("click", () => {
+    const countryCode = prompt("国コードを入力してください（例: US, UK, JP, TH）:");
+    if (!countryCode) return;
+    
+    const info = getTimezoneInfo(countryCode.toUpperCase());
+    if (!info) {
+      alert("該当する国が見つかりませんでした。");
+      return;
+    }
+    
+    const content = `
+🕐 時差情報: ${info.country}
+
+【タイムゾーン】
+${info.timezone}
+
+【現在時刻】
+日本時間: ${info.localTime}
+現地時間: ${info.targetTime}
+時差: ${info.diff}
+    `;
+    alert(content);
+  });
+}
+
+// チップ計算表示
+const tipCalculatorBtn = document.getElementById("tip-calculator-btn");
+if (tipCalculatorBtn) {
+  tipCalculatorBtn.addEventListener("click", () => {
+    const amount = parseFloat(prompt("金額を入力してください:"));
+    if (isNaN(amount) || amount <= 0) {
+      alert("有効な金額を入力してください。");
+      return;
+    }
+    
+    const countryCode = prompt("国コードを入力してください（例: US, JP, TH）:").toUpperCase();
+    const serviceType = prompt("サービス種別を選択（restaurant/hotel/taxi）:", "restaurant");
+    
+    const result = calculateTip(amount, countryCode, serviceType);
+    
+    const content = `
+💰 チップ計算結果
+
+【金額】
+元の金額: ${result.amount.toFixed(2)}
+チップ: ${result.tip.toFixed(2)} (${result.rate})
+合計: ${result.total.toFixed(2)}
+
+【注意】
+${result.note}
+    `;
+    alert(content);
+  });
+}
+
+// 電圧・プラグ情報表示
+const voltageInfoBtn = document.getElementById("voltage-info-btn");
+if (voltageInfoBtn) {
+  voltageInfoBtn.addEventListener("click", () => {
+    const countryCode = prompt("国コードを入力してください（例: US, UK, JP, TH）:").toUpperCase();
+    const info = voltageInfo[countryCode];
+    
+    if (!info) {
+      alert("該当する国が見つかりませんでした。");
+      return;
+    }
+    
+    const content = `
+⚡ 電圧・プラグ情報: ${countryCode}
+
+【電圧】
+${info.voltage}
+
+【プラグタイプ】
+${info.plug}
+
+【注意】
+${info.note}
+
+【変換器について】
+- 日本（100V）→ 海外（220V）: 変圧器必須
+- 海外（220V）→ 日本（100V）: 変圧器必須
+- プラグ形状が異なる場合は変換プラグが必要
+    `;
+    alert(content);
+  });
+}
+
+// 文化・マナー情報表示
+const culturalInfoBtn = document.getElementById("cultural-info-btn");
+if (culturalInfoBtn) {
+  culturalInfoBtn.addEventListener("click", () => {
+    const countryCode = prompt("国コードを入力してください（例: JP, US, TH, FR）:").toUpperCase();
+    const info = culturalInfo[countryCode];
+    
+    if (!info) {
+      alert("該当する国が見つかりませんでした。");
+      return;
+    }
+    
+    const content = `
+🌍 文化・マナー情報: ${countryCode}
+
+【マナー・習慣】
+${info.tips.map(tip => `✓ ${tip}`).join('\n')}
+
+【タブー・注意事項】
+${info.taboos.map(taboo => `⚠ ${taboo}`).join('\n')}
+
+【参考】
+現地の文化を尊重し、快適な旅行を楽しみましょう。
+    `;
+    alert(content);
+  });
+}
+
 // 全データエクスポート
 exportAllDataBtn.addEventListener("click", () => {
   exportTranslationData();
