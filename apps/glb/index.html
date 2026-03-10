@@ -561,6 +561,17 @@ button.btn-primary:disabled{
   font-size:13px;
 }
 
+/* パフォーマンス最適化：GPU加速 */
+.card, .icon-btn, button, textarea {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* レンダリング最適化 */
+.history-item, .answer {
+  contain: layout style paint;
+}
+
 @media (max-width:640px){
   .container{padding:20px 16px 48px}
   .card{padding:20px}
@@ -780,10 +791,15 @@ const fallbackDict = new Map([
   ["good evening", "こんばんは"]
 ]);
 
-// 150k辞書
+// 150k辞書（パフォーマンス最適化）
 let dict150k = null;
 let dictLoaded = false;
+let dictLoading = false;
 let dictIndex = new Map();
+let dictLoadProgress = 0;
+
+// 辞書読み込みの最適化（チャンク読み込み）
+const DICT_CHUNK_SIZE = 1000; // 一度に処理する行数
 
 // ユーザー辞書（オンデバイス）
 let userDict = new Map();
@@ -1013,55 +1029,113 @@ function saveHistory(source, target, fromLang, toLang) {
   renderHistory();
 }
 
-// 履歴の表示
+// 履歴の表示（パフォーマンス最適化：仮想スクロール対応）
 function renderHistory() {
   const panel = document.getElementById("history-panel");
-  panel.innerHTML = history.slice(0, 10).map(item => `
-    <div class="history-item" data-source="${item.source}" data-target="${item.target}">
+  const displayCount = Math.min(history.length, 10); // 最大10件のみ表示
+  
+  // DocumentFragmentを使用してDOM操作を最適化
+  const fragment = document.createDocumentFragment();
+  
+  for (let i = 0; i < displayCount; i++) {
+    const item = history[i];
+    const div = document.createElement("div");
+    div.className = "history-item";
+    div.dataset.source = item.source;
+    div.dataset.target = item.target;
+    div.innerHTML = `
       <div class="source">${item.source}</div>
       <div class="target">${item.target}</div>
-    </div>
-  `).join("");
-  
-  panel.querySelectorAll(".history-item").forEach(item => {
-    item.addEventListener("click", () => {
-      document.getElementById("user-input").value = item.dataset.source;
+    `;
+    div.addEventListener("click", () => {
+      document.getElementById("user-input").value = item.source;
       handleSend();
     });
-  });
+    fragment.appendChild(div);
+  }
+  
+  panel.innerHTML = "";
+  panel.appendChild(fragment);
 }
 
-// 150k辞書のロード
+// 150k辞書のロード（パフォーマンス最適化：チャンク読み込み）
 async function load150kDict() {
-  if (dictLoaded) return dict150k;
+  if (dictLoaded) return dictIndex;
+  if (dictLoading) {
+    // 既に読み込み中なら待機
+    while (dictLoading) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return dictIndex;
+  }
+  
+  dictLoading = true;
   
   try {
     const res = await fetch("../../dictionary/150k.csv");
     if (!res.ok) {
       console.warn("150k.csv not found");
       dictLoaded = true;
+      dictLoading = false;
       return null;
     }
-    const text = await res.text();
-    const lines = text.split("\n");
     
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const [source, target, from, to] = line.split(",");
-      if (!source || !target) continue;
+    // ストリーミング読み込み（メモリ効率化）
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let lineCount = 0;
+    let processedCount = 0;
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
       
-      const key = `${from}-${to}:${source.trim().toLowerCase()}`;
-      dictIndex.set(key, target.trim());
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // 最後の不完全な行を保持
+      
+      // チャンク処理（UIブロックを防ぐ）
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || line.startsWith("#")) continue;
+        
+        const [source, target, from, to] = line.split(",");
+        if (!source || !target) continue;
+        
+        const key = `${from}-${to}:${source.trim().toLowerCase()}`;
+        dictIndex.set(key, target.trim());
+        processedCount++;
+        
+        // 1000行ごとに処理を一時停止（UI応答性確保）
+        if (processedCount % DICT_CHUNK_SIZE === 0) {
+          await new Promise(resolve => setTimeout(resolve, 0));
+          dictLoadProgress = Math.floor((processedCount / 150000) * 100);
+        }
+      }
+      
+      lineCount += lines.length;
+    }
+    
+    // 残りのバッファを処理
+    if (buffer.trim()) {
+      const [source, target, from, to] = buffer.split(",");
+      if (source && target) {
+        const key = `${from}-${to}:${source.trim().toLowerCase()}`;
+        dictIndex.set(key, target.trim());
+      }
     }
     
     dictLoaded = true;
-    console.log("[150k辞書インデックス] 構築完了:", dictIndex.size, "語");
+    dictLoadProgress = 100;
+    console.log("[150k辞書インデックス] 構築完了:", dictIndex.size, "語（最適化済み）");
     return dictIndex;
   } catch (e) {
     console.warn("150k辞書読み込み失敗:", e);
     dictLoaded = true;
     return null;
+  } finally {
+    dictLoading = false;
   }
 }
 
@@ -1212,17 +1286,34 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
     if (updateStatus) {
       updateStatus("GLBしています...");
     }
+    // 辞書コンテキスト取得の最適化（全検索を避ける）
     const dictContext = [];
     const queryWords = text.toLowerCase().split(/\s+/);
     let contextCount = 0;
+    const maxContext = 5; // 最大5エントリに削減（パフォーマンス向上）
     
-    for (const [key, value] of dictIndex.entries()) {
-      if (contextCount >= 10) break;
-      if (key.includes(`${fromLang}-${toLang}:`)) {
-        const dictWord = key.split(":")[1];
-        if (queryWords.some(w => dictWord.includes(w) || w.includes(dictWord))) {
-          dictContext.push(`${dictWord} → ${value}`);
-          contextCount++;
+    // 直接マッチを優先検索（全走査を避ける）
+    for (const word of queryWords) {
+      if (contextCount >= maxContext) break;
+      const directKey = `${fromLang}-${toLang}:${word}`;
+      if (dictIndex.has(directKey)) {
+        dictContext.push(`${word} → ${dictIndex.get(directKey)}`);
+        contextCount++;
+      }
+    }
+    
+    // 部分マッチは必要最小限のみ
+    if (contextCount < maxContext) {
+      for (const [key, value] of dictIndex.entries()) {
+        if (contextCount >= maxContext) break;
+        if (key.includes(`${fromLang}-${toLang}:`)) {
+          const dictWord = key.split(":")[1];
+          if (queryWords.some(w => dictWord.includes(w) || w.includes(dictWord))) {
+            if (!dictContext.some(ctx => ctx.includes(dictWord))) {
+              dictContext.push(`${dictWord} → ${value}`);
+              contextCount++;
+            }
+          }
         }
       }
     }
@@ -1572,21 +1663,28 @@ testGatewayBtn.addEventListener("click", async () => {
   `;
 });
 
-// 初期化
+// 初期化（パフォーマンス最適化：非同期読み込み）
 initializeEmptyDict(); // 初回ダウンロード時に空の辞書を初期化
 loadUserPlanAndUsage(); // ユーザープランとAPI使用量をロード
 loadUserDict();
 loadHistory();
-load150kDict().then(() => {
-  const userCount = userDict.size;
-  if (dictIndex.size > 0) {
-    statusEl.textContent = `✓ 150k辞書インデックス + あなたの辞書(${userCount}語) 準備完了`;
-    statusEl.className = "status success";
-  } else {
-    statusEl.textContent = userCount > 0 ? `簡易辞書 + あなたの辞書(${userCount}語)` : "簡易辞書モード";
-  }
-  updateUsageDisplay(); // API使用量表示を更新
-});
+
+// 150k辞書はバックグラウンドで遅延読み込み（UI応答性確保）
+setTimeout(() => {
+  load150kDict().then(() => {
+    const userCount = userDict.size;
+    if (dictIndex.size > 0) {
+      statusEl.textContent = `✓ 150k辞書インデックス + あなたの辞書(${userCount}語) 準備完了`;
+      statusEl.className = "status success";
+    } else {
+      statusEl.textContent = userCount > 0 ? `簡易辞書 + あなたの辞書(${userCount}語)` : "簡易辞書モード";
+    }
+    updateUsageDisplay(); // API使用量表示を更新
+  });
+}, 500); // 500ms遅延でUI応答性を確保
+
+// 初期表示
+updateUsageDisplay();
 </script>
 
 </body>
