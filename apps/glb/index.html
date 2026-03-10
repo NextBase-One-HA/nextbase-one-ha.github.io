@@ -1993,6 +1993,25 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
     updateStatus(`使用量警告: ${quotaInfo.usagePercent.toFixed(1)}%使用中 (残り $${quotaInfo.remaining.toFixed(4)})`);
   }
   
+  // API削減ロジック: キャッシュチェック（軽量版）
+  const inputHash = btoa(`${text}_${fromLang}_${toLang}`).substring(0, 32);
+  const cached = getCachedResult(inputHash);
+  if (cached) {
+    console.log("[API削減] キャッシュヒット");
+    return cached;
+  }
+  
+  // API削減ロジック: 呼び出し許可チェック（軽量版）
+  const apiCheck = checkAPICallAllowed("prod_user_request");
+  if (!apiCheck.allowed) {
+    console.warn(`[API削減] ${apiCheck.reason}`);
+    if (updateStatus) {
+      updateStatus(apiCheck.reason);
+    }
+    // キャッシュがあれば使用、なければフォールバック
+    return null;
+  }
+  
   try {
     if (updateStatus) {
       updateStatus("GLBしています...");
