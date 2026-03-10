@@ -929,6 +929,168 @@ let realtimeTimer = null;
 // ガイドモード
 let guideMode = false;
 
+// 感情デコード（パニック・不安を構造化・noir_layer_v2から抽出）
+function decodeEmotions(text) {
+  let decoded = text;
+  
+  // 医療パニック（最優先）
+  const medicalPanicMap = {
+    /死ぬ|死にそう/g: '重篤な症状を訴える',
+    /やばい/g: '緊急の医療対応が必要',
+    /パニック/g: '強い不安を感じている',
+    /無理/g: '限界を感じている',
+    /助けて/g: '緊急の支援を必要としている'
+  };
+  
+  for (const [pattern, replacement] of Object.entries(medicalPanicMap)) {
+    decoded = decoded.replace(new RegExp(pattern), replacement);
+  }
+  
+  // 一般感情デコード
+  const emotionMap = {
+    /金返せ/g: '返金を要求する',
+    /詐欺/g: '掲載内容との不一致を報告する',
+    /最悪|ひどい/g: '状況が許容範囲を超えている',
+    /許せない/g: '適切な対応を求める'
+  };
+  
+  for (const [pattern, replacement] of Object.entries(emotionMap)) {
+    decoded = decoded.replace(new RegExp(pattern), replacement);
+  }
+  
+  return decoded;
+}
+
+// 曖昧な表現検出（時間・場所・金額・noir_layer_v2から抽出）
+function detectVagueExpressions(text) {
+  const vague = {
+    time: /(あとで|そのうち|いつか|適当に|later|sometime|eventually)/i.test(text),
+    location: /(あっち|そっち|あそこ|ここら辺|近く|over there|around here|nearby)/i.test(text),
+    amount: /(?<![\d:])(\d{3,})(?![\d:号室])/i.test(text) && !/(円|ドル|ユーロ|USD|JPY|EUR)/i.test(text)
+  };
+  
+  const questions = [];
+  if (vague.time) {
+    questions.push('具体的な日時を教えてください。');
+  }
+  if (vague.location) {
+    questions.push('場所の基準が必要です（住所・駅名・ランドマーク等）。');
+  }
+  if (vague.amount) {
+    questions.push('通貨単位を教えてください（円・ドル・ユーロ等）。');
+  }
+  
+  return { vague, questions };
+}
+
+// 翻訳メモリ（ユーザー修正の記憶・translation_memoryから抽出）
+let translationMemory = new Map(); // sourceKey -> { targetValue, timestamp }
+
+function addToTranslationMemory(sourceKey, targetValue) {
+  translationMemory.set(sourceKey.toLowerCase(), {
+    targetValue,
+    timestamp: Date.now()
+  });
+  
+  // 最大100件に制限
+  if (translationMemory.size > 100) {
+    const oldestKey = Array.from(translationMemory.entries())
+      .sort((a, b) => a[1].timestamp - b[1].timestamp)[0][0];
+    translationMemory.delete(oldestKey);
+  }
+  
+  // Local Storageに保存
+  try {
+    const memoryData = Array.from(translationMemory.entries()).map(([key, value]) => ({
+      sourceKey: key,
+      targetValue: value.targetValue,
+      timestamp: value.timestamp
+    }));
+    localStorage.setItem('glb_translation_memory', JSON.stringify(memoryData));
+  } catch (e) {
+    console.warn('翻訳メモリ保存失敗:', e);
+  }
+}
+
+function getFromTranslationMemory(sourceKey) {
+  return translationMemory.get(sourceKey.toLowerCase());
+}
+
+// 翻訳メモリの復元
+function loadTranslationMemory() {
+  try {
+    const memoryData = localStorage.getItem('glb_translation_memory');
+    if (memoryData) {
+      const data = JSON.parse(memoryData);
+      translationMemory = new Map();
+      data.forEach(item => {
+        translationMemory.set(item.sourceKey.toLowerCase(), {
+          targetValue: item.targetValue,
+          timestamp: item.timestamp
+        });
+      });
+    }
+  } catch (e) {
+    console.warn('翻訳メモリ読み込み失敗:', e);
+  }
+}
+
+// 詳細質問生成（noir_layer_v2から抽出）
+function generateDetailedQuestions(troubleType, text) {
+  const questions = [];
+  const evidence = [];
+  
+  switch (troubleType) {
+    case 'medical_emergency':
+      questions.push('具体的な症状（部位、いつから発症したか、痛みのレベル1〜10）を特定してください。');
+      questions.push('現在服用中の薬、または既存のアレルギー（薬効・食物）はありますか？');
+      evidence.push('海外旅行保険証 / お薬手帳の提示');
+      break;
+      
+    case 'dining_allergy':
+      questions.push('これは命に関わる『アレルギー』ですか？それとも『嗜好（好き嫌い）』ですか？');
+      questions.push('予算、肉/魚の希望、または避けるべき食材を指定してください。');
+      break;
+      
+    case 'legal_issue':
+      questions.push('警察署で被害届を提出しましたか？事件番号を記録してください。');
+      questions.push('日本大使館・領事館の連絡先を確認していますか？');
+      questions.push('警察から事件番号（Reference Number）を受け取りましたか？');
+      evidence.push('警察の被害届受理証明 / 事件番号');
+      evidence.push('パスポートのコピー / 顔写真');
+      break;
+      
+    case 'trouble_hotel':
+      questions.push('修理を要求しますか？それとも部屋の変更を希望しますか？');
+      questions.push('予約番号はありますか？');
+      evidence.push('設備の不具合の写真');
+      break;
+      
+    case 'trouble_airport':
+      questions.push('バゲージタグ（荷物預かり証）の番号を教えてください。');
+      evidence.push('バゲージタグ / 搭乗券');
+      break;
+      
+    case 'trouble_shopping':
+      questions.push('レシート（購入証明）はありますか？');
+      evidence.push('不良箇所の写真 / レシート');
+      break;
+      
+    case 'trouble_dining':
+      questions.push('作り直しを希望しますか？それともキャンセルしますか？');
+      break;
+      
+    case 'trouble_transportation':
+      questions.push('遅延証明書の発行を要求しますか？');
+      questions.push('メーターの写真は撮影しましたか？');
+      evidence.push('遅延の記録（時刻表・アナウンス写真）');
+      evidence.push('タクシーメーター / レシート');
+      break;
+  }
+  
+  return { questions, evidence };
+}
+
 // 旅行トラブル検出（軽量版・noir_layer_v2から抽出）
 function detectTravelTrouble(text) {
   const lower = text.toLowerCase();
@@ -2302,6 +2464,10 @@ async function translate(text, fromLang, toLang, updateStatus) {
     // API翻訳結果をユーザー辞書（オンデバイス辞書）に記録
     saveToUserDict(text, geminiResult.reply, fromLang, toLang);
     console.log(`[ユーザー辞書に記録] "${text}" → "${geminiResult.reply}"`);
+    
+    // 翻訳メモリにも記録（ユーザー修正の記憶）
+    addToTranslationMemory(text, geminiResult.reply);
+    
     return geminiResult;
   }
   
@@ -2507,25 +2673,64 @@ async function handleSend() {
       displayCurrencyRate();
     }
     
+    // 感情デコード（パニック・不安を構造化）
+    const decodedText = decodeEmotions(text);
+    
+    // 曖昧な表現検出
+    const vagueInfo = detectVagueExpressions(text);
+    
     // 旅行トラブル検出（命の危険・ストレス0対応）
     const trouble = detectTravelTrouble(text);
     if (trouble) {
+      // 詳細質問生成
+      const { questions, evidence } = generateDetailedQuestions(trouble.type, text);
+      
+      // 曖昧な表現の質問も追加
+      questions.push(...vagueInfo.questions);
+      
       const troubleAlert = document.createElement("div");
       troubleAlert.style.cssText = `
         position:fixed; top:20px; left:50%; transform:translateX(-50%); 
         z-index:10003; background:${trouble.priority === "critical" ? "var(--error)" : "var(--gold)"}; 
         color:#000; padding:16px 24px; border-radius:12px; 
-        box-shadow:0 4px 20px rgba(0,0,0,.5); max-width:500px; width:90%;
+        box-shadow:0 4px 20px rgba(0,0,0,.5); max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
       `;
-      troubleAlert.innerHTML = `
+      
+      let alertContent = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <div style="font-weight:700; font-size:16px;">⚠️ ${trouble.action}</div>
           <button id="close-trouble-alert" style="background:none; border:none; font-size:24px; cursor:pointer; color:#000;">×</button>
         </div>
-        <div style="font-size:14px; line-height:1.6; color:#000;">
+        <div style="font-size:14px; line-height:1.6; color:#000; margin-bottom:16px;">
           ${troubleGuides[trouble.type] ? (troubleGuides[trouble.type][currentToLang] || troubleGuides[trouble.type].ja) : "対応ガイドを準備中です"}
         </div>
       `;
+      
+      // 詳細質問を表示
+      if (questions.length > 0) {
+        alertContent += `
+          <div style="margin-top:16px; padding:12px; background:rgba(0,0,0,.1); border-radius:8px;">
+            <div style="font-weight:700; margin-bottom:8px; font-size:12px;">📋 確認事項:</div>
+            <ul style="margin:0; padding-left:20px; font-size:13px;">
+              ${questions.map(q => `<li style="margin-bottom:4px;">${q}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // 証拠要求を表示
+      if (evidence.length > 0) {
+        alertContent += `
+          <div style="margin-top:12px; padding:12px; background:rgba(212,175,55,.2); border-radius:8px;">
+            <div style="font-weight:700; margin-bottom:8px; font-size:12px;">📸 準備すべき証拠:</div>
+            <ul style="margin:0; padding-left:20px; font-size:13px;">
+              ${evidence.map(e => `<li style="margin-bottom:4px;">${e}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      troubleAlert.innerHTML = alertContent;
       document.body.appendChild(troubleAlert);
       
       document.getElementById("close-trouble-alert").addEventListener("click", () => {
@@ -2538,6 +2743,13 @@ async function handleSend() {
           document.body.removeChild(troubleAlert);
         }
       }, trouble.priority === "critical" ? 10000 : 5000);
+    }
+    
+    // 翻訳メモリをチェック（ユーザー修正があれば適用）
+    const memoryResult = getFromTranslationMemory(text);
+    if (memoryResult) {
+      console.log(`[翻訳メモリ] "${text}" → "${memoryResult.targetValue}" (記憶済み)`);
+      // メモリから取得した翻訳を優先表示（オプション）
     }
     
     // ガイドモードがONの場合、シーンガイドを表示
@@ -3155,6 +3367,9 @@ loadHistory();
 realtimeMode = localStorage.getItem("glb_realtime_mode") === "true";
 conversationMode = localStorage.getItem("glb_conversation_mode") === "true";
 guideMode = localStorage.getItem("glb_guide_mode") === "true";
+
+// 翻訳メモリの復元
+loadTranslationMemory();
 
 if (realtimeMode) {
   realtimeCheckbox.checked = true;
