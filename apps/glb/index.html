@@ -274,6 +274,70 @@ const fallbackDict = new Map([
 let dict150k = null;
 let dictLoaded = false;
 
+// ユーザー辞書（空の辞書）- 端末に保存
+let userDict = new Map();
+
+// ユーザー辞書のロード（ローカルストレージから）
+function loadUserDict() {
+  try {
+    const stored = localStorage.getItem("glb_user_dict");
+    if (stored) {
+      const data = JSON.parse(stored);
+      userDict = new Map(data);
+      console.log("User dictionary loaded:", userDict.size, "entries");
+    }
+  } catch (e) {
+    console.warn("Failed to load user dictionary:", e);
+  }
+}
+
+// ユーザー辞書に保存（端末にダウンロード）
+function saveToUserDict(source, target, fromLang, toLang) {
+  try {
+    const key = `${fromLang}-${toLang}:${source.trim().toLowerCase()}`;
+    userDict.set(key, target.trim());
+    
+    // ローカルストレージに保存
+    const data = Array.from(userDict.entries());
+    localStorage.setItem("glb_user_dict", JSON.stringify(data));
+    
+    // API経由でバックエンドにも送信（オプション）
+    syncUserDictToAPI(source, target, fromLang, toLang);
+  } catch (e) {
+    console.warn("Failed to save to user dictionary:", e);
+  }
+}
+
+// API経由でバックエンドに同期
+async function syncUserDictToAPI(source, target, fromLang, toLang) {
+  const API_SYNC_URL = "https://YOUR_BACKEND_ENDPOINT/api/user-dict";
+  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  
+  // APIが設定されていない場合はスキップ
+  if (API_SYNC_URL === "https://YOUR_BACKEND_ENDPOINT/api/user-dict") {
+    return;
+  }
+  
+  try {
+    await fetch(API_SYNC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": API_KEY
+      },
+      body: JSON.stringify({
+        source: source.trim(),
+        target: target.trim(),
+        from: fromLang,
+        to: toLang,
+        timestamp: Date.now()
+      })
+    });
+  } catch (e) {
+    console.warn("Failed to sync to API:", e);
+  }
+}
+
 // 150k辞書のロード
 async function load150kDict() {
   if (dictLoaded) return dict150k;
@@ -311,18 +375,23 @@ async function load150kDict() {
   }
 }
 
-// 辞書検索
+// 辞書検索（優先順位: ユーザー辞書 → 150k辞書 → フォールバック）
 function searchDict(query, fromLang, toLang) {
   const normalized = query.trim().toLowerCase();
+  const key = `${fromLang}-${toLang}:${normalized}`;
   
-  // 1. 150k辞書を検索
+  // 1. ユーザー辞書（空の辞書）を最優先で検索
+  if (userDict.has(key)) {
+    return userDict.get(key);
+  }
+  
+  // 2. 150k辞書を検索
   if (dict150k) {
-    const key = `${fromLang}-${toLang}:${normalized}`;
     const result = dict150k.get(key);
     if (result) return result;
   }
   
-  // 2. フォールバック辞書を検索
+  // 3. フォールバック辞書を検索
   const fallbackKey = fromLang === "ja" ? normalized : normalized;
   const fallbackResult = fallbackDict.get(fallbackKey);
   if (fallbackResult) return fallbackResult;
@@ -332,10 +401,13 @@ function searchDict(query, fromLang, toLang) {
 
 // 翻訳実行（必ず何かを返す）
 async function translate(text, fromLang, toLang) {
-  // 1. オフライン辞書を最優先
+  // 1. 辞書検索（ユーザー辞書 → 150k辞書 → フォールバック）
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
-    return { reply: dictResult, source: "150k_dict" };
+    // ユーザー辞書から見つかったかチェック
+    const key = `${fromLang}-${toLang}:${text.trim().toLowerCase()}`;
+    const source = userDict.has(key) ? "user_dict" : "150k_dict";
+    return { reply: dictResult, source: source };
   }
   
   // 2. APIが設定されていればGemini経由
@@ -356,6 +428,8 @@ async function translate(text, fromLang, toLang) {
       if (response.ok) {
         const data = await response.json();
         if (data && data.reply) {
+          // APIから返ってきた翻訳をユーザー辞書に保存
+          saveToUserDict(text, data.reply, fromLang, toLang);
           return { reply: data.reply, source: "gemini" };
         }
       }
@@ -412,7 +486,13 @@ async function handleSend() {
     answerEl.textContent = result.reply;
     answerEl.classList.remove("empty");
     
+    // 翻訳結果をユーザー辞書に保存（150k辞書やフォールバックから取得した場合も）
+    if (result.source === "150k_dict" || result.source === "fallback") {
+      saveToUserDict(text, result.reply, fromLang, toLang);
+    }
+    
     const sourceNames = {
+      "user_dict": "あなたの辞書",
       "150k_dict": "オフライン辞書",
       "gemini": "Gemini AI",
       "fallback": "準備中"
@@ -436,13 +516,24 @@ inputEl.addEventListener("keydown", (e) => {
   }
 });
 
-// 初期化: 150k辞書をロード
+// 初期化: ユーザー辞書と150k辞書をロード
+loadUserDict();
 load150kDict().then(map => {
   dict150k = map;
   if (map) {
-    statusEl.textContent = "✓ 15万語辞書を読み込みました";
+    const userCount = userDict.size;
+    if (userCount > 0) {
+      statusEl.textContent = `✓ 15万語辞書 + あなたの辞書(${userCount}語)を読み込みました`;
+    } else {
+      statusEl.textContent = "✓ 15万語辞書を読み込みました";
+    }
   } else {
-    statusEl.textContent = "簡易辞書モード";
+    const userCount = userDict.size;
+    if (userCount > 0) {
+      statusEl.textContent = `簡易辞書モード + あなたの辞書(${userCount}語)`;
+    } else {
+      statusEl.textContent = "簡易辞書モード";
+    }
   }
 });
 </script>
