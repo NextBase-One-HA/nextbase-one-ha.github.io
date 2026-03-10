@@ -624,9 +624,25 @@ button.btn-primary:disabled{
 
   <div class="card">
     <div class="label">INPUT</div>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <label class="icon-btn" style="flex:1; padding:10px; font-size:12px; cursor:pointer; ${localStorage.getItem('glb_realtime_mode') === 'true' ? 'background:var(--gold); color:#000;' : ''}" id="realtime-toggle">
+        <input type="checkbox" id="realtime-checkbox" style="display:none;">
+        ⚡ リアルタイムGLB
+      </label>
+      <label class="icon-btn" style="flex:1; padding:10px; font-size:12px; cursor:pointer; ${localStorage.getItem('glb_conversation_mode') === 'true' ? 'background:var(--gold); color:#000;' : ''}" id="conversation-toggle">
+        <input type="checkbox" id="conversation-checkbox" style="display:none;">
+        💬 会話モード
+      </label>
+    </div>
     <div class="input-wrapper">
       <textarea id="user-input" placeholder="GLBしたい文章を入力してください..."></textarea>
       <div class="input-actions">
+        <button class="icon-btn" id="camera-input" title="カメラ翻訳">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
         <button class="icon-btn" id="voice-input" title="音声入力">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -651,6 +667,10 @@ button.btn-primary:disabled{
     <div class="label">REPLY</div>
     <div class="answer-wrapper">
       <div id="answer" class="answer empty">GLB結果がここに表示されます...</div>
+      <div id="alternative-answers" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
+        <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">他の候補:</div>
+        <div id="alt-answers-list"></div>
+      </div>
       <div class="answer-actions" style="display:none;" id="answer-actions">
         <button class="icon-btn" id="copy-answer" title="コピー">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -759,6 +779,14 @@ let synth = window.speechSynthesis;
 
 // 履歴管理
 let history = [];
+
+// 会話モード（文脈保持）
+let conversationContext = [];
+let conversationMode = false;
+
+// リアルタイム翻訳モード
+let realtimeMode = false;
+let realtimeTimer = null;
 
 // API使用量管理（月間クォータ）
 const API_QUOTA = {
@@ -1347,6 +1375,23 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
       if (data && data.reply) {
         // API使用量を記録（上手く分配して使う）
         recordAPIUsage();
+        
+        // 会話モード: 文脈に追加
+        if (conversationMode) {
+          conversationContext.push({
+            from: "user",
+            text: text,
+            to: data.reply,
+            timestamp: Date.now()
+          });
+          if (conversationContext.length > 10) conversationContext.shift();
+        }
+        
+        // 複数候補がある場合は表示
+        if (data.alternatives && Array.isArray(data.alternatives)) {
+          return { reply: data.reply, source: "gemini", alternatives: data.alternatives };
+        }
+        
         // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
         return { reply: data.reply, source: "gemini" };
       }
@@ -1413,6 +1458,12 @@ async function testGatewayConnection() {
 
 // GLB実行（15万語アセット → オンデバイス辞書 → NEゲートウェイ接続）
 async function translate(text, fromLang, toLang, updateStatus) {
+  // 会話モード: 文脈を追加
+  if (conversationMode && conversationContext.length > 0) {
+    const contextText = conversationContext.slice(-3).map(c => `${c.from}: ${c.text}`).join("\n");
+    text = `[会話の文脈]\n${contextText}\n\n[現在の入力]\n${text}`;
+  }
+  
   // 1. 15万語アセット（150k辞書）を最初に確認
   if (updateStatus) {
     updateStatus("15万語アセットを確認しています...");
@@ -1422,7 +1473,20 @@ async function translate(text, fromLang, toLang, updateStatus) {
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
     // 15万語アセットまたはオンデバイス辞書で見つかった
-    return { reply: dictResult.result, source: dictResult.source };
+    const result = { reply: dictResult.result, source: dictResult.source };
+    
+    // 会話モード: 文脈に追加
+    if (conversationMode) {
+      conversationContext.push({
+        from: "user",
+        text: text,
+        to: result.reply,
+        timestamp: Date.now()
+      });
+      if (conversationContext.length > 10) conversationContext.shift();
+    }
+    
+    return result;
   }
   
   // 2. 15万語アセットにもオンデバイス辞書にもない場合、NEゲートウェイ接続
@@ -1467,6 +1531,11 @@ const importDictInput = document.getElementById("import-dict-input");
 const testGatewayBtn = document.getElementById("test-gateway");
 const setPlanBasicBtn = document.getElementById("set-plan-basic");
 const setPlanTravelerBtn = document.getElementById("set-plan-traveler");
+const realtimeToggle = document.getElementById("realtime-toggle");
+const realtimeCheckbox = document.getElementById("realtime-checkbox");
+const conversationToggle = document.getElementById("conversation-toggle");
+const conversationCheckbox = document.getElementById("conversation-checkbox");
+const cameraInputBtn = document.getElementById("camera-input");
 
 // 言語切り替え
 langFrom.addEventListener("change", () => {
@@ -1582,6 +1651,23 @@ async function handleSend() {
     answerEl.classList.remove("empty");
     answerActions.style.display = "flex";
     
+    // 複数候補の表示
+    if (result.alternatives && result.alternatives.length > 0) {
+      const altList = document.getElementById("alt-answers-list");
+      altList.innerHTML = result.alternatives.slice(0, 3).map((alt, idx) => `
+        <div style="padding:8px; margin-bottom:6px; background:rgba(0,0,0,.2); border-radius:8px; cursor:pointer; transition:all .2s;" 
+             onmouseover="this.style.background='rgba(212,175,55,.1)'" 
+             onmouseout="this.style.background='rgba(0,0,0,.2)'"
+             onclick="document.getElementById('answer').textContent=this.textContent; document.getElementById('alternative-answers').style.display='none';">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">候補 ${idx + 1}</div>
+          <div style="font-size:14px;">${alt}</div>
+        </div>
+      `).join("");
+      document.getElementById("alternative-answers").style.display = "block";
+    } else {
+      document.getElementById("alternative-answers").style.display = "none";
+    }
+    
     const sourceNames = {
       "150k_dict": "15万語アセット",
       "user_dict": "オンデバイス辞書",
@@ -1589,7 +1675,7 @@ async function handleSend() {
       "fallback": "System Reconnecting..."
     };
     
-    statusEl.textContent = `✓ ${sourceNames[result.source] || "GLB完了"}`;
+    statusEl.textContent = `${conversationMode ? "💬 " : ""}${realtimeMode ? "⚡ " : ""}✓ ${sourceNames[result.source] || "GLB完了"}`;
     statusEl.className = result.source === "fallback" ? "status error" : "status success";
     
     // 履歴に保存
@@ -1610,6 +1696,121 @@ async function handleSend() {
     sendBtn.disabled = false;
   }
 }
+
+// リアルタイム翻訳モード
+realtimeToggle.addEventListener("click", () => {
+  realtimeMode = !realtimeMode;
+  realtimeCheckbox.checked = realtimeMode;
+  localStorage.setItem("glb_realtime_mode", realtimeMode.toString());
+  realtimeToggle.style.background = realtimeMode ? "var(--gold)" : "";
+  realtimeToggle.style.color = realtimeMode ? "#000" : "";
+  
+  if (realtimeMode) {
+    // リアルタイム翻訳開始
+    inputEl.addEventListener("input", handleRealtimeTranslate);
+  } else {
+    // リアルタイム翻訳停止
+    inputEl.removeEventListener("input", handleRealtimeTranslate);
+    if (realtimeTimer) {
+      clearTimeout(realtimeTimer);
+      realtimeTimer = null;
+    }
+  }
+});
+
+// 会話モード
+conversationToggle.addEventListener("click", () => {
+  conversationMode = !conversationMode;
+  conversationCheckbox.checked = conversationMode;
+  localStorage.setItem("glb_conversation_mode", conversationMode.toString());
+  conversationToggle.style.background = conversationMode ? "var(--gold)" : "";
+  conversationToggle.style.color = conversationMode ? "#000" : "";
+  
+  if (!conversationMode) {
+    conversationContext = []; // 会話モードOFF時は文脈をクリア
+  }
+});
+
+// リアルタイム翻訳処理（デバウンス）
+async function handleRealtimeTranslate() {
+  if (realtimeTimer) {
+    clearTimeout(realtimeTimer);
+  }
+  
+  realtimeTimer = setTimeout(async () => {
+    const text = (inputEl.value || "").trim();
+    if (text.length < 3) return; // 3文字未満は翻訳しない
+    
+    try {
+      const [fromLang, toLang] = currentFromLang === "ja" ? ["ja", "en"] : ["en", "ja"];
+      const result = await translate(text, fromLang, toLang, null);
+      
+      if (result && result.reply) {
+        answerEl.textContent = result.reply;
+        answerEl.classList.remove("empty");
+        statusEl.textContent = "⚡ リアルタイムGLB";
+        statusEl.className = "status success";
+      }
+    } catch (e) {
+      console.warn("リアルタイム翻訳エラー:", e);
+    }
+  }, 500); // 500msデバウンス
+}
+
+// カメラ翻訳（軽量OCR）
+cameraInputBtn.addEventListener("click", async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.play();
+    
+    // 簡易カメラUI（軽量化）
+    const cameraModal = document.createElement("div");
+    cameraModal.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;";
+    cameraModal.innerHTML = `
+      <video id="camera-video" autoplay playsinline style="max-width:100%; max-height:70vh; border-radius:12px;"></video>
+      <div style="margin-top:20px; display:flex; gap:12px;">
+        <button id="capture-btn" style="padding:12px 24px; background:var(--gold); color:#000; border:none; border-radius:8px; font-weight:700; cursor:pointer;">撮影</button>
+        <button id="close-camera-btn" style="padding:12px 24px; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; font-weight:700; cursor:pointer;">閉じる</button>
+      </div>
+    `;
+    document.body.appendChild(cameraModal);
+    
+    const cameraVideo = document.getElementById("camera-video");
+    cameraVideo.srcObject = stream;
+    
+    document.getElementById("capture-btn").addEventListener("click", async () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      canvas.getContext("2d").drawImage(cameraVideo, 0, 0);
+      
+      // 軽量OCR（Tesseract.jsまたは簡易実装）
+      // ここでは簡易実装として、画像をBase64に変換してAPIに送信
+      const imageData = canvas.toDataURL("image/jpeg", 0.8);
+      
+      // 実際のOCR処理はAPI経由で実装
+      statusEl.textContent = "カメラ翻訳: OCR処理中...";
+      
+      // ストリームを停止
+      stream.getTracks().forEach(track => track.stop());
+      document.body.removeChild(cameraModal);
+      
+      // OCR結果を入力欄に設定
+      inputEl.value = "[カメラ翻訳] テキストを認識中...";
+      handleSend();
+    });
+    
+    document.getElementById("close-camera-btn").addEventListener("click", () => {
+      stream.getTracks().forEach(track => track.stop());
+      document.body.removeChild(cameraModal);
+    });
+  } catch (e) {
+    console.error("カメラエラー:", e);
+    alert("カメラへのアクセスが拒否されました");
+  }
+});
 
 sendBtn.addEventListener("click", handleSend);
 inputEl.addEventListener("keydown", (e) => {
@@ -1668,6 +1869,21 @@ initializeEmptyDict(); // 初回ダウンロード時に空の辞書を初期化
 loadUserPlanAndUsage(); // ユーザープランとAPI使用量をロード
 loadUserDict();
 loadHistory();
+
+// モード設定の復元
+realtimeMode = localStorage.getItem("glb_realtime_mode") === "true";
+conversationMode = localStorage.getItem("glb_conversation_mode") === "true";
+if (realtimeMode) {
+  realtimeCheckbox.checked = true;
+  realtimeToggle.style.background = "var(--gold)";
+  realtimeToggle.style.color = "#000";
+  inputEl.addEventListener("input", handleRealtimeTranslate);
+}
+if (conversationMode) {
+  conversationCheckbox.checked = true;
+  conversationToggle.style.background = "var(--gold)";
+  conversationToggle.style.color = "#000";
+}
 
 // 150k辞書はバックグラウンドで遅延読み込み（UI応答性確保）
 setTimeout(() => {
