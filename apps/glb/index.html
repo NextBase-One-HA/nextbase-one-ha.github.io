@@ -2079,38 +2079,62 @@ let userDict = new Map();
 const GLB_SERIES_KEY = "glb_series_data";
 const GLB_DATA_VERSION = "1.0";
 
-// ユーザープランとAPI使用量のロード
+// ユーザープランとAPI使用量のロード（新仕様対応）
 function loadUserPlanAndUsage() {
   try {
-    // ユーザープラン
-    const storedPlan = localStorage.getItem("glb_user_plan");
-    if (storedPlan) {
-      userPlan = storedPlan;
-    }
-    
-    // 月間使用量
-    const storedUsage = localStorage.getItem("glb_api_usage");
-    if (storedUsage) {
-      const data = JSON.parse(storedUsage);
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
+    const saved = localStorage.getItem("glb_user_plan_usage");
+    if (saved) {
+      const data = JSON.parse(saved);
+      userPlan = data.plan || "FREE";
+      monthlyUsage = data.usage || {
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear(),
+        used: 0,
+        requests: 0,
+        freeTranslations: 0
+      };
+      
+      // プレミアム無料日数の復元
+      if (data.premiumFreeDays) {
+        premiumFreeDays = data.premiumFreeDays;
+      }
+      
+      // プラン登録月数の復元
+      if (data.planMonths !== undefined) {
+        planMonths = data.planMonths;
+      }
       
       // 月が変わったらリセット
-      if (data.currentMonth !== currentMonth || data.currentYear !== currentYear) {
-        monthlyUsage = {
-          currentMonth: currentMonth,
-          currentYear: currentYear,
-          used: 0,
-          requests: 0
-        };
+      const now = new Date();
+      if (monthlyUsage.currentMonth !== now.getMonth() || monthlyUsage.currentYear !== now.getFullYear()) {
+        monthlyUsage.used = 0;
+        monthlyUsage.freeTranslations = 0;  // 無料版の翻訳回数もリセット
+        monthlyUsage.currentMonth = now.getMonth();
+        monthlyUsage.currentYear = now.getFullYear();
+        
+        // プラン登録月数を更新
+        if (userPlan === "BASIC" && premiumFreeDays.registrationDate) {
+          const regDate = new Date(premiumFreeDays.registrationDate);
+          const monthsDiff = (now.getFullYear() - regDate.getFullYear()) * 12 + (now.getMonth() - regDate.getMonth());
+          planMonths = monthsDiff;
+        }
+        
         saveUserPlanAndUsage();
-      } else {
-        monthlyUsage = data;
       }
+      
+      console.log(`[API使用量] プラン: ${userPlan}, 今月の使用量: $${monthlyUsage.used.toFixed(4)} / ${getCurrentQuota().quota}`);
+    } else {
+      // 初回: 無料版
+      userPlan = "FREE";
+      monthlyUsage = {
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear(),
+        used: 0,
+        requests: 0,
+        freeTranslations: 0
+      };
+      saveUserPlanAndUsage();
     }
-    
-    console.log(`[API使用量] プラン: ${userPlan}, 今月の使用量: $${monthlyUsage.used.toFixed(4)} / $${API_QUOTA[userPlan]}`);
   } catch (e) {
     console.warn("ユーザープラン・使用量読み込み失敗:", e);
   }
