@@ -929,6 +929,94 @@ let realtimeTimer = null;
 // ガイドモード
 let guideMode = false;
 
+// 旅行トラブル検出（軽量版・noir_layer_v2から抽出）
+function detectTravelTrouble(text) {
+  const lower = text.toLowerCase();
+  
+  // 医療緊急（命に関わる最優先）
+  if (/(痛い|苦しい|吐き気|熱|倒れた|血|怪我|死ぬ|死にそう|助けて|pain|sick|hurt|fever|injury|blood|dying|help)/i.test(lower)) {
+    return { type: "medical_emergency", priority: "critical", action: "医療緊急対応" };
+  }
+  
+  // 食事アレルギー（命に関わる）
+  if (/(アレルギー|アナフィラキシー|allergy|anaphylaxis|食べられない|ダメ)/i.test(lower)) {
+    return { type: "dining_allergy", priority: "critical", action: "食事アレルギー対応" };
+  }
+  
+  // 法的問題（警察・盗難・パスポート）
+  if (/(警察|盗まれた|盗難|紛失|パスポート|police|stolen|theft|lost|passport)/i.test(lower)) {
+    return { type: "legal_issue", priority: "high", action: "法的問題対応" };
+  }
+  
+  // ホテルトラブル
+  if (/(ホテル|予約|部屋|チェックイン|hotel|reservation|room|check-in)/i.test(lower) && 
+      /(最悪|ひどい|詐欺|違う|間違|問題|worst|terrible|fraud|wrong|problem)/i.test(lower)) {
+    return { type: "trouble_hotel", priority: "medium", action: "ホテルトラブル対応" };
+  }
+  
+  // 空港トラブル
+  if (/(空港|飛行機|荷物|バゲージ|airport|flight|baggage|luggage)/i.test(lower) && 
+      /(どうすれば|どうしよう|困った|やばい|遅延|what|how|delay|late)/i.test(lower)) {
+    return { type: "trouble_airport", priority: "medium", action: "空港トラブル対応" };
+  }
+  
+  // 買い物トラブル
+  if (/(ショップ|店|買い物|shop|store|shopping)/i.test(lower) && 
+      /(最悪|ひどい|詐欺|返せ|返金|worst|terrible|fraud|refund)/i.test(lower)) {
+    return { type: "trouble_shopping", priority: "medium", action: "買い物トラブル対応" };
+  }
+  
+  // 食事トラブル
+  if (/(レストラン|食事|注文|restaurant|dining|order)/i.test(lower) && 
+      /(頼んでない|違う|間違|来てない|まだ|wrong|different|not yet)/i.test(lower)) {
+    return { type: "trouble_dining", priority: "medium", action: "食事トラブル対応" };
+  }
+  
+  // 交通トラブル
+  if (/(タクシー|バス|電車|交通|taxi|bus|train|transport)/i.test(lower) && 
+      /(遅延|遅れ|高すぎ|delay|late|too expensive|overcharge)/i.test(lower)) {
+    return { type: "trouble_transportation", priority: "medium", action: "交通トラブル対応" };
+  }
+  
+  return null;
+}
+
+// トラブル対応ガイド（軽量データ）
+const troubleGuides = {
+  medical_emergency: {
+    ja: "【医療緊急】\n1. すぐに現地の緊急連絡先（112/911）に電話\n2. 症状を具体的に説明（部位、痛みのレベル1-10）\n3. 現在の場所を伝える\n4. 服用中の薬やアレルギーがある場合は伝える\n5. 旅行保険のサポートに連絡",
+    en: "【Medical Emergency】\n1. Call local emergency (112/911) immediately\n2. Describe symptoms specifically (location, pain level 1-10)\n3. Tell your current location\n4. Inform about medications or allergies\n5. Contact travel insurance support"
+  },
+  dining_allergy: {
+    ja: "【食事アレルギー】\n1. アレルギー食材を現地語で明確に伝える\n2. メニューを指差しながら「これは入っていますか？」と確認\n3. アナフィラキシーの場合は緊急連絡先に電話\n4. アレルギー情報をカードに書いて携帯",
+    en: "【Dining Allergy】\n1. Clearly state allergens in local language\n2. Point to menu and ask \"Does this contain...?\"\n3. Call emergency if anaphylaxis occurs\n4. Carry allergy information card"
+  },
+  legal_issue: {
+    ja: "【法的問題】\n1. 警察に連絡（110/911）\n2. 事件番号を必ず取得\n3. 大使館に連絡（パスポート紛失時）\n4. 写真や証拠を撮影\n5. 旅行保険に連絡",
+    en: "【Legal Issue】\n1. Contact police (110/911)\n2. Get incident number\n3. Contact embassy (if passport lost)\n4. Take photos as evidence\n5. Contact travel insurance"
+  },
+  trouble_hotel: {
+    ja: "【ホテルトラブル】\n1. 予約確認番号を提示\n2. 問題を具体的に説明（写真があると良い）\n3. フロントに冷静に伝える\n4. 解決しない場合はマネージャーに要求\n5. 旅行サイトのサポートに連絡",
+    en: "【Hotel Trouble】\n1. Show reservation confirmation number\n2. Explain problem specifically (photos help)\n3. Calmly inform front desk\n4. Request manager if unresolved\n5. Contact booking site support"
+  },
+  trouble_airport: {
+    ja: "【空港トラブル】\n1. 航空会社のカウンターに連絡\n2. 予約番号を提示\n3. 遅延証明書を取得\n4. 荷物の問題はバゲージタグ番号を提示\n5. 旅行保険に連絡（必要に応じて）",
+    en: "【Airport Trouble】\n1. Contact airline counter\n2. Show reservation number\n3. Get delay certificate\n4. For baggage issues, show baggage tag number\n5. Contact travel insurance if needed"
+  },
+  trouble_shopping: {
+    ja: "【買い物トラブル】\n1. レシートを提示\n2. 問題商品を写真で記録\n3. 店員に冷静に説明\n4. 返金または交換を要求\n5. 解決しない場合は観光案内所に相談",
+    en: "【Shopping Trouble】\n1. Show receipt\n2. Take photos of problematic item\n3. Calmly explain to staff\n4. Request refund or exchange\n5. Consult tourist information if unresolved"
+  },
+  trouble_dining: {
+    ja: "【食事トラブル】\n1. 注文内容を確認\n2. 間違いを指摘（メニューを指差しながら）\n3. 冷静に説明\n4. 解決しない場合はマネージャーに要求\n5. アレルギーの場合は最優先で対応",
+    en: "【Dining Trouble】\n1. Confirm order\n2. Point out mistake (pointing to menu)\n3. Calmly explain\n4. Request manager if unresolved\n5. Prioritize if allergy-related"
+  },
+  trouble_transportation: {
+    ja: "【交通トラブル】\n1. タクシーの場合はメーターを確認\n2. 高額請求の場合は領収書を要求\n3. 遅延の場合は証明書を取得\n4. 問題がある場合は観光案内所に相談\n5. 旅行保険に連絡（必要に応じて）",
+    en: "【Transportation Trouble】\n1. Check meter for taxis\n2. Request receipt for overcharge\n3. Get certificate for delays\n4. Consult tourist information for issues\n5. Contact travel insurance if needed"
+  }
+};
+
 // 旅行安全サポート（オフライン対応・軽量データ）
 const emergencyPhrases = {
   ja: {
@@ -2419,6 +2507,39 @@ async function handleSend() {
       displayCurrencyRate();
     }
     
+    // 旅行トラブル検出（命の危険・ストレス0対応）
+    const trouble = detectTravelTrouble(text);
+    if (trouble) {
+      const troubleAlert = document.createElement("div");
+      troubleAlert.style.cssText = `
+        position:fixed; top:20px; left:50%; transform:translateX(-50%); 
+        z-index:10003; background:${trouble.priority === "critical" ? "var(--error)" : "var(--gold)"}; 
+        color:#000; padding:16px 24px; border-radius:12px; 
+        box-shadow:0 4px 20px rgba(0,0,0,.5); max-width:500px; width:90%;
+      `;
+      troubleAlert.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-weight:700; font-size:16px;">⚠️ ${trouble.action}</div>
+          <button id="close-trouble-alert" style="background:none; border:none; font-size:24px; cursor:pointer; color:#000;">×</button>
+        </div>
+        <div style="font-size:14px; line-height:1.6; color:#000;">
+          ${troubleGuides[trouble.type] ? (troubleGuides[trouble.type][currentToLang] || troubleGuides[trouble.type].ja) : "対応ガイドを準備中です"}
+        </div>
+      `;
+      document.body.appendChild(troubleAlert);
+      
+      document.getElementById("close-trouble-alert").addEventListener("click", () => {
+        document.body.removeChild(troubleAlert);
+      });
+      
+      // 5秒後に自動で閉じる（クリティカルは10秒）
+      setTimeout(() => {
+        if (document.body.contains(troubleAlert)) {
+          document.body.removeChild(troubleAlert);
+        }
+      }, trouble.priority === "critical" ? 10000 : 5000);
+    }
+    
     // ガイドモードがONの場合、シーンガイドを表示
     if (guideMode) {
       const scene = detectScene(replyText, currentFromLang, currentToLang);
@@ -2533,7 +2654,14 @@ guideToggle.addEventListener("click", () => {
 
 // API削減ロジック（軽量版・クライアント側のみ）
 // 注意: NEゲートウェイ、VOID系、NEシステム、レイヤーロック系は世界に出さない
-let apiCallCache = new Map(); // Exact Cache（軽量）
+// 参考: NextBase ロックAPIロジック.txt（DEVモードの軽量実装）
+
+// 4段階キャッシュシステム（InfiniteScaleDictionaryから抽出・軽量版）
+let apiCallCache = new Map(); // L1: Exact Cache（軽量）
+let apiCallCacheL2 = new Map(); // L2: LRU Cache（最大100件）
+let apiCallCacheL2Keys = []; // LRU管理用
+const L2_MAX_SIZE = 100;
+
 let apiCooldown = new Map(); // クールダウン管理（軽量）
 const COOLDOWN_SECONDS = 5; // 軽量設定（5秒）
 const MAX_CALLS_PER_HOUR = 60; // レート制限（軽量）
@@ -2576,19 +2704,43 @@ function recordAPICall(purpose = "prod_user_request") {
   apiCallHistory = apiCallHistory.filter(t => t > now - 3600000); // 1時間以上前は削除
 }
 
-// キャッシュチェック（軽量版）
+// キャッシュチェック（4段階キャッシュ・軽量版）
 function getCachedResult(inputHash) {
-  return apiCallCache.get(inputHash);
+  // L1: Exact Cache（最優先）
+  if (apiCallCache.has(inputHash)) {
+    return apiCallCache.get(inputHash);
+  }
+  
+  // L2: LRU Cache
+  if (apiCallCacheL2.has(inputHash)) {
+    // LRU更新（使用されたキーを最後に移動）
+    const index = apiCallCacheL2Keys.indexOf(inputHash);
+    if (index > -1) {
+      apiCallCacheL2Keys.splice(index, 1);
+    }
+    apiCallCacheL2Keys.push(inputHash);
+    return apiCallCacheL2.get(inputHash);
+  }
+  
+  return null;
 }
 
-// キャッシュ保存（軽量版）
+// キャッシュ保存（4段階キャッシュ・軽量版）
 function setCachedResult(inputHash, result) {
-  // キャッシュサイズ制限（最大100件）
-  if (apiCallCache.size >= 100) {
+  // L1: Exact Cache（最大50件）
+  if (apiCallCache.size >= 50) {
     const firstKey = apiCallCache.keys().next().value;
     apiCallCache.delete(firstKey);
   }
   apiCallCache.set(inputHash, result);
+  
+  // L2: LRU Cache（最大100件）
+  if (apiCallCacheL2Keys.length >= L2_MAX_SIZE) {
+    const oldestKey = apiCallCacheL2Keys.shift();
+    apiCallCacheL2.delete(oldestKey);
+  }
+  apiCallCacheL2.set(inputHash, result);
+  apiCallCacheL2Keys.push(inputHash);
 }
 
 // ガイドを閉じる
