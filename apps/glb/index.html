@@ -2894,20 +2894,41 @@ async function translate(text, fromLang, toLang, updateStatus) {
   }
   
   // 2. 15万語アセットにもオンデバイス辞書にもない場合、NEゲートウェイ接続
-  // API使用量チェック（新仕様対応）
+  // API使用量チェック（新仕様対応・ユーザーには見せない）
   const quotaInfo = checkAPIQuota();
   if (!quotaInfo.canUse) {
-    if (updateStatus) {
-      updateStatus(`月間使用量上限到達 (${userPlan}プラン: $${quotaInfo.quota.toFixed(2)})`);
+    if (userPlan === "TRAVELER") {
+      // $7.99プランで上限超過: 「只今プラン準備中」
+      if (updateStatus) {
+        updateStatus("只今プラン準備中");
+      }
+      console.warn(`[API使用量] TRAVELERプラン上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
+      showUpgradeModal();
+      return null;
+    } else {
+      // 無料版/BASICプラン: 次プランへ誘導
+      if (updateStatus) {
+        if (userPlan === "FREE") {
+          updateStatus("BASICプランで無制限に使えます");
+        } else {
+          updateStatus("TRAVELERプランでさらに無制限に");
+        }
+      }
+      console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
+      showUpgradeModal();
+      return null;
     }
-    console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
-    showUpgradeModal();
-    return null;
   }
   
-  // 使用量が80%を超えている場合は警告
-  if (quotaInfo.usagePercent > 80 && updateStatus) {
-    updateStatus(`使用量警告: ${quotaInfo.usagePercent.toFixed(1)}%使用中 (残り $${quotaInfo.remaining.toFixed(4)})`);
+  // 使用量が80%を超えている場合は警告（プラン誘導のみ）
+  if (quotaInfo.usagePercent > 80 && userPlan !== "TRAVELER") {
+    if (updateStatus) {
+      if (userPlan === "FREE") {
+        updateStatus("BASICプランで無制限に使えます");
+      } else {
+        updateStatus("TRAVELERプランでさらに無制限に");
+      }
+    }
     showUpgradeWarning(quotaInfo);
   }
   
@@ -3720,53 +3741,89 @@ importAllDataInput.addEventListener("change", (e) => {
 });
 
 // アップグレードモーダル表示（課金を促す）
+// アップグレードモーダル表示（上限到達時・プラン誘導のみ）
 function showUpgradeModal() {
+  const upgradeModal = document.getElementById("upgrade-modal");
   const content = document.getElementById("upgrade-modal-content");
-  const quotaInfo = checkAPIQuota();
-  
-  content.innerHTML = `
-    <p style="margin-bottom:16px;">今月の使用量上限に達しました。</p>
-    <p style="margin-bottom:16px; color:var(--gold); font-weight:700;">BASICプラン（$1.99/月）で無制限に使えます</p>
-    <div style="display:flex; gap:12px; margin-top:20px;">
-      <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
-        BASIC $1.99
-      </a>
-      <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
-        TRAVELER $7.99
-      </a>
-    </div>
-  `;
-  
+
+  // ユーザーにはAPI使用量を見せない、プラン誘導のみ
+  if (userPlan === "FREE") {
+    content.innerHTML = `
+      <p style="margin-bottom:16px; font-size:14px;">無料版の制限に達しました。</p>
+      <p style="margin-bottom:16px; color:var(--gold); font-weight:700; font-size:16px;">🌟 BASICプラン（$1.99/月）で無制限に使えます</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--muted);">• 登録から1ヶ月間の好きな2日間が全開放<br>• AI翻訳が無制限<br>• 全機能が使えます</p>
+      <div style="display:flex; gap:12px; margin-top:20px;">
+        <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+          BASIC $1.99 を始める
+        </a>
+        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+          TRAVELER $7.99
+        </a>
+      </div>
+    `;
+  } else if (userPlan === "BASIC") {
+    content.innerHTML = `
+      <p style="margin-bottom:16px; font-size:14px;">BASICプランの制限に達しました。</p>
+      <p style="margin-bottom:16px; color:var(--gold); font-weight:700; font-size:16px;">🌟 TRAVELERプラン（$7.99/月）でさらに無制限に</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--muted);">• 全機能が無制限<br>• 優先サポート<br>• 最新機能をいち早く</p>
+      <div style="display:flex; gap:12px; margin-top:20px;">
+        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+          TRAVELER $7.99 にアップグレード
+        </a>
+      </div>
+    `;
+  } else if (userPlan === "TRAVELER") {
+    // $7.99プランで上限超過: 「只今プラン準備中」
+    content.innerHTML = `
+      <p style="margin-bottom:16px; font-size:14px; font-weight:700;">只今プラン準備中</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--muted);">より高機能なプランを準備しています。<br>しばらくお待ちください。</p>
+    `;
+  }
+
   upgradeModal.style.display = "flex";
 }
 
-// アップグレード警告表示（80%到達時）
+// アップグレード警告表示（80%到達時・プラン誘導のみ）
 function showUpgradeWarning(quotaInfo) {
-  // 軽い通知（1回だけ表示）
+  // 軽い通知（1回だけ表示、API使用量は見せない）
   if (localStorage.getItem('upgrade_warning_shown') === 'true') return;
-  
+
   const warning = document.createElement("div");
   warning.style.cssText = `
-    position:fixed; top:20px; left:50%; transform:translateX(-50%); 
-    z-index:10003; background:var(--gold); color:#000; 
+    position:fixed; top:20px; left:50%; transform:translateX(-50%);
+    z-index:10003; background:var(--gold); color:#000;
     padding:12px 20px; border-radius:8px; font-size:12px; font-weight:700;
     box-shadow:0 4px 12px rgba(212,175,55,.4);
+    cursor:pointer; /* クリック可能にする */
   `;
-  warning.innerHTML = `⚠️ 使用量${quotaInfo.usagePercent.toFixed(0)}% - BASICプラン（$1.99/月）で無制限に`;
-  warning.onclick = () => {
-    showUpgradeModal();
-    document.body.removeChild(warning);
-  };
+  
+  // ユーザーにはAPI使用量を見せない、プラン誘導のみ
+  if (userPlan === "FREE") {
+    warning.innerHTML = `🌟 BASICプラン（$1.99/月）で無制限に使えます`;
+  } else if (userPlan === "BASIC") {
+    warning.innerHTML = `🌟 TRAVELERプラン（$7.99/月）でさらに無制限に`;
+  } else {
+    return; // TRAVELERプランでは警告を表示しない
+  }
   
   document.body.appendChild(warning);
-  
+
+  // クリックでモーダル表示
+  warning.addEventListener('click', () => {
+    showUpgradeModal();
+    if (document.body.contains(warning)) {
+      document.body.removeChild(warning);
+    }
+  });
+
+  // 5秒後に自動で消える
   setTimeout(() => {
     if (document.body.contains(warning)) {
       document.body.removeChild(warning);
     }
   }, 5000);
-  
-  localStorage.setItem('upgrade_warning_shown', 'true');
+
+  localStorage.setItem('upgrade_warning_shown', 'true'); // 1回表示したことを記録
   setTimeout(() => {
     localStorage.removeItem('upgrade_warning_shown');
   }, 3600000); // 1時間後にリセット
