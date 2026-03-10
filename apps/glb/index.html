@@ -669,6 +669,19 @@ button.btn-primary:disabled{
     <div class="label">REPLY</div>
     <div class="answer-wrapper">
       <div id="answer" class="answer empty">GLB結果がここに表示されます...</div>
+      <div id="currency-display" style="display:none; margin-top:12px; padding:12px; background:rgba(212,175,55,.1); border-radius:8px; border:1px solid var(--gold);">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">💱 通貨レート（撮影時）</div>
+        <div id="currency-info" style="font-size:14px; color:var(--gold);"></div>
+      </div>
+      <div id="word-explanation-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10001; display:flex; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:var(--panel); border:2px solid var(--gold); border-radius:16px; padding:24px; max-width:500px; width:100%; max-height:80vh; overflow-y:auto;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; color:var(--gold);">単語説明</h3>
+            <button id="close-explanation" style="background:none; border:none; color:var(--text); font-size:24px; cursor:pointer;">×</button>
+          </div>
+          <div id="explanation-content" style="color:var(--text); line-height:1.6;"></div>
+        </div>
+      </div>
       <div id="alternative-answers" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);">
         <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">他の候補:</div>
         <div id="alt-answers-list"></div>
@@ -790,6 +803,100 @@ let conversationMode = false;
 // リアルタイム翻訳モード
 let realtimeMode = false;
 let realtimeTimer = null;
+
+// カメラ撮影時の通貨レート
+let cameraCurrencyRate = null;
+let cameraTimestamp = null;
+
+// 通貨レート取得（無料API）
+async function getCurrencyRate() {
+  try {
+    // 無料の通貨レートAPI（例: exchangerate-api.com の無料版）
+    // 実際のAPIキーが必要な場合は設定してください
+    const response = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+    if (response.ok) {
+      const data = await response.json();
+      return data.rates;
+    }
+  } catch (e) {
+    console.warn("通貨レート取得失敗:", e);
+  }
+  return null;
+}
+
+// 通貨レート表示（カメラ撮影時）
+async function displayCurrencyRate() {
+  if (!cameraTimestamp) return;
+  
+  const rates = await getCurrencyRate();
+  if (!rates) return;
+  
+  // ユーザーの国を推定（ブラウザの言語設定から）
+  const userLang = navigator.language || navigator.userLanguage;
+  let userCurrency = "JPY"; // デフォルト
+  
+  if (userLang.includes("en")) userCurrency = "USD";
+  else if (userLang.includes("zh")) userCurrency = "CNY";
+  else if (userLang.includes("ko")) userCurrency = "KRW";
+  else if (userLang.includes("es")) userCurrency = "EUR";
+  else if (userLang.includes("fr")) userCurrency = "EUR";
+  else if (userLang.includes("de")) userCurrency = "EUR";
+  
+  const rate = rates[userCurrency];
+  if (rate) {
+    const currencyDisplay = document.getElementById("currency-display");
+    const currencyInfo = document.getElementById("currency-info");
+    currencyInfo.textContent = `1 USD = ${rate.toFixed(2)} ${userCurrency} (${new Date(cameraTimestamp).toLocaleString("ja-JP")})`;
+    currencyDisplay.style.display = "block";
+  }
+}
+
+// 単語説明取得（辞書→AI→フォールバック）
+async function getWordExplanation(word, fromLang, toLang) {
+  // 1. 辞書内を確認
+  const dictKey = `${fromLang}-${toLang}:${word.toLowerCase()}`;
+  if (dictIndex.has(dictKey)) {
+    return { explanation: dictIndex.get(dictKey), source: "辞書" };
+  }
+  if (userDict.has(dictKey)) {
+    return { explanation: userDict.get(dictKey), source: "あなたの辞書" };
+  }
+  
+  // 2. AI（API）で説明を取得
+  const NE_GATEWAY_URL = "http://192.168.1.25:5000";
+  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  
+  if (NE_GATEWAY_URL !== "http://192.168.1.25:5000" && API_KEY !== "YOUR_REAL_AUTHORIZED_KEY") {
+    try {
+      const response = await fetch(NE_GATEWAY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": API_KEY,
+          "X-Caller-ID": "noir"
+        },
+        body: JSON.stringify({
+          prompt: `「${word}」という単語の説明を${toLang === "ja" ? "日本語" : "英語"}で簡潔に教えてください。`,
+          mode: "low_cost_0.08",
+          from: fromLang,
+          to: toLang
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.reply) {
+          return { explanation: data.reply, source: "AI" };
+        }
+      }
+    } catch (e) {
+      console.warn("AI説明取得失敗:", e);
+    }
+  }
+  
+  // 3. フォールバック
+  return { explanation: "ごめん。わからない。", source: "不明" };
+}
 
 // API使用量管理（月間クォータ）
 const API_QUOTA = {
@@ -1652,9 +1759,16 @@ async function handleSend() {
     // translate関数にステータス更新関数を渡す
     const result = await translate(text, currentFromLang, currentToLang, updateStatus);
     
-    answerEl.textContent = result.reply;
+    // 翻訳結果を表示（単語ごとにタップ可能にする）
+    const replyText = result.reply;
+    answerEl.innerHTML = makeWordsTappable(replyText, currentToLang, currentFromLang);
     answerEl.classList.remove("empty");
     answerActions.style.display = "flex";
+    
+    // カメラ撮影時は通貨レートを表示
+    if (cameraTimestamp) {
+      displayCurrencyRate();
+    }
     
     // 複数候補の表示
     if (result.alternatives && result.alternatives.length > 0) {
@@ -1762,6 +1876,60 @@ async function handleRealtimeTranslate() {
   }, 500); // 500msデバウンス
 }
 
+// 翻訳結果を単語ごとにタップ可能にする
+function makeWordsTappable(text, toLang, fromLang) {
+  // 単語を分割（スペース、句読点で分割）
+  const words = text.split(/(\s+|[.,!?;:])/);
+  return words.map((word, idx) => {
+    const trimmed = word.trim();
+    if (!trimmed || /^[.,!?;:\s]+$/.test(word)) {
+      return word; // 句読点やスペースはそのまま
+    }
+    return `<span class="tappable-word" data-word="${trimmed}" data-to-lang="${toLang}" data-from-lang="${fromLang}" style="cursor:pointer; text-decoration:underline; text-decoration-color:var(--gold); text-underline-offset:2px; transition:all .2s;" onmouseover="this.style.color='var(--gold)'; this.style.textDecorationColor='var(--gold)';" onmouseout="this.style.color=''; this.style.textDecorationColor='var(--gold);'">${word}</span>`;
+  }).join("");
+}
+
+// 単語説明モーダル
+const wordExplanationModal = document.getElementById("word-explanation-modal");
+const explanationContent = document.getElementById("explanation-content");
+const closeExplanationBtn = document.getElementById("close-explanation");
+
+// 単語タップイベント（イベント委譲）
+answerEl.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("tappable-word")) {
+    const word = e.target.dataset.word;
+    const toLang = e.target.dataset.toLang;
+    const fromLang = e.target.dataset.fromLang;
+    
+    // モーダルを表示
+    wordExplanationModal.style.display = "flex";
+    explanationContent.textContent = "説明を取得中...";
+    
+    // 説明を取得
+    const result = await getWordExplanation(word, fromLang, toLang);
+    explanationContent.innerHTML = `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:18px; font-weight:700; color:var(--gold); margin-bottom:8px;">${word}</div>
+        <div style="font-size:11px; color:var(--muted);">出典: ${result.source}</div>
+      </div>
+      <div style="font-size:14px; line-height:1.8; color:var(--text);">
+        ${result.explanation}
+      </div>
+    `;
+  }
+});
+
+// モーダルを閉じる
+closeExplanationBtn.addEventListener("click", () => {
+  wordExplanationModal.style.display = "none";
+});
+
+wordExplanationModal.addEventListener("click", (e) => {
+  if (e.target === wordExplanationModal) {
+    wordExplanationModal.style.display = "none";
+  }
+});
+
 // カメラ翻訳（OCR機能付き）
 cameraInputBtn.addEventListener("click", async () => {
   // Tesseract.jsの読み込み確認
@@ -1769,6 +1937,10 @@ cameraInputBtn.addEventListener("click", async () => {
     alert("OCR機能の読み込みに失敗しました。ページをリロードしてください。");
     return;
   }
+  
+  // カメラ撮影時のタイムスタンプを記録（通貨レート表示用）
+  cameraTimestamp = Date.now();
+  
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     const video = document.createElement("video");
@@ -1851,6 +2023,11 @@ cameraInputBtn.addEventListener("click", async () => {
               inputEl.value = recognizedText;
               statusEl.textContent = `✓ OCR完了: ${recognizedText.length}文字を認識`;
               statusEl.className = "status success";
+              
+              // 通貨レートを取得（バックグラウンド）
+              getCurrencyRate().then(rates => {
+                if (rates) cameraCurrencyRate = rates;
+              });
               
               // 自動で翻訳実行（オプション）
               setTimeout(() => {
