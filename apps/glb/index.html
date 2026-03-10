@@ -635,6 +635,10 @@ button.btn-primary:disabled{
         <input type="checkbox" id="conversation-checkbox" style="display:none;">
         💬 会話モード
       </label>
+      <label class="icon-btn" style="flex:1; padding:10px; font-size:12px; cursor:pointer; ${localStorage.getItem('glb_guide_mode') === 'true' ? 'background:var(--gold); color:#000;' : ''}" id="guide-toggle">
+        <input type="checkbox" id="guide-checkbox" style="display:none;">
+        📖 ガイド
+      </label>
     </div>
     <div class="input-wrapper">
       <textarea id="user-input" placeholder="GLBしたい文章を入力してください..."></textarea>
@@ -672,6 +676,13 @@ button.btn-primary:disabled{
       <div id="currency-display" style="display:none; margin-top:12px; padding:12px; background:rgba(212,175,55,.1); border-radius:8px; border:1px solid var(--gold);">
         <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">💱 通貨レート（撮影時）</div>
         <div id="currency-info" style="font-size:14px; color:var(--gold);"></div>
+      </div>
+      <div id="scene-guide" style="display:none; margin-top:12px; padding:16px; background:rgba(212,175,55,.08); border-radius:12px; border:1px solid var(--gold);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:12px; color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.1em;">📖 シーンガイド</div>
+          <button id="close-guide" style="background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:0; width:24px; height:24px; display:flex; align-items:center; justify-content:center;">×</button>
+        </div>
+        <div id="guide-content" style="font-size:14px; color:var(--text); line-height:1.8;"></div>
       </div>
       <div id="word-explanation-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:10001; display:flex; align-items:center; justify-content:center; padding:20px;">
         <div style="background:var(--panel); border:2px solid var(--gold); border-radius:16px; padding:24px; max-width:500px; width:100%; max-height:80vh; overflow-y:auto;">
@@ -804,6 +815,9 @@ let conversationMode = false;
 let realtimeMode = false;
 let realtimeTimer = null;
 
+// ガイドモード
+let guideMode = false;
+
 // カメラ撮影時の通貨レート
 let cameraCurrencyRate = null;
 let cameraTimestamp = null;
@@ -849,6 +863,123 @@ async function displayCurrencyRate() {
     currencyInfo.textContent = `1 USD = ${rate.toFixed(2)} ${userCurrency} (${new Date(cameraTimestamp).toLocaleString("ja-JP")})`;
     currencyDisplay.style.display = "block";
   }
+}
+
+// シーン判定（翻訳テキストからシーンを判定）
+function detectScene(text, fromLang, toLang) {
+  const lowerText = text.toLowerCase();
+  
+  // レストラン関連
+  if (/(menu|order|food|restaurant|meal|dining|eat|drink|メニュー|注文|食事|レストラン|食べる|飲む)/i.test(lowerText)) {
+    return "restaurant";
+  }
+  
+  // ホテル関連
+  if (/(hotel|check-in|check-out|room|reservation|booking|ホテル|チェックイン|チェックアウト|部屋|予約)/i.test(lowerText)) {
+    return "hotel";
+  }
+  
+  // 買い物関連
+  if (/(shop|store|buy|purchase|price|cost|discount|sale|ショップ|店|買う|購入|価格|値段|割引|セール)/i.test(lowerText)) {
+    return "shopping";
+  }
+  
+  // 交通関連
+  if (/(taxi|station|bus|train|subway|metro|airport|flight|タクシー|駅|バス|電車|地下鉄|空港|飛行機)/i.test(lowerText)) {
+    return "transport";
+  }
+  
+  // 医療関連
+  if (/(hospital|clinic|doctor|medicine|pharmacy|病院|クリニック|医者|薬|薬局)/i.test(lowerText)) {
+    return "medical";
+  }
+  
+  // 観光関連
+  if (/(tour|sightseeing|attraction|museum|temple|shrine|観光|見学|博物館|寺|神社)/i.test(lowerText)) {
+    return "tourism";
+  }
+  
+  return null;
+}
+
+// シーンガイド取得（辞書→AI→フォールバック）
+async function getSceneGuide(scene, fromLang, toLang) {
+  const sceneGuides = {
+    restaurant: {
+      ja: "レストランでの注文: メニューを指差しながら「これください」と言うか、英語なら「I'll have this」と言います。チップは通常10-20%です。",
+      en: "At a restaurant: Point to the menu and say \"これください\" (kore kudasai) or \"I'll have this\". Tips are usually 10-20%."
+    },
+    hotel: {
+      ja: "ホテルチェックイン: パスポートと予約確認書を準備。チェックアウト時間を確認しましょう。",
+      en: "Hotel check-in: Have your passport and reservation confirmation ready. Confirm the check-out time."
+    },
+    shopping: {
+      ja: "買い物: 値段交渉は市場や屋台で可能。レシートを必ずもらいましょう。",
+      en: "Shopping: Price negotiation is possible at markets and stalls. Always get a receipt."
+    },
+    transport: {
+      ja: "交通: タクシーはメーター制。目的地を書いたメモを見せると便利です。",
+      en: "Transportation: Taxis use meters. It's helpful to show a note with your destination written."
+    },
+    medical: {
+      ja: "医療: 症状を説明するために、痛みの場所を指差すか、症状の写真を見せましょう。",
+      en: "Medical: Point to where it hurts or show a photo of symptoms to explain your condition."
+    },
+    tourism: {
+      ja: "観光: 入場料を確認。写真撮影が禁止の場所もあるので注意しましょう。",
+      en: "Tourism: Check admission fees. Note that photography may be prohibited in some places."
+    }
+  };
+  
+  // 1. 辞書内のガイドを確認
+  const guideKey = `guide-${scene}-${toLang}`;
+  if (sceneGuides[scene] && sceneGuides[scene][toLang]) {
+    return { guide: sceneGuides[scene][toLang], source: "ガイド辞書" };
+  }
+  
+  // 2. AI（API）でガイドを取得
+  const NE_GATEWAY_URL = "http://192.168.1.25:5000";
+  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  
+  if (NE_GATEWAY_URL !== "http://192.168.1.25:5000" && API_KEY !== "YOUR_REAL_AUTHORIZED_KEY") {
+    try {
+      const sceneNames = {
+        restaurant: "レストラン",
+        hotel: "ホテル",
+        shopping: "買い物",
+        transport: "交通",
+        medical: "医療",
+        tourism: "観光"
+      };
+      
+      const response = await fetch(NE_GATEWAY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": API_KEY,
+          "X-Caller-ID": "noir"
+        },
+        body: JSON.stringify({
+          prompt: `${sceneNames[scene]}でのシーンガイドを${toLang === "ja" ? "日本語" : "英語"}で簡潔に教えてください。実用的なアドバイスを含めてください。`,
+          mode: "low_cost_0.08",
+          from: fromLang,
+          to: toLang
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.reply) {
+          return { guide: data.reply, source: "AI" };
+        }
+      }
+    } catch (e) {
+      console.warn("AIガイド取得失敗:", e);
+    }
+  }
+  
+  // 3. フォールバック
+  return { guide: "ごめん。わからない。", source: "不明" };
 }
 
 // 単語説明取得（辞書→AI→フォールバック）
@@ -1647,6 +1778,9 @@ const realtimeToggle = document.getElementById("realtime-toggle");
 const realtimeCheckbox = document.getElementById("realtime-checkbox");
 const conversationToggle = document.getElementById("conversation-toggle");
 const conversationCheckbox = document.getElementById("conversation-checkbox");
+const guideToggle = document.getElementById("guide-toggle");
+const guideCheckbox = document.getElementById("guide-checkbox");
+const closeGuideBtn = document.getElementById("close-guide");
 const cameraInputBtn = document.getElementById("camera-input");
 
 // 言語切り替え
@@ -1770,6 +1904,25 @@ async function handleSend() {
       displayCurrencyRate();
     }
     
+    // ガイドモードがONの場合、シーンガイドを表示
+    if (guideMode) {
+      const scene = detectScene(replyText, currentFromLang, currentToLang);
+      if (scene) {
+        const guideResult = await getSceneGuide(scene, currentFromLang, currentToLang);
+        const sceneGuide = document.getElementById("scene-guide");
+        const guideContent = document.getElementById("guide-content");
+        guideContent.innerHTML = `
+          <div style="margin-bottom:8px; font-size:12px; color:var(--muted);">シーン: ${scene} | 出典: ${guideResult.source}</div>
+          <div>${guideResult.guide}</div>
+        `;
+        sceneGuide.style.display = "block";
+      } else {
+        document.getElementById("scene-guide").style.display = "none";
+      }
+    } else {
+      document.getElementById("scene-guide").style.display = "none";
+    }
+    
     // 複数候補の表示
     if (result.alternatives && result.alternatives.length > 0) {
       const altList = document.getElementById("alt-answers-list");
@@ -1848,6 +2001,24 @@ conversationToggle.addEventListener("click", () => {
   if (!conversationMode) {
     conversationContext = []; // 会話モードOFF時は文脈をクリア
   }
+});
+
+// ガイドモード
+guideToggle.addEventListener("click", () => {
+  guideMode = !guideMode;
+  guideCheckbox.checked = guideMode;
+  localStorage.setItem("glb_guide_mode", guideMode.toString());
+  guideToggle.style.background = guideMode ? "var(--gold)" : "";
+  guideToggle.style.color = guideMode ? "#000" : "";
+  
+  if (!guideMode) {
+    document.getElementById("scene-guide").style.display = "none";
+  }
+});
+
+// ガイドを閉じる
+closeGuideBtn.addEventListener("click", () => {
+  document.getElementById("scene-guide").style.display = "none";
 });
 
 // リアルタイム翻訳処理（デバウンス）
@@ -2129,6 +2300,8 @@ loadHistory();
 // モード設定の復元
 realtimeMode = localStorage.getItem("glb_realtime_mode") === "true";
 conversationMode = localStorage.getItem("glb_conversation_mode") === "true";
+guideMode = localStorage.getItem("glb_guide_mode") === "true";
+
 if (realtimeMode) {
   realtimeCheckbox.checked = true;
   realtimeToggle.style.background = "var(--gold)";
@@ -2139,6 +2312,11 @@ if (conversationMode) {
   conversationCheckbox.checked = true;
   conversationToggle.style.background = "var(--gold)";
   conversationToggle.style.color = "#000";
+}
+if (guideMode) {
+  guideCheckbox.checked = true;
+  guideToggle.style.background = "var(--gold)";
+  guideToggle.style.color = "#000";
 }
 
 // 150k辞書はバックグラウンドで遅延読み込み（UI応答性確保）
