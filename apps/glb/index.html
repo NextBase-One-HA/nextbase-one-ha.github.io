@@ -3,16 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>GLB - NEXT BASE 瞬間翻訳</title>
+<title>GLB v1.0 - NEXT BASE | 瞬間翻訳兵器</title>
 
 <style>
 :root{
-  --gold:#d6b25e;
-  --bg:#050505;
-  --panel:#0f0f0f;
-  --line:#222;
-  --text:#f2f2f2;
-  --muted:#9a9a9a;
+  --gold:#D4AF37;
+  --gold-glow:rgba(212,175,55,.4);
+  --bg:#000000;
+  --bg-gradient:linear-gradient(135deg, #0a0a0a 0%, #000000 50%, #050505 100%);
+  --panel:rgba(15,15,15,.95);
+  --panel-border:rgba(212,175,55,.2);
+  --line:#1a1a1a;
+  --text:#f5f5f5;
+  --text-bright:#ffffff;
+  --muted:#888888;
+  --success:#4ade80;
+  --error:#ef4444;
 }
 
 *{box-sizing:border-box}
@@ -20,200 +26,435 @@ html,body{
   margin:0;
   padding:0;
   background:var(--bg);
+  background-image:var(--bg-gradient);
   color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  min-height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background:radial-gradient(circle at 20% 50%, rgba(212,175,55,.03) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(212,175,55,.02) 0%, transparent 50%);
+  pointer-events:none;
+  z-index:0;
 }
 
 .container{
-  max-width:720px;
+  max-width:800px;
   margin:0 auto;
-  padding:28px 20px 56px;
+  padding:32px 24px 64px;
+  position:relative;
+  z-index:1;
+}
+
+.hero-section{
+  text-align:center;
+  margin-bottom:40px;
+  padding:24px 0;
 }
 
 .hero-title{
-  text-align:center;
   color:var(--gold);
-  font-size:clamp(28px,6vw,42px);
-  font-weight:800;
-  letter-spacing:.02em;
-  margin:0 0 8px;
-  text-shadow:0 2px 20px rgba(214,178,94,.3);
+  font-size:clamp(32px,7vw,52px);
+  font-weight:900;
+  letter-spacing:-.02em;
+  margin:0 0 12px;
+  text-shadow:0 0 30px var(--gold-glow),
+              0 4px 20px rgba(0,0,0,.5);
+  background:linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
 }
 
 .hero-subtitle{
-  text-align:center;
   color:var(--muted);
-  font-size:14px;
-  margin:0 0 32px;
-  letter-spacing:.08em;
+  font-size:15px;
+  font-weight:500;
+  letter-spacing:.1em;
+  margin:0;
+  text-transform:uppercase;
 }
 
 .lang-toggle{
   display:flex;
-  gap:12px;
-  margin-bottom:24px;
+  gap:8px;
+  margin-bottom:32px;
   background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:4px;
+  border:1px solid var(--panel-border);
+  border-radius:16px;
+  padding:6px;
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
 }
 
 .lang-toggle button{
   flex:1;
-  padding:12px;
+  padding:14px 20px;
   border:none;
   background:transparent;
   color:var(--muted);
-  border-radius:8px;
-  font-weight:600;
+  border-radius:12px;
+  font-weight:700;
   font-size:14px;
   cursor:pointer;
-  transition:all .2s ease;
+  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing:.05em;
+  position:relative;
+  overflow:hidden;
+}
+
+.lang-toggle button::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg, transparent, rgba(212,175,55,.1), transparent);
+  transition:left .5s;
+}
+
+.lang-toggle button:hover::before{
+  left:100%;
 }
 
 .lang-toggle button.active{
-  background:var(--gold);
+  background:linear-gradient(135deg, var(--gold) 0%, #FFD700 100%);
   color:#000;
+  box-shadow:0 4px 20px var(--gold-glow),
+             0 0 0 1px rgba(212,175,55,.3);
+  transform:scale(1.02);
 }
 
 .card{
-  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
-  border:1px solid var(--line);
-  border-radius:22px;
-  padding:28px;
-  box-shadow:0 24px 60px rgba(0,0,0,.28);
-  margin-bottom:20px;
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  border-radius:24px;
+  padding:32px;
+  margin-bottom:24px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,.5),
+             0 0 0 1px rgba(212,175,55,.1);
+  transition:all .3s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:2px;
+  background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity:0;
+  transition:opacity .3s;
+}
+
+.card:hover::before{
+  opacity:1;
 }
 
 .label{
   color:var(--gold);
-  letter-spacing:.12em;
-  font-weight:700;
+  letter-spacing:.15em;
+  font-weight:800;
   font-size:11px;
-  margin-bottom:12px;
+  margin-bottom:16px;
   text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.label::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg, var(--gold), transparent);
+  opacity:.3;
 }
 
 textarea{
   width:100%;
-  min-height:140px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:var(--panel);
-  color:var(--text);
-  padding:16px;
+  min-height:160px;
+  border-radius:16px;
+  border:2px solid var(--line);
+  background:rgba(0,0,0,.4);
+  color:var(--text-bright);
+  padding:20px;
   font-size:16px;
+  line-height:1.7;
   resize:vertical;
   font-family:inherit;
-  line-height:1.6;
+  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter:blur(10px);
 }
 
 textarea:focus{
   outline:none;
   border-color:var(--gold);
-  box-shadow:0 0 0 3px rgba(214,178,94,.1);
+  background:rgba(0,0,0,.6);
+  box-shadow:0 0 0 4px var(--gold-glow),
+             0 8px 32px rgba(212,175,55,.2),
+             inset 0 0 20px rgba(212,175,55,.05);
+  transform:translateY(-2px);
+}
+
+textarea::placeholder{
+  color:var(--muted);
+  opacity:.6;
 }
 
 button.btn-primary{
   width:100%;
   text-align:center;
-  border-radius:12px;
-  padding:18px 24px;
-  margin-top:16px;
+  border-radius:16px;
+  padding:20px 32px;
+  margin-top:20px;
   font-weight:800;
-  letter-spacing:.04em;
-  transition:transform .15s ease, opacity .15s ease, background .15s ease;
+  letter-spacing:.08em;
+  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
   border:none;
   cursor:pointer;
   font-size:16px;
-  background:var(--gold);
+  background:linear-gradient(135deg, var(--gold) 0%, #FFD700 100%);
   color:#000;
+  box-shadow:0 8px 24px rgba(212,175,55,.3),
+             0 0 0 1px rgba(212,175,55,.2);
+  position:relative;
+  overflow:hidden;
+  text-transform:uppercase;
 }
 
-button.btn-primary:hover{opacity:.92}
-button.btn-primary:active{transform:scale(.985)}
+button.btn-primary::before{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:0;
+  height:0;
+  border-radius:50%;
+  background:rgba(255,255,255,.3);
+  transform:translate(-50%, -50%);
+  transition:width .6s, height .6s;
+}
+
+button.btn-primary:hover::before{
+  width:300px;
+  height:300px;
+}
+
+button.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 32px rgba(212,175,55,.4),
+             0 0 0 1px rgba(212,175,55,.3);
+}
+
+button.btn-primary:active{
+  transform:translateY(0);
+}
+
 button.btn-primary:disabled{
   opacity:.5;
   cursor:not-allowed;
+  transform:none;
 }
 
 .status{
-  margin-top:12px;
-  font-size:12px;
+  margin-top:16px;
+  font-size:13px;
   color:var(--muted);
-  min-height:18px;
+  min-height:20px;
   text-align:center;
+  font-weight:500;
+  letter-spacing:.05em;
+}
+
+.status.success{
+  color:var(--success);
+}
+
+.status.error{
+  color:var(--error);
 }
 
 .answer{
-  margin-top:18px;
-  padding:20px;
-  border-radius:12px;
-  background:var(--panel);
+  margin-top:20px;
+  padding:24px;
+  border-radius:16px;
+  background:rgba(0,0,0,.4);
   border:1px solid var(--line);
   white-space:pre-wrap;
-  font-size:16px;
+  font-size:17px;
   line-height:1.8;
-  min-height:80px;
+  min-height:100px;
+  color:var(--text-bright);
+  backdrop-filter:blur(10px);
+  transition:all .3s ease;
 }
 
 .answer.empty{
   color:var(--muted);
   font-style:italic;
-}
-
-.upgrade-section{
   text-align:center;
-  padding:24px;
-  margin-top:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.upgrade-section .label{
-  margin-bottom:16px;
+.answer:not(.empty){
+  border-color:var(--panel-border);
+  box-shadow:inset 0 0 20px rgba(212,175,55,.05);
 }
 
-.upgrade-buttons{
+.premium-gate{
+  margin-top:32px;
+  padding:28px;
+  background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%);
+  border:2px solid var(--gold);
+  border-radius:20px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.premium-gate::before{
+  content:"";
+  position:absolute;
+  top:-50%;
+  left:-50%;
+  width:200%;
+  height:200%;
+  background:radial-gradient(circle, rgba(212,175,55,.1) 0%, transparent 70%);
+  animation:premiumPulse 3s ease-in-out infinite;
+}
+
+@keyframes premiumPulse{
+  0%, 100%{ transform:scale(1); opacity:.5; }
+  50%{ transform:scale(1.1); opacity:.8; }
+}
+
+.premium-gate .label{
+  color:var(--gold);
+  font-size:13px;
+  margin-bottom:12px;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+}
+
+.premium-gate h3{
+  color:var(--text-bright);
+  font-size:20px;
+  font-weight:800;
+  margin:0 0 8px;
+  letter-spacing:.05em;
+}
+
+.premium-gate p{
+  color:var(--muted);
+  font-size:13px;
+  margin:0 0 20px;
+  line-height:1.6;
+}
+
+.premium-buttons{
   display:flex;
   gap:12px;
   flex-wrap:wrap;
   justify-content:center;
+  position:relative;
+  z-index:1;
 }
 
-.upgrade-buttons a{
+.premium-buttons a{
   display:inline-block;
-  padding:14px 28px;
-  border-radius:12px;
+  padding:16px 32px;
+  border-radius:14px;
   text-decoration:none;
-  font-weight:700;
+  font-weight:800;
   font-size:14px;
-  transition:transform .15s ease, opacity .15s ease;
-  letter-spacing:.04em;
+  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  position:relative;
+  overflow:hidden;
 }
 
-.upgrade-buttons a:hover{
-  opacity:.9;
-  transform:translateY(-2px);
+.premium-buttons a::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  transition:left .5s;
 }
 
-.btn-basic{
-  background:var(--gold);
+.premium-buttons a:hover::before{
+  left:100%;
+}
+
+.btn-premium{
+  background:linear-gradient(135deg, var(--gold) 0%, #FFD700 100%);
   color:#000;
+  box-shadow:0 8px 24px rgba(212,175,55,.4),
+             0 0 0 1px rgba(212,175,55,.3);
 }
 
-.btn-traveler{
+.btn-premium:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px rgba(212,175,55,.5),
+             0 0 0 1px rgba(212,175,55,.4);
+}
+
+.btn-premium-pro{
   background:transparent;
   color:var(--gold);
   border:2px solid var(--gold);
+  box-shadow:0 0 20px rgba(212,175,55,.2);
+}
+
+.btn-premium-pro:hover{
+  background:var(--gold);
+  color:#000;
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px rgba(212,175,55,.4);
+}
+
+.loading{
+  display:inline-block;
+  width:16px;
+  height:16px;
+  border:2px solid var(--muted);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin-right:8px;
+  vertical-align:middle;
+}
+
+@keyframes spin{
+  to{ transform:rotate(360deg); }
 }
 
 @media (max-width:640px){
-  .container{padding:22px 16px 44px}
-  .card{padding:22px}
-  .upgrade-buttons{
+  .container{padding:24px 16px 48px}
+  .card{padding:24px}
+  .premium-buttons{
     flex-direction:column;
   }
-  .upgrade-buttons a{
+  .premium-buttons a{
     width:100%;
   }
 }
@@ -222,8 +463,10 @@ button.btn-primary:disabled{
 <body>
 
 <div class="container">
-  <h1 class="hero-title">GLB - NEXT BASE 瞬間翻訳</h1>
-  <p class="hero-subtitle">15万語オフライン辞書 + AI翻訳</p>
+  <div class="hero-section">
+    <h1 class="hero-title">GLB v1.0</h1>
+    <p class="hero-subtitle">NEXT BASE 瞬間翻訳兵器</p>
+  </div>
 
   <div class="lang-toggle">
     <button id="lang-ja-en" class="active">日本語 → 英語</button>
@@ -233,7 +476,7 @@ button.btn-primary:disabled{
   <div class="card">
     <div class="label">INPUT</div>
     <textarea id="user-input" placeholder="翻訳したい文章を入力してください..."></textarea>
-    <button id="send-btn" class="btn-primary">翻訳</button>
+    <button id="send-btn" class="btn-primary">翻訳実行</button>
     <div id="status" class="status"></div>
   </div>
 
@@ -241,20 +484,21 @@ button.btn-primary:disabled{
     <div class="label">REPLY</div>
     <div id="answer" class="answer empty">翻訳結果がここに表示されます...</div>
     
-    <div class="upgrade-section">
-      <div class="label">UPGRADE</div>
-      <div class="upgrade-buttons">
-        <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-basic">GET BASIC ($1.99)</a>
-        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-traveler">GET TRAVELER ($7.99)</a>
+    <div class="premium-gate">
+      <div class="label">PREMIUM PASS</div>
+      <h3>世界の扉を開く</h3>
+      <p>Gemini Pro の高精度翻訳と無制限アクセスを解放</p>
+      <div class="premium-buttons">
+        <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium">BASIC $1.99</a>
+        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro">TRAVELER $7.99</a>
       </div>
-      <p style="margin-top:16px; font-size:12px; color:var(--muted);">アップグレードで Gemini Pro の高精度翻訳を解放</p>
     </div>
   </div>
 </div>
 
 <script>
 // 言語設定
-let currentLang = "ja-en"; // デフォルト: 日本語→英語
+let currentLang = "ja-en";
 
 // 内蔵簡易翻訳テーブル（フォールバック用）
 const fallbackDict = new Map([
@@ -270,50 +514,97 @@ const fallbackDict = new Map([
   ["good evening", "こんばんは"]
 ]);
 
-// 150k辞書
+// 150k辞書（検索インデックスとして常駐）
 let dict150k = null;
 let dictLoaded = false;
+let dictIndex = new Map(); // 高速検索用インデックス
 
-// ユーザー辞書（空の辞書）- 端末に保存
+// ユーザー辞書（オンデバイス）
 let userDict = new Map();
 
-// ユーザー辞書のロード（ローカルストレージから）
+// ユーザー辞書のロード
 function loadUserDict() {
   try {
     const stored = localStorage.getItem("glb_user_dict");
     if (stored) {
       const data = JSON.parse(stored);
       userDict = new Map(data);
-      console.log("User dictionary loaded:", userDict.size, "entries");
+      console.log("[オンデバイス辞書] 読み込み完了:", userDict.size, "語");
     }
   } catch (e) {
-    console.warn("Failed to load user dictionary:", e);
+    console.warn("ユーザー辞書読み込み失敗:", e);
   }
 }
 
-// ユーザー辞書に保存（端末にダウンロード・オンデバイス保存）
+// 150k辞書のロード（検索インデックスとして最適化）
+async function load150kDict() {
+  if (dictLoaded) return dict150k;
+  
+  try {
+    const res = await fetch("../../dictionary/150k.csv");
+    if (!res.ok) {
+      console.warn("150k.csv not found");
+      dictLoaded = true;
+      return null;
+    }
+    const text = await res.text();
+    const lines = text.split("\n");
+    
+    // 検索インデックスを構築
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const [source, target, from, to] = line.split(",");
+      if (!source || !target) continue;
+      
+      const key = `${from}-${to}:${source.trim().toLowerCase()}`;
+      dictIndex.set(key, target.trim());
+    }
+    
+    dictLoaded = true;
+    console.log("[150k辞書インデックス] 構築完了:", dictIndex.size, "語");
+    return dictIndex;
+  } catch (e) {
+    console.warn("150k辞書読み込み失敗:", e);
+    dictLoaded = true;
+    return null;
+  }
+}
+
+// 辞書検索（最適化済み）
+function searchDict(query, fromLang, toLang) {
+  const normalized = query.trim().toLowerCase();
+  const key = `${fromLang}-${toLang}:${normalized}`;
+  
+  // 1. ユーザー辞書（最優先）
+  if (userDict.has(key)) {
+    return { result: userDict.get(key), source: "user_dict" };
+  }
+  
+  // 2. 150k辞書インデックス
+  if (dictIndex.has(key)) {
+    return { result: dictIndex.get(key), source: "150k_dict" };
+  }
+  
+  // 3. フォールバック
+  const fallbackKey = fromLang === "ja" ? normalized : normalized;
+  if (fallbackDict.has(fallbackKey)) {
+    return { result: fallbackDict.get(fallbackKey), source: "fallback" };
+  }
+  
+  return null;
+}
+
+// ユーザー辞書に保存（オンデバイス）
 function saveToUserDict(source, target, fromLang, toLang) {
   try {
     const key = `${fromLang}-${toLang}:${source.trim().toLowerCase()}`;
-    const wasNew = !userDict.has(key);
     userDict.set(key, target.trim());
     
-    // オンデバイス（ローカルストレージ）に永続化
     const data = Array.from(userDict.entries());
     localStorage.setItem("glb_user_dict", JSON.stringify(data));
     
-    // 保存成功をログに記録
-    if (wasNew) {
-      console.log(`[オンデバイス保存] "${source}" → "${target}" (${fromLang}→${toLang})`);
-      console.log(`[ユーザー辞書] 現在のエントリ数: ${userDict.size}`);
-    }
-    
-    // API経由でバックエンドにも送信（オプション・非同期）
-    syncUserDictToAPI(source, target, fromLang, toLang).catch(e => {
-      // API同期失敗は無視（オンデバイス保存は成功している）
-      console.warn("API同期失敗（オンデバイス保存は成功）:", e);
-    });
-    
+    console.log(`[オンデバイス保存] "${source}" → "${target}"`);
     return true;
   } catch (e) {
     console.error("オンデバイス保存失敗:", e);
@@ -321,12 +612,11 @@ function saveToUserDict(source, target, fromLang, toLang) {
   }
 }
 
-// API経由でバックエンドに同期
+// API同期（非同期）
 async function syncUserDictToAPI(source, target, fromLang, toLang) {
   const API_SYNC_URL = "https://YOUR_BACKEND_ENDPOINT/api/user-dict";
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
-  // APIが設定されていない場合はスキップ
   if (API_SYNC_URL === "https://YOUR_BACKEND_ENDPOINT/api/user-dict") {
     return;
   }
@@ -347,118 +637,91 @@ async function syncUserDictToAPI(source, target, fromLang, toLang) {
       })
     });
   } catch (e) {
-    console.warn("Failed to sync to API:", e);
+    console.warn("API同期失敗:", e);
   }
 }
 
-// 150k辞書のロード
-async function load150kDict() {
-  if (dictLoaded) return dict150k;
+// Gemini翻訳（辞書データを組み込んだプロンプト）
+async function translateWithGemini(text, fromLang, toLang) {
+  const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
+  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
-  try {
-    const res = await fetch("../../dictionary/150k.csv");
-    if (!res.ok) {
-      console.warn("150k.csv not found, using fallback dictionary");
-      dictLoaded = true;
-      return null;
-    }
-    const text = await res.text();
-    const map = new Map();
-    const lines = text.split("\n");
-    
-    // ヘッダー行をスキップ
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const [source, target, from, to] = line.split(",");
-      if (!source || !target) continue;
-      
-      // 言語ペアごとに保存
-      const key = `${from}-${to}:${source.trim().toLowerCase()}`;
-      map.set(key, target.trim());
-    }
-    
-    dictLoaded = true;
-    console.log("150k dictionary loaded:", map.size, "entries");
-    return map;
-  } catch (e) {
-    console.warn("Failed to load 150k.csv:", e);
-    dictLoaded = true;
+  if (NE_GATEWAY_URL === "https://YOUR_BACKEND_ENDPOINT" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     return null;
   }
-}
+  
+  try {
+    // 150k辞書の関連エントリを取得（プロンプトに組み込む）
+    const dictContext = [];
+    const queryWords = text.toLowerCase().split(/\s+/);
+    let contextCount = 0;
+    
+    for (const [key, value] of dictIndex.entries()) {
+      if (contextCount >= 10) break; // 最大10エントリ
+      if (key.includes(`${fromLang}-${toLang}:`)) {
+        const dictWord = key.split(":")[1];
+        if (queryWords.some(w => dictWord.includes(w) || w.includes(dictWord))) {
+          dictContext.push(`${dictWord} → ${value}`);
+          contextCount++;
+        }
+      }
+    }
+    
+    const systemPrompt = `You are a professional translator with access to a 150,000-word dictionary. 
+Use the following dictionary entries as context for the best translation:
+${dictContext.length > 0 ? dictContext.join("\n") : "No direct matches, use your knowledge."}
 
-// 辞書検索（優先順位: ユーザー辞書 → 150k辞書 → フォールバック）
-function searchDict(query, fromLang, toLang) {
-  const normalized = query.trim().toLowerCase();
-  const key = `${fromLang}-${toLang}:${normalized}`;
-  
-  // 1. ユーザー辞書（空の辞書）を最優先で検索
-  if (userDict.has(key)) {
-    return userDict.get(key);
+Translate the following text from ${fromLang} to ${toLang} with natural, context-aware translation:`;
+    
+    const response = await fetch(NE_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": API_KEY
+      },
+      body: JSON.stringify({
+        prompt: `${systemPrompt}\n\n${text}`,
+        mode: "low_cost_0.08",
+        from: fromLang,
+        to: toLang
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.reply) {
+        // オンデバイスに保存
+        saveToUserDict(text, data.reply, fromLang, toLang);
+        syncUserDictToAPI(text, data.reply, fromLang, toLang);
+        return { reply: data.reply, source: "gemini" };
+      }
+    }
+  } catch (e) {
+    console.warn("Gemini API error:", e);
   }
-  
-  // 2. 150k辞書を検索
-  if (dict150k) {
-    const result = dict150k.get(key);
-    if (result) return result;
-  }
-  
-  // 3. フォールバック辞書を検索
-  const fallbackKey = fromLang === "ja" ? normalized : normalized;
-  const fallbackResult = fallbackDict.get(fallbackKey);
-  if (fallbackResult) return fallbackResult;
   
   return null;
 }
 
-// 翻訳実行（必ず何かを返す）
+// 翻訳実行
 async function translate(text, fromLang, toLang) {
-  // 1. 辞書検索（ユーザー辞書 → 150k辞書 → フォールバック）
+  // 1. 辞書検索（最優先）
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
-    // ユーザー辞書から見つかったかチェック
-    const key = `${fromLang}-${toLang}:${text.trim().toLowerCase()}`;
-    const source = userDict.has(key) ? "user_dict" : "150k_dict";
-    return { reply: dictResult, source: source };
+    return { reply: dictResult.result, source: dictResult.source };
   }
   
-  // 2. APIが設定されていればGemini経由
-  const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
-  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
-  
-  if (NE_GATEWAY_URL !== "https://YOUR_BACKEND_ENDPOINT" && API_KEY !== "YOUR_REAL_AUTHORIZED_KEY") {
-    try {
-      const response = await fetch(NE_GATEWAY_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-KEY": API_KEY
-        },
-        body: JSON.stringify({ prompt: text, mode: "low_cost_0.08", from: fromLang, to: toLang })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.reply) {
-          // API（Gemini）から返ってきた翻訳を確実にオンデバイス辞書に保存
-          const saved = saveToUserDict(text, data.reply, fromLang, toLang);
-          if (saved) {
-            console.log(`[API翻訳→オンデバイス保存完了] "${text}" → "${data.reply}"`);
-          }
-          return { reply: data.reply, source: "gemini", savedToDevice: saved };
-        }
-      }
-    } catch (e) {
-      console.warn("API error:", e);
-    }
+  // 2. Gemini API（辞書データ組み込み）
+  const geminiResult = await translateWithGemini(text, fromLang, toLang);
+  if (geminiResult) {
+    return geminiResult;
   }
   
-  // 3. フォールバック: 簡易メッセージ
+  // 3. フォールバック
   if (fromLang === "ja") {
-    return { reply: `[翻訳準備中] "${text}" の英語翻訳を準備しています。アップグレードで高精度翻訳を解放できます。`, source: "fallback" };
+    return { reply: `[System Reconnecting...] "${text}" の英語翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
   } else {
-    return { reply: `[翻訳準備中] "${text}" の日本語翻訳を準備しています。アップグレードで高精度翻訳を解放できます。`, source: "fallback" };
+    return { reply: `[System Reconnecting...] "${text}" の日本語翻訳を準備中です。PREMIUM PASSで高精度翻訳を解放できます。`, source: "fallback" };
   }
 }
 
@@ -491,7 +754,8 @@ async function handleSend() {
   if (!text) return;
 
   sendBtn.disabled = true;
-  statusEl.textContent = "翻訳中...";
+  statusEl.innerHTML = '<span class="loading"></span>翻訳中...';
+  statusEl.className = "status";
   answerEl.classList.add("empty");
   answerEl.textContent = "";
 
@@ -502,32 +766,26 @@ async function handleSend() {
     answerEl.textContent = result.reply;
     answerEl.classList.remove("empty");
     
-    // 翻訳結果をユーザー辞書に保存（150k辞書やフォールバックから取得した場合も）
+    const sourceNames = {
+      "user_dict": "あなたの辞書（オンデバイス）",
+      "150k_dict": "150k辞書",
+      "gemini": "Gemini Pro",
+      "fallback": "System Reconnecting..."
+    };
+    
+    statusEl.textContent = `✓ ${sourceNames[result.source] || "翻訳完了"}`;
+    statusEl.className = result.source === "fallback" ? "status error" : "status success";
+    
+    // 辞書から取得した場合も保存（次回最優先）
     if (result.source === "150k_dict" || result.source === "fallback") {
       saveToUserDict(text, result.reply, fromLang, toLang);
     }
-    
-    // API（Gemini）からの翻訳結果をオンデバイス辞書に保存
-    if (result.source === "gemini" && result.savedToDevice) {
-      // 既に保存済み（translate関数内で保存）
-      console.log("[オンデバイス保存確認] API翻訳結果を端末に保存しました");
-    } else if (result.source === "150k_dict" || result.source === "fallback") {
-      // 150k辞書やフォールバックからの結果も保存（次回から最優先）
-      saveToUserDict(text, result.reply, fromLang, toLang);
-    }
-    
-    const sourceNames = {
-      "user_dict": "あなたの辞書（オンデバイス）",
-      "150k_dict": "オフライン辞書",
-      "gemini": "Gemini AI → オンデバイス保存済み",
-      "fallback": "準備中"
-    };
-    statusEl.textContent = `✓ ${sourceNames[result.source] || "翻訳完了"}`;
   } catch (err) {
     console.error(err);
-    answerEl.textContent = "エラーが発生しました。もう一度お試しください。";
+    answerEl.textContent = "[System Error] エラーが発生しました。もう一度お試しください。";
     answerEl.classList.remove("empty");
-    statusEl.textContent = "エラー";
+    statusEl.textContent = "✗ エラー";
+    statusEl.className = "status error";
   } finally {
     sendBtn.disabled = false;
   }
@@ -541,26 +799,15 @@ inputEl.addEventListener("keydown", (e) => {
   }
 });
 
-// 初期化: ユーザー辞書（オンデバイス）と150k辞書をロード
+// 初期化
 loadUserDict();
-load150kDict().then(map => {
-  dict150k = map;
-  if (map) {
-    const userCount = userDict.size;
-    if (userCount > 0) {
-      statusEl.textContent = `✓ 15万語辞書 + あなたの辞書(${userCount}語・オンデバイス)を読み込みました`;
-      console.log(`[オンデバイス辞書] ${userCount}語の翻訳履歴を読み込みました`);
-    } else {
-      statusEl.textContent = "✓ 15万語辞書を読み込みました";
-    }
+load150kDict().then(() => {
+  const userCount = userDict.size;
+  if (dictIndex.size > 0) {
+    statusEl.textContent = `✓ 150k辞書インデックス + あなたの辞書(${userCount}語) 準備完了`;
+    statusEl.className = "status success";
   } else {
-    const userCount = userDict.size;
-    if (userCount > 0) {
-      statusEl.textContent = `簡易辞書モード + あなたの辞書(${userCount}語・オンデバイス)`;
-      console.log(`[オンデバイス辞書] ${userCount}語の翻訳履歴を読み込みました`);
-    } else {
-      statusEl.textContent = "簡易辞書モード";
-    }
+    statusEl.textContent = userCount > 0 ? `簡易辞書 + あなたの辞書(${userCount}語)` : "簡易辞書モード";
   }
 });
 </script>
