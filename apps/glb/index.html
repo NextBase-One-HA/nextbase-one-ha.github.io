@@ -3622,6 +3622,213 @@ upgradeModal.addEventListener("click", (e) => {
   }
 });
 
+// 感染力強化: 紹介コード生成（ユーザー固有のコード）
+function generateReferralCode() {
+  // ユーザーIDを生成（localStorageから取得、なければ新規生成）
+  let userId = localStorage.getItem('glb_user_id');
+  if (!userId) {
+    userId = 'GLB' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+    localStorage.setItem('glb_user_id', userId);
+  }
+  return userId;
+}
+
+// 感染力強化: シェア機能（自然に拡散させる）
+const shareUrl = 'https://nextbase-one-ha.github.io/apps/glb/';
+const shareText = 'GLB（Global Language Breaker）で旅行の言語の壁を破壊！150k辞書 + AI翻訳で、どこでも安心。';
+
+// Twitterシェア
+if (shareTwitterBtn) {
+  shareTwitterBtn.addEventListener("click", () => {
+    const referralCode = generateReferralCode();
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText + ' 紹介コード: ' + referralCode)}&url=${encodeURIComponent(shareUrl + '?ref=' + referralCode)}`;
+    window.open(url, '_blank', 'width=550,height=420');
+    
+    // シェア報酬（依存性強化）
+    recordShareAction('twitter');
+  });
+}
+
+// Facebookシェア
+if (shareFacebookBtn) {
+  shareFacebookBtn.addEventListener("click", () => {
+    const referralCode = generateReferralCode();
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl + '?ref=' + referralCode)}&quote=${encodeURIComponent(shareText + ' 紹介コード: ' + referralCode)}`;
+    window.open(url, '_blank', 'width=550,height=420');
+    
+    recordShareAction('facebook');
+  });
+}
+
+// LINEシェア
+if (shareLineBtn) {
+  shareLineBtn.addEventListener("click", () => {
+    const referralCode = generateReferralCode();
+    const url = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl + '?ref=' + referralCode)}&text=${encodeURIComponent(shareText + ' 紹介コード: ' + referralCode)}`;
+    window.open(url, '_blank');
+    
+    recordShareAction('line');
+  });
+}
+
+// リンクをコピー
+if (shareCopyBtn) {
+  shareCopyBtn.addEventListener("click", () => {
+    const referralCode = generateReferralCode();
+    const fullUrl = shareUrl + '?ref=' + referralCode;
+    
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      shareCopyBtn.textContent = '✓ コピー完了';
+      shareCopyBtn.style.background = 'var(--success)';
+      setTimeout(() => {
+        shareCopyBtn.textContent = '📋 リンクをコピー';
+        shareCopyBtn.style.background = '';
+      }, 2000);
+    }).catch(() => {
+      // フォールバック
+      const textarea = document.createElement('textarea');
+      textarea.value = fullUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      shareCopyBtn.textContent = '✓ コピー完了';
+      shareCopyBtn.style.background = 'var(--success)';
+      setTimeout(() => {
+        shareCopyBtn.textContent = '📋 リンクをコピー';
+        shareCopyBtn.style.background = '';
+      }, 2000);
+    });
+    
+    recordShareAction('copy');
+  });
+}
+
+// 紹介コード表示（依存性強化: ユーザーに自分のコードを見せる）
+function displayReferralCode() {
+  const referralCode = generateReferralCode();
+  if (referralCodeEl) {
+    referralCodeEl.textContent = referralCode;
+  }
+  if (referralCodeDisplay) {
+    referralCodeDisplay.style.display = 'block';
+  }
+}
+
+// シェア報酬記録（依存性強化: シェアした回数を記録）
+function recordShareAction(platform) {
+  const shareStats = JSON.parse(localStorage.getItem('glb_share_stats') || '{}');
+  shareStats[platform] = (shareStats[platform] || 0) + 1;
+  shareStats.total = (shareStats.total || 0) + 1;
+  shareStats.lastShare = Date.now();
+  localStorage.setItem('glb_share_stats', JSON.stringify(shareStats));
+  
+  // シェア報酬（依存性強化: シェアすると特典）
+  if (shareStats.total === 1) {
+    // 初回シェア: 特別報酬
+    alert('🎉 初回シェアありがとう！\n\n友達が紹介コードで登録すると、お互いに特典がもらえます。');
+  } else if (shareStats.total % 5 === 0) {
+    // 5回シェアごとに報酬
+    alert(`🎉 ${shareStats.total}回シェア達成！\n\nありがとうございます。友達が紹介コードで登録すると、お互いに特典がもらえます。`);
+  }
+  
+  // 紹介コードを表示（依存性強化）
+  displayReferralCode();
+}
+
+// 紹介コードでアクセスした場合の処理（感染力強化）
+function checkReferralCode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const refCode = urlParams.get('ref');
+  
+  if (refCode) {
+    // 紹介コードでアクセスした場合
+    const referredBy = localStorage.getItem('glb_referred_by');
+    if (!referredBy) {
+      // 初回のみ記録
+      localStorage.setItem('glb_referred_by', refCode);
+      localStorage.setItem('glb_referred_at', Date.now().toString());
+      
+      // 紹介者に報酬（依存性強化）
+      alert(`🎉 紹介コード「${refCode}」で登録しました！\n\n紹介者とあなたの両方に特典がもらえます。`);
+      
+      // 紹介コードを表示（依存性強化）
+      displayReferralCode();
+    }
+  }
+}
+
+// 依存性強化: 毎日ログインボーナス（毎日使いたくなる）
+function checkDailyLogin() {
+  const lastLogin = localStorage.getItem('glb_last_login');
+  const today = new Date().toDateString();
+  
+  if (lastLogin !== today) {
+    // 今日初めてのログイン
+    localStorage.setItem('glb_last_login', today);
+    
+    const loginStreak = parseInt(localStorage.getItem('glb_login_streak') || '0') + 1;
+    localStorage.setItem('glb_login_streak', loginStreak.toString());
+    
+    // ログインストリーク表示（依存性強化）
+    if (loginStreak > 1) {
+      const streakNotification = document.createElement("div");
+      streakNotification.style.cssText = `
+        position:fixed; top:20px; right:20px; 
+        z-index:10003; background:var(--gold); color:#000; 
+        padding:12px 20px; border-radius:8px; font-size:12px; font-weight:700;
+        box-shadow:0 4px 12px rgba(212,175,55,.4);
+      `;
+      streakNotification.innerHTML = `🔥 ${loginStreak}日連続ログイン！`;
+      document.body.appendChild(streakNotification);
+      
+      setTimeout(() => {
+        if (document.body.contains(streakNotification)) {
+          document.body.removeChild(streakNotification);
+        }
+      }, 3000);
+    }
+  }
+}
+
+// 依存性強化: 使用統計表示（自分がどれだけ使ったか見せる）
+function showUsageStats() {
+  const shareStats = JSON.parse(localStorage.getItem('glb_share_stats') || '{}');
+  const loginStreak = parseInt(localStorage.getItem('glb_login_streak') || '0');
+  const totalTranslations = history.length;
+  
+  const statsText = `
+📊 あなたのGLB統計
+
+【使用状況】
+総翻訳数: ${totalTranslations}回
+連続ログイン: ${loginStreak}日
+シェア回数: ${shareStats.total || 0}回
+
+【紹介コード】
+${generateReferralCode()}
+
+友達がこのコードで登録すると、お互いに特典がもらえます！
+  `;
+  
+  alert(statsText);
+}
+
+// 依存性強化: 使用統計ボタン（毎日見たくなる）
+const usageStatsBtn = document.createElement("button");
+usageStatsBtn.className = "icon-btn";
+usageStatsBtn.style.cssText = "position:fixed; bottom:20px; right:20px; width:56px; height:56px; border-radius:50%; background:var(--gold); color:#000; font-size:20px; font-weight:700; box-shadow:0 4px 12px rgba(212,175,55,.4); z-index:1000; cursor:pointer; border:none;";
+usageStatsBtn.textContent = "📊";
+usageStatsBtn.title = "使用統計を見る";
+usageStatsBtn.addEventListener("click", showUsageStats);
+document.body.appendChild(usageStatsBtn);
+
+// 初期化: 紹介コードチェック、毎日ログインチェック
+checkReferralCode();
+checkDailyLogin();
+displayReferralCode(); // 紹介コードを表示（依存性強化）
+
 // パフォーマンス統計表示
 performanceStatsBtn.addEventListener("click", () => {
   const stats = getPerformanceStats();
