@@ -704,6 +704,23 @@ button.btn-primary:disabled{
   </div>
 
   <div class="card">
+    <div class="label">API使用量管理</div>
+    <div id="api-usage-display" style="margin-bottom:16px;"></div>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <button class="icon-btn" id="set-plan-basic" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'BASIC' ? 'background:var(--gold); color:#000;' : ''}">
+        BASIC ($1.99/月)
+      </button>
+      <button class="icon-btn" id="set-plan-traveler" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'TRAVELER' ? 'background:var(--gold); color:#000;' : ''}">
+        TRAVELER ($7.99/月)
+      </button>
+    </div>
+    <p style="font-size:11px; color:var(--muted); text-align:center; margin:0;">
+      BASIC: 月間$0.12相当 / TRAVELER: 月間$1.99相当<br>
+      使用量を上手く分配して使用してください
+    </p>
+  </div>
+
+  <div class="card">
     <div class="label">NEゲートウェイ設定</div>
     <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
       Windows側の安定版NEゲートウェイURLとAPIキーを設定してください
@@ -732,6 +749,23 @@ let synth = window.speechSynthesis;
 // 履歴管理
 let history = [];
 
+// API使用量管理（月間クォータ）
+const API_QUOTA = {
+  BASIC: 0.12,    // $1.99プラン: 月間$0.12相当
+  TRAVELER: 1.99  // $7.99プラン: 月間$1.99相当
+};
+
+// API使用量の推定（1回あたりのコスト）
+const API_COST_PER_REQUEST = 0.001; // 1リクエストあたり$0.001と仮定（実際の値に調整）
+
+let userPlan = "BASIC"; // デフォルト: BASIC
+let monthlyUsage = {
+  currentMonth: new Date().getMonth(),
+  currentYear: new Date().getFullYear(),
+  used: 0, // 使用量（ドル）
+  requests: 0 // リクエスト数
+};
+
 // 内蔵簡易GLBテーブル
 const fallbackDict = new Map([
   ["おはよう", "Good morning"],
@@ -757,6 +791,99 @@ let userDict = new Map();
 // GLBシリーズ標準データ構造
 const GLB_SERIES_KEY = "glb_series_data";
 const GLB_DATA_VERSION = "1.0";
+
+// ユーザープランとAPI使用量のロード
+function loadUserPlanAndUsage() {
+  try {
+    // ユーザープラン
+    const storedPlan = localStorage.getItem("glb_user_plan");
+    if (storedPlan) {
+      userPlan = storedPlan;
+    }
+    
+    // 月間使用量
+    const storedUsage = localStorage.getItem("glb_api_usage");
+    if (storedUsage) {
+      const data = JSON.parse(storedUsage);
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      // 月が変わったらリセット
+      if (data.currentMonth !== currentMonth || data.currentYear !== currentYear) {
+        monthlyUsage = {
+          currentMonth: currentMonth,
+          currentYear: currentYear,
+          used: 0,
+          requests: 0
+        };
+        saveUserPlanAndUsage();
+      } else {
+        monthlyUsage = data;
+      }
+    }
+    
+    console.log(`[API使用量] プラン: ${userPlan}, 今月の使用量: $${monthlyUsage.used.toFixed(4)} / $${API_QUOTA[userPlan]}`);
+  } catch (e) {
+    console.warn("ユーザープラン・使用量読み込み失敗:", e);
+  }
+}
+
+// ユーザープランとAPI使用量の保存
+function saveUserPlanAndUsage() {
+  try {
+    localStorage.setItem("glb_user_plan", userPlan);
+    localStorage.setItem("glb_api_usage", JSON.stringify(monthlyUsage));
+  } catch (e) {
+    console.error("ユーザープラン・使用量保存失敗:", e);
+  }
+}
+
+// API使用量を記録
+function recordAPIUsage() {
+  monthlyUsage.used += API_COST_PER_REQUEST;
+  monthlyUsage.requests += 1;
+  saveUserPlanAndUsage();
+  updateUsageDisplay();
+}
+
+// API使用量が上限内かチェック
+function checkAPIQuota() {
+  const quota = API_QUOTA[userPlan];
+  const remaining = quota - monthlyUsage.used;
+  const usagePercent = (monthlyUsage.used / quota) * 100;
+  
+  return {
+    canUse: remaining > API_COST_PER_REQUEST,
+    remaining: remaining,
+    usagePercent: usagePercent,
+    quota: quota
+  };
+}
+
+// 使用量表示の更新
+function updateUsageDisplay() {
+  const quotaInfo = checkAPIQuota();
+  const usageEl = document.getElementById("api-usage-display");
+  if (usageEl) {
+    usageEl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+        <span style="font-size:12px; color:var(--muted);">今月の使用量</span>
+        <span style="font-size:12px; color:var(--muted);">${userPlan} プラン</span>
+      </div>
+      <div style="background:rgba(0,0,0,.3); border-radius:8px; height:8px; margin-bottom:8px; overflow:hidden;">
+        <div style="background:${quotaInfo.usagePercent > 80 ? 'var(--error)' : quotaInfo.usagePercent > 60 ? 'var(--gold)' : 'var(--success)'}; height:100%; width:${Math.min(quotaInfo.usagePercent, 100)}%; transition:width .3s;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px;">
+        <span style="color:var(--muted);">$${monthlyUsage.used.toFixed(4)} / $${quotaInfo.quota.toFixed(2)}</span>
+        <span style="color:${quotaInfo.remaining < 0.01 ? 'var(--error)' : 'var(--muted)'};">
+          ${quotaInfo.remaining > 0 ? `残り $${quotaInfo.remaining.toFixed(4)}` : '上限到達'}
+        </span>
+      </div>
+      ${quotaInfo.usagePercent > 80 ? `<p style="margin-top:8px; font-size:11px; color:var(--error); text-align:center;">⚠️ 使用量が上限に近づいています</p>` : ''}
+    `;
+  }
+}
 
 // 初回ダウンロード時に空の辞書を初期化
 function initializeEmptyDict() {
@@ -1066,6 +1193,21 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
     return null;
   }
   
+  // API使用量クォータチェック
+  const quotaInfo = checkAPIQuota();
+  if (!quotaInfo.canUse) {
+    if (updateStatus) {
+      updateStatus(`月間使用量上限到達 (${userPlan}プラン: $${quotaInfo.quota.toFixed(2)})`);
+    }
+    console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
+    return null;
+  }
+  
+  // 使用量が80%を超えている場合は警告
+  if (quotaInfo.usagePercent > 80 && updateStatus) {
+    updateStatus(`使用量警告: ${quotaInfo.usagePercent.toFixed(1)}%使用中 (残り $${quotaInfo.remaining.toFixed(4)})`);
+  }
+  
   try {
     if (updateStatus) {
       updateStatus("GLBしています...");
@@ -1112,6 +1254,8 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
     if (response.ok) {
       const data = await response.json();
       if (data && data.reply) {
+        // API使用量を記録（上手く分配して使う）
+        recordAPIUsage();
         // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
         return { reply: data.reply, source: "gemini" };
       }
@@ -1230,6 +1374,8 @@ const favoriteBtn = document.getElementById("favorite");
 const exportDictBtn = document.getElementById("export-dict");
 const importDictInput = document.getElementById("import-dict-input");
 const testGatewayBtn = document.getElementById("test-gateway");
+const setPlanBasicBtn = document.getElementById("set-plan-basic");
+const setPlanTravelerBtn = document.getElementById("set-plan-traveler");
 
 // 言語切り替え
 langFrom.addEventListener("change", () => {
@@ -1391,6 +1537,27 @@ importDictInput.addEventListener("change", (e) => {
   }
 });
 
+// プラン設定
+setPlanBasicBtn.addEventListener("click", () => {
+  userPlan = "BASIC";
+  saveUserPlanAndUsage();
+  updateUsageDisplay();
+  setPlanBasicBtn.style.background = "var(--gold)";
+  setPlanBasicBtn.style.color = "#000";
+  setPlanTravelerBtn.style.background = "";
+  setPlanTravelerBtn.style.color = "";
+});
+
+setPlanTravelerBtn.addEventListener("click", () => {
+  userPlan = "TRAVELER";
+  saveUserPlanAndUsage();
+  updateUsageDisplay();
+  setPlanTravelerBtn.style.background = "var(--gold)";
+  setPlanTravelerBtn.style.color = "#000";
+  setPlanBasicBtn.style.background = "";
+  setPlanBasicBtn.style.color = "";
+});
+
 // NEゲートウェイ接続テスト
 testGatewayBtn.addEventListener("click", async () => {
   testGatewayBtn.disabled = true;
@@ -1407,6 +1574,7 @@ testGatewayBtn.addEventListener("click", async () => {
 
 // 初期化
 initializeEmptyDict(); // 初回ダウンロード時に空の辞書を初期化
+loadUserPlanAndUsage(); // ユーザープランとAPI使用量をロード
 loadUserDict();
 loadHistory();
 load150kDict().then(() => {
@@ -1417,6 +1585,7 @@ load150kDict().then(() => {
   } else {
     statusEl.textContent = userCount > 0 ? `簡易辞書 + あなたの辞書(${userCount}語)` : "簡易辞書モード";
   }
+  updateUsageDisplay(); // API使用量表示を更新
 });
 </script>
 
