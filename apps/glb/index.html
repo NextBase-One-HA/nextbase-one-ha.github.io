@@ -838,16 +838,22 @@ function saveToUserDict(source, target, fromLang, toLang) {
   }
 }
 
-// Gemini GLB
-async function translateWithGemini(text, fromLang, toLang) {
+// Gemini GLB（NEゲートウェイ接続）
+async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   const NE_GATEWAY_URL = "https://YOUR_BACKEND_ENDPOINT";
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
   if (NE_GATEWAY_URL === "https://YOUR_BACKEND_ENDPOINT" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+    if (updateStatus) {
+      updateStatus("API未設定 - オンデバイス辞書のみ使用中");
+    }
     return null;
   }
   
   try {
+    if (updateStatus) {
+      updateStatus("GLBしています...");
+    }
     const dictContext = [];
     const queryWords = text.toLowerCase().split(/\s+/);
     let contextCount = 0;
@@ -869,6 +875,10 @@ ${dictContext.length > 0 ? dictContext.join("\n") : "No direct matches, use your
 
 GLB the following text from ${fromLang} to ${toLang} with natural, context-aware GLB:`;
     
+    if (updateStatus) {
+      updateStatus("ちょっと待ってね...");
+    }
+    
     const response = await fetch(NE_GATEWAY_URL, {
       method: "POST",
       headers: {
@@ -886,29 +896,54 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
     if (response.ok) {
       const data = await response.json();
       if (data && data.reply) {
-        saveToUserDict(text, data.reply, fromLang, toLang);
+        // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
         return { reply: data.reply, source: "gemini" };
+      }
+    } else {
+      if (updateStatus) {
+        updateStatus("NEゲートウェイ接続エラー");
       }
     }
   } catch (e) {
     console.warn("Gemini API error:", e);
+    if (updateStatus) {
+      updateStatus("接続エラー - もう一度お試しください");
+    }
   }
   
   return null;
 }
 
-// GLB実行
-async function translate(text, fromLang, toLang) {
+// GLB実行（オンデバイス辞書最優先 → NEゲートウェイ接続）
+async function translate(text, fromLang, toLang, updateStatus) {
+  // 1. オンデバイス辞書を最初に確認
+  if (updateStatus) {
+    updateStatus("オンデバイス辞書を確認しています...");
+    await new Promise(resolve => setTimeout(resolve, 300)); // ユーザーに確認中を表示
+  }
+  
   const dictResult = searchDict(text, fromLang, toLang);
   if (dictResult) {
+    // オンデバイス辞書で見つかった
     return { reply: dictResult.result, source: dictResult.source };
   }
   
-  const geminiResult = await translateWithGemini(text, fromLang, toLang);
+  // 2. オンデバイス辞書にない場合、NEゲートウェイ接続
+  if (updateStatus) {
+    updateStatus("探しています...");
+    await new Promise(resolve => setTimeout(resolve, 200));
+    updateStatus("NEゲートウェイに接続中...");
+  }
+  
+  const geminiResult = await translateWithGemini(text, fromLang, toLang, updateStatus);
   if (geminiResult) {
+    // API翻訳結果をオンデバイス辞書に保存（空の辞書に記録）
+    saveToUserDict(text, geminiResult.reply, fromLang, toLang);
+    console.log(`[オンデバイス辞書に記録] "${text}" → "${geminiResult.reply}"`);
     return geminiResult;
   }
   
+  // 3. フォールバック
   if (fromLang === "ja") {
     return { reply: `[System Reconnecting...] "${text}" のGLBを準備中です。PREMIUM PASSで高精度GLBを解放できます。`, source: "fallback" };
   } else {
@@ -1027,14 +1062,19 @@ async function handleSend() {
   if (!text) return;
 
   sendBtn.disabled = true;
-  statusEl.innerHTML = '<span class="loading"></span>GLB中...';
   statusEl.className = "status";
   answerEl.classList.add("empty");
   answerEl.textContent = "";
   answerActions.style.display = "none";
 
+  // ステータス更新関数
+  const updateStatus = (message) => {
+    statusEl.innerHTML = `<span class="loading"></span>${message}`;
+  };
+
   try {
-    const result = await translate(text, currentFromLang, currentToLang);
+    // translate関数にステータス更新関数を渡す
+    const result = await translate(text, currentFromLang, currentToLang, updateStatus);
     
     answerEl.textContent = result.reply;
     answerEl.classList.remove("empty");
@@ -1043,15 +1083,17 @@ async function handleSend() {
     const sourceNames = {
       "user_dict": "あなたの辞書（オンデバイス）",
       "150k_dict": "150k辞書",
-      "gemini": "Gemini Pro",
+      "gemini": "Gemini Pro（オンデバイス辞書に記録済み）",
       "fallback": "System Reconnecting..."
     };
     
     statusEl.textContent = `✓ ${sourceNames[result.source] || "GLB完了"}`;
     statusEl.className = result.source === "fallback" ? "status error" : "status success";
     
+    // 履歴に保存
     saveHistory(text, result.reply, currentFromLang, currentToLang);
     
+    // 150k辞書やフォールバックから取得した場合もオンデバイス辞書に保存
     if (result.source === "150k_dict" || result.source === "fallback") {
       saveToUserDict(text, result.reply, currentFromLang, currentToLang);
     }
