@@ -291,20 +291,33 @@ function loadUserDict() {
   }
 }
 
-// ユーザー辞書に保存（端末にダウンロード）
+// ユーザー辞書に保存（端末にダウンロード・オンデバイス保存）
 function saveToUserDict(source, target, fromLang, toLang) {
   try {
     const key = `${fromLang}-${toLang}:${source.trim().toLowerCase()}`;
+    const wasNew = !userDict.has(key);
     userDict.set(key, target.trim());
     
-    // ローカルストレージに保存
+    // オンデバイス（ローカルストレージ）に永続化
     const data = Array.from(userDict.entries());
     localStorage.setItem("glb_user_dict", JSON.stringify(data));
     
-    // API経由でバックエンドにも送信（オプション）
-    syncUserDictToAPI(source, target, fromLang, toLang);
+    // 保存成功をログに記録
+    if (wasNew) {
+      console.log(`[オンデバイス保存] "${source}" → "${target}" (${fromLang}→${toLang})`);
+      console.log(`[ユーザー辞書] 現在のエントリ数: ${userDict.size}`);
+    }
+    
+    // API経由でバックエンドにも送信（オプション・非同期）
+    syncUserDictToAPI(source, target, fromLang, toLang).catch(e => {
+      // API同期失敗は無視（オンデバイス保存は成功している）
+      console.warn("API同期失敗（オンデバイス保存は成功）:", e);
+    });
+    
+    return true;
   } catch (e) {
-    console.warn("Failed to save to user dictionary:", e);
+    console.error("オンデバイス保存失敗:", e);
+    return false;
   }
 }
 
@@ -428,9 +441,12 @@ async function translate(text, fromLang, toLang) {
       if (response.ok) {
         const data = await response.json();
         if (data && data.reply) {
-          // APIから返ってきた翻訳をユーザー辞書に保存
-          saveToUserDict(text, data.reply, fromLang, toLang);
-          return { reply: data.reply, source: "gemini" };
+          // API（Gemini）から返ってきた翻訳を確実にオンデバイス辞書に保存
+          const saved = saveToUserDict(text, data.reply, fromLang, toLang);
+          if (saved) {
+            console.log(`[API翻訳→オンデバイス保存完了] "${text}" → "${data.reply}"`);
+          }
+          return { reply: data.reply, source: "gemini", savedToDevice: saved };
         }
       }
     } catch (e) {
@@ -491,10 +507,19 @@ async function handleSend() {
       saveToUserDict(text, result.reply, fromLang, toLang);
     }
     
+    // API（Gemini）からの翻訳結果をオンデバイス辞書に保存
+    if (result.source === "gemini" && result.savedToDevice) {
+      // 既に保存済み（translate関数内で保存）
+      console.log("[オンデバイス保存確認] API翻訳結果を端末に保存しました");
+    } else if (result.source === "150k_dict" || result.source === "fallback") {
+      // 150k辞書やフォールバックからの結果も保存（次回から最優先）
+      saveToUserDict(text, result.reply, fromLang, toLang);
+    }
+    
     const sourceNames = {
-      "user_dict": "あなたの辞書",
+      "user_dict": "あなたの辞書（オンデバイス）",
       "150k_dict": "オフライン辞書",
-      "gemini": "Gemini AI",
+      "gemini": "Gemini AI → オンデバイス保存済み",
       "fallback": "準備中"
     };
     statusEl.textContent = `✓ ${sourceNames[result.source] || "翻訳完了"}`;
@@ -516,21 +541,23 @@ inputEl.addEventListener("keydown", (e) => {
   }
 });
 
-// 初期化: ユーザー辞書と150k辞書をロード
+// 初期化: ユーザー辞書（オンデバイス）と150k辞書をロード
 loadUserDict();
 load150kDict().then(map => {
   dict150k = map;
   if (map) {
     const userCount = userDict.size;
     if (userCount > 0) {
-      statusEl.textContent = `✓ 15万語辞書 + あなたの辞書(${userCount}語)を読み込みました`;
+      statusEl.textContent = `✓ 15万語辞書 + あなたの辞書(${userCount}語・オンデバイス)を読み込みました`;
+      console.log(`[オンデバイス辞書] ${userCount}語の翻訳履歴を読み込みました`);
     } else {
       statusEl.textContent = "✓ 15万語辞書を読み込みました";
     }
   } else {
     const userCount = userDict.size;
     if (userCount > 0) {
-      statusEl.textContent = `簡易辞書モード + あなたの辞書(${userCount}語)`;
+      statusEl.textContent = `簡易辞書モード + あなたの辞書(${userCount}語・オンデバイス)`;
+      console.log(`[オンデバイス辞書] ${userCount}語の翻訳履歴を読み込みました`);
     } else {
       statusEl.textContent = "簡易辞書モード";
     }
