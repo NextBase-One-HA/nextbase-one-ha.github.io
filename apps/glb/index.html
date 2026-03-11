@@ -2142,9 +2142,10 @@ async function getSceneGuide(scene, fromLang, toLang) {
   
   // 2. AI（API）でガイドを取得
   const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
-  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  // Caller ID: "noir" → NB_GATE_NOIR キーを使用
+  const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
-  if (NE_GATEWAY_URL !== "http://192.168.1.25:3000" && API_KEY !== "YOUR_REAL_AUTHORIZED_KEY") {
+  if (NE_GATEWAY_URL !== "http://192.168.1.25:3000" && API_KEY !== "YOUR_NB_GATE_NOIR_KEY_HERE") {
     try {
       const sceneNames = {
         restaurant: "レストラン",
@@ -2198,9 +2199,10 @@ async function getWordExplanation(word, fromLang, toLang) {
   
   // 2. AI（API）で説明を取得
   const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
-  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  // Caller ID: "noir" → NB_GATE_NOIR キーを使用
+  const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
-  if (NE_GATEWAY_URL !== "http://192.168.1.25:3000" && API_KEY !== "YOUR_REAL_AUTHORIZED_KEY") {
+  if (NE_GATEWAY_URL !== "http://192.168.1.25:3000" && API_KEY !== "YOUR_NB_GATE_NOIR_KEY_HERE") {
     try {
       const response = await fetch(NE_GATEWAY_URL, {
         method: "POST",
@@ -2877,12 +2879,14 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   // ポートは環境変数PORTで変更可能（デフォルト: 3000）
   const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
   
-  // ★Windows側のAPIキーを設定してください
-  // Windows側のkey.txtファイルの内容をここに設定
-  // 例: "your-windows-api-key-from-key.txt"
-  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  // ★Caller ID別のAPIキー設定
+  // GLBアプリは "noir" を使用 → NB_GATE_NOIR キーが必要
+  // その他のCaller ID: "admin" → NB_GATE_ADMIN, "dev" → NB_GATE_DEV, "prod" → NB_GATE_PROD
+  // info@nextbaseのアカウント（事務長モトイ）のキーを使用
+  // キーはすでに打ち込んである（環境変数またはlocalStorageから取得）
+  const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
-  if (API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+  if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     if (updateStatus) {
       updateStatus("API未設定 - Windows側APIキーを設定してください (URL: http://192.168.1.25:3000 設定済み)");
     }
@@ -3062,10 +3066,11 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
 // NEゲートウェイ接続テスト（Windows側 - 最新版 v2.6）
 async function testGatewayConnection() {
   const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
-  const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
+  // Caller ID: "noir" → NB_GATE_NOIR キーを使用
+  const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
-  if (API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    alert("Windows側のAPIキーを設定してください\n\nNEゲートウェイURL: http://192.168.1.25:3000 (設定済み)\nWindows側のkey.txtファイルの内容をAPI_KEYに設定してください");
+  if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
+    alert("NB_GATE_NOIRキーを設定してください\n\nNEゲートウェイURL: http://192.168.1.25:3000 (設定済み)\nCaller ID: noir → NB_GATE_NOIRキーが必要\ninfo@nextbaseのアカウント（事務長モトイ）のキーを使用");
     return false;
   }
   
