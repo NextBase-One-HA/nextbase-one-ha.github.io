@@ -2152,7 +2152,7 @@ async function getSceneGuide(scene, fromLang, toLang) {
   // Caller ID: "noir" → NB_GATE_NOIR キーを使用
   const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
-  if (NE_GATEWAY_URL !== "http://192.168.1.25:3000" && API_KEY !== "YOUR_NB_GATE_NOIR_KEY_HERE") {
+  if (NE_GATEWAY_URL !== "http://127.0.0.1:3000" && API_KEY !== "YOUR_NB_GATE_NOIR_KEY_HERE") {
     try {
       const sceneNames = {
         restaurant: "レストラン",
@@ -2209,7 +2209,7 @@ async function getWordExplanation(word, fromLang, toLang) {
   // Caller ID: "noir" → NB_GATE_NOIR キーを使用
   const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
-  if (NE_GATEWAY_URL !== "http://192.168.1.25:3000" && API_KEY !== "YOUR_NB_GATE_NOIR_KEY_HERE") {
+  if (NE_GATEWAY_URL !== "http://127.0.0.1:3000" && API_KEY !== "YOUR_NB_GATE_NOIR_KEY_HERE") {
     try {
       const response = await fetch(NE_GATEWAY_URL, {
         method: "POST",
@@ -2881,10 +2881,10 @@ function importDictionary(file) {
 
 // Gemini GLB（NEゲートウェイ接続 - Windows側ゲートウェイ）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
-  // ★Windows側のNEゲートウェイURL（最新版 v2.6 - デフォルトポート3000）
-  // Windows側のIPアドレスを確認: Windowsのターミナルで "ipconfig" を実行
+  // ★Mac側のNEゲートウェイURL（最新版 v2.6 - デフォルトポート3000）
+  // Mac側で起動: http://127.0.0.1:3000 (ローカル) または http://[MacのIP]:3000 (ネットワーク)
   // ポートは環境変数PORTで変更可能（デフォルト: 3000）
-  const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
+  const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
   
   // ★Caller ID別のAPIキー設定
   // GLBアプリは "noir" を使用 → NB_GATE_NOIR キーが必要
@@ -2895,9 +2895,9 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   
   if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     if (updateStatus) {
-      updateStatus("API未設定 - Windows側APIキーを設定してください (URL: http://192.168.1.25:3000 設定済み)");
+      updateStatus("API未設定 - NB_GATE_NOIRキーを設定してください (URL: http://127.0.0.1:3000 設定済み)");
     }
-    console.warn("[NEゲートウェイ] Windows側のAPIキーを設定してください (URLは設定済み)");
+    console.warn("[NEゲートウェイ] NB_GATE_NOIRキーを設定してください (URLは設定済み)");
     return null;
   }
   
@@ -3063,7 +3063,7 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
   } catch (e) {
     console.error("[NEゲートウェイ] 接続エラー:", e);
     if (updateStatus) {
-      updateStatus("接続エラー - Windows側ゲートウェイを確認してください");
+      updateStatus("接続エラー - Mac側NEゲートウェイを確認してください");
     }
   }
   
@@ -3072,12 +3072,12 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
 
 // NEゲートウェイ接続テスト（Windows側 - 最新版 v2.6）
 async function testGatewayConnection() {
-  const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
+  const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
   // Caller ID: "noir" → NB_GATE_NOIR キーを使用
   const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
   if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    alert("NB_GATE_NOIRキーを設定してください\n\nNEゲートウェイURL: http://192.168.1.25:3000 (設定済み)\nCaller ID: noir → NB_GATE_NOIRキーが必要\ninfo@nextbaseのアカウント（事務長モトイ）のキーを使用");
+    alert("NB_GATE_NOIRキーを設定してください\n\nNEゲートウェイURL: http://127.0.0.1:3000 (Mac側ローカル)\nCaller ID: noir → NB_GATE_NOIRキーが必要\ninfo@nextbaseのアカウント（事務長モトイ）のキーを使用");
     return false;
   }
   
