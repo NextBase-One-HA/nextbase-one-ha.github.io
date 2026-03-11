@@ -2881,16 +2881,16 @@ function importDictionary(file) {
 
 // Gemini GLB（NEゲートウェイ接続 - Mac側ゲートウェイ v2.6）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
-  // ★Mac側のNEゲートウェイURL（最新版 v2.6 - デフォルトポート3000）
+  // [SECURITY] NEゲートウェイ設定 - 絶対に漏洩させない
   // Mac側で起動: http://127.0.0.1:3000 (ローカル) または http://[MacのIP]:3000 (ネットワーク)
   // ポートは環境変数PORTで変更可能（デフォルト: 3000）
-  const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
+  const NE_GATEWAY_URL = "http://127.0.0.1:3000";
   
-  // ★Caller ID別のAPIキー設定
+  // [SECURITY] Caller ID別のAPIキー設定 - キーはlocalStorageから取得（コードに直接書かない）
   // GLBアプリは "noir" を使用 → NB_GATE_NOIR キーが必要
   // その他のCaller ID: "admin" → NB_GATE_ADMIN, "dev" → NB_GATE_DEV, "prod" → NB_GATE_PROD
   // info@nextbaseのアカウント（事務長モトイ）のキーを使用
-  // キーはすでに打ち込んである（環境変数またはlocalStorageから取得）
+  // ⚠️ 警告: 実際のキーをコードに直接書かないこと。localStorageまたは環境変数から取得すること。
   const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
   if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
