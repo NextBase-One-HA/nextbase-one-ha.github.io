@@ -1195,8 +1195,9 @@ button.btn-primary:disabled{
 
   <div class="card">
     <div class="label">NEゲートウェイ設定</div>
-    <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
-      Windows側の安定版NEゲートウェイURLとAPIキーを設定してください
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+      Windows側の最新NEゲートウェイ（v2.6）URLとAPIキーを設定してください<br>
+      <span style="font-size:11px;">デフォルトポート: 3000（環境変数PORTで変更可能）</span>
     </p>
     <button class="icon-btn" id="test-gateway" title="接続テスト" style="width:100%; padding:12px; justify-content:center;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
@@ -1204,9 +1205,10 @@ button.btn-primary:disabled{
       </svg>
       Windows側NEゲートウェイ接続テスト
     </button>
-    <p style="margin-top:12px; font-size:11px; color:var(--muted); text-align:center;">
+      <p style="margin-top:12px; font-size:11px; color:var(--muted); text-align:center;">
       ※コード内の NE_GATEWAY_URL と API_KEY をWindows側の値に設定してください<br>
-      WindowsのIPアドレス確認: Windowsのターミナルで "ipconfig" を実行
+      WindowsのIPアドレス確認: Windowsのターミナルで "ipconfig" を実行<br>
+      APIキー: Windows側のkey.txtファイルの内容を使用
     </p>
   </div>
 </div>
@@ -2870,17 +2872,19 @@ function importDictionary(file) {
 
 // Gemini GLB（NEゲートウェイ接続 - Windows側ゲートウェイ）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
-  // ★Windows側のNEゲートウェイURL（ノワール接続先）
-  // 座標: 192.168.1.25:5000
-  const NE_GATEWAY_URL = "http://192.168.1.25:5000";
+  // ★Windows側のNEゲートウェイURL（最新版 v2.6 - デフォルトポート3000）
+  // Windows側のIPアドレスを確認: Windowsのターミナルで "ipconfig" を実行
+  // ポートは環境変数PORTで変更可能（デフォルト: 3000）
+  const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
   
   // ★Windows側のAPIキーを設定してください
-  // 例: "your-windows-api-key-here"
+  // Windows側のkey.txtファイルの内容をここに設定
+  // 例: "your-windows-api-key-from-key.txt"
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
   if (API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
     if (updateStatus) {
-      updateStatus("API未設定 - Windows側APIキーを設定してください (URL: http://192.168.1.25:5000 設定済み)");
+      updateStatus("API未設定 - Windows側APIキーを設定してください (URL: http://192.168.1.25:3000 設定済み)");
     }
     console.warn("[NEゲートウェイ] Windows側のAPIキーを設定してください (URLは設定済み)");
     return null;
@@ -3055,13 +3059,13 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
   return null;
 }
 
-// NEゲートウェイ接続テスト（Windows側 - ノワール）
+// NEゲートウェイ接続テスト（Windows側 - 最新版 v2.6）
 async function testGatewayConnection() {
-  const NE_GATEWAY_URL = "http://192.168.1.25:5000";
+  const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
   const API_KEY = "YOUR_REAL_AUTHORIZED_KEY";
   
   if (API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    alert("Windows側のAPIキーを設定してください\n\nNEゲートウェイURL: http://192.168.1.25:5000 (設定済み)");
+    alert("Windows側のAPIキーを設定してください\n\nNEゲートウェイURL: http://192.168.1.25:3000 (設定済み)\nWindows側のkey.txtファイルの内容をAPI_KEYに設定してください");
     return false;
   }
   
