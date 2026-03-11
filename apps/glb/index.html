@@ -2148,7 +2148,7 @@ async function getSceneGuide(scene, fromLang, toLang) {
   }
   
   // 2. AI（API）でガイドを取得
-  const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
+  const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
   // Caller ID: "noir" → NB_GATE_NOIR キーを使用
   const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
@@ -2205,7 +2205,7 @@ async function getWordExplanation(word, fromLang, toLang) {
   }
   
   // 2. AI（API）で説明を取得
-  const NE_GATEWAY_URL = "http://192.168.1.25:3000"; // 最新版はポート3000がデフォルト
+  const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
   // Caller ID: "noir" → NB_GATE_NOIR キーを使用
   const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
   
@@ -3070,7 +3070,7 @@ GLB the following text from ${fromLang} to ${toLang} with natural, context-aware
   return null;
 }
 
-// NEゲートウェイ接続テスト（Windows側 - 最新版 v2.6）
+// NEゲートウェイ接続テスト（Mac側 - 最新版 v2.6）
 async function testGatewayConnection() {
   const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
   // Caller ID: "noir" → NB_GATE_NOIR キーを使用
@@ -3082,7 +3082,7 @@ async function testGatewayConnection() {
   }
   
   try {
-    console.log("[接続テスト] Windows側NEゲートウェイ（ノワール）に接続中...");
+    console.log("[接続テスト] Mac側NEゲートウェイ（ノワール）に接続中...");
     const response = await fetch(NE_GATEWAY_URL, {
       method: "POST",
       headers: {
@@ -3101,7 +3101,7 @@ async function testGatewayConnection() {
     if (response.ok) {
       const data = await response.json();
       console.log("[接続テスト] 成功:", data);
-      alert("Windows側NEゲートウェイへの接続に成功しました！");
+      alert("Mac側NEゲートウェイへの接続に成功しました！");
       return true;
     } else {
       const errorText = await response.text().catch(() => "");
@@ -4692,7 +4692,7 @@ testGatewayBtn.addEventListener("click", async () => {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
     </svg>
-    Windows側NEゲートウェイ接続テスト
+      Mac側NEゲートウェイ接続テスト
   `;
 });
 
