@@ -1196,19 +1196,26 @@ button.btn-primary:disabled{
   <div class="card">
     <div class="label">NEゲートウェイ設定</div>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
-      Windows側の最新NEゲートウェイ（v2.6）URLとAPIキーを設定してください<br>
+      Mac側の最新NEゲートウェイ（v2.6）URLとAPIキーを設定してください<br>
       <span style="font-size:11px;">デフォルトポート: 3000（環境変数PORTで変更可能）</span>
     </p>
+    <div style="margin-bottom:12px; padding:12px; background:var(--bg-tertiary); border-radius:8px; font-size:12px;">
+      <div style="font-weight:600; margin-bottom:4px; color:var(--primary);">Caller ID別APIキー（事務長モトイ）:</div>
+      <div>• <strong>noir</strong> → NB_GATE_NOIR（GLBアプリ使用）</div>
+      <div>• admin → NB_GATE_ADMIN</div>
+      <div>• dev → NB_GATE_DEV</div>
+      <div>• prod → NB_GATE_PROD</div>
+    </div>
     <button class="icon-btn" id="test-gateway" title="接続テスト" style="width:100%; padding:12px; justify-content:center;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
-      Windows側NEゲートウェイ接続テスト
+      Mac側NEゲートウェイ接続テスト
     </button>
       <p style="margin-top:12px; font-size:11px; color:var(--muted); text-align:center;">
-      ※コード内の NE_GATEWAY_URL と API_KEY をWindows側の値に設定してください<br>
-      WindowsのIPアドレス確認: Windowsのターミナルで "ipconfig" を実行<br>
-      APIキー: Windows側のkey.txtファイルの内容を使用
+      ※コード内の NE_GATEWAY_URL と NB_GATE_NOIR キーを設定してください<br>
+      MacのIPアドレス確認: ターミナルで "ifconfig" を実行<br>
+      APIキー: localStorageに 'NB_GATE_NOIR' として保存（事務長モトイのキー）
     </p>
   </div>
 </div>
