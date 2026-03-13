@@ -97,7 +97,7 @@
                 const res = this.dict.get(q.toLowerCase().trim());
                 document.getElementById('result-area').innerHTML = res 
                     ? `<strong>${res}</strong>` 
-                    : `<span style="color:#666;">見つかりません（NEゲートウェイ接続推奨）</span>`;
+                    : `<span style="color:#666;">見つかりません</span>`;
             }
         };
 
@@ -106,30 +106,19 @@
 
         STELLA_BUS.init();
 
-        // momoriri ノワールテレビ: システム稼働状況（1行だけ）
         (function initMomoririTicker() {
             const el = document.getElementById('momoriri-ticker');
+            const DEFAULT_TICKER = 'システム稼働中。';
             if (!el) return;
-
-            async function loadPhrases() {
-                try {
-                    const res = await fetch('/data/phrases.json', { cache: 'no-store' });
-                    if (!res.ok) throw new Error('status ' + res.status);
-                    const json = await res.json();
+            fetch('/data/phrases.json', { cache: 'no-store' })
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(json => {
                     if (Array.isArray(json) && json.length) {
                         const first = json.find(x => typeof x === 'string' && x.trim().length > 0);
-                        el.textContent = first || '（ momoriri 信号待機中... ）';
-                    } else {
-                        el.textContent = '（ momoriri 信号待機中... ）';
+                        if (first) el.textContent = first;
                     }
-                } catch (e) {
-                    el.textContent = '（ momoriri 信号待機中... ）';
-                }
-            }
-
-            loadPhrases();
-            // 失敗しても止めず、10秒ごとに再試行
-            setInterval(loadPhrases, 10000);
+                })
+                .catch(() => { el.textContent = DEFAULT_TICKER; });
         })();
     </script>
 </body>
