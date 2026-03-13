@@ -45,7 +45,7 @@
             dict: new Map(),
             async init() {
                 try {
-                    const res = await fetch('/dictionary/150k.csv');
+                    const res = await fetch('../../dictionary/150k.csv');
                     const text = await res.text();
                     const lines = text.split('\n');
                     for (let i = 0; i < lines.length; i++) {

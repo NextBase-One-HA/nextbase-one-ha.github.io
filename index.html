@@ -1,498 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>NEXT BASE | GLB</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>GLB TRAVEL</title>
+    <style>
+        :root { --gold: #d6b25e; --bg: #0a0a0a; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 18px; }
+        .hero { position: fixed; inset: 0; opacity: 0.25; z-index: -1; }
+        .hero img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 28px 20px; text-align: center; }
+        .screen.active { display: flex; }
 
-<style>
-:root{
-  --gold:#d6b25e;
-  --bg:#050505;
-  --panel:#0f0f0f;
-  --line:#222;
-  --text:#f2f2f2;
-  --muted:#9a9a9a;
-}
-
-*{box-sizing:border-box}
-html,body{
-  margin:0;
-  padding:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  min-height:100%;
-}
-
-body{
-  overflow-x:hidden;
-}
-
-#intro{
-  position:fixed;
-  inset:0;
-  background:#000;
-  z-index:9999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-#intro video{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
-  background:#000;
-}
-#skip{
-  position:absolute;
-  right:16px;
-  bottom:20px;
-  border:1px solid rgba(214,178,94,.55);
-  color:var(--gold);
-  background:rgba(0,0,0,.45);
-  padding:10px 14px;
-  border-radius:999px;
-  font-size:12px;
-  letter-spacing:.12em;
-  cursor:pointer;
-  backdrop-filter:blur(6px);
-}
-
-#main{
-  opacity:0;
-  transform:translateY(10px);
-  transition:opacity .8s ease, transform .8s ease;
-}
-
-#main.show{
-  opacity:1;
-  transform:none;
-}
-
-.container{
-  max-width:1080px;
-  margin:0 auto;
-  padding:28px 20px 56px;
-}
-
-.topbar{
-  text-align:center;
-  color:var(--gold);
-  letter-spacing:.38em;
-  font-weight:700;
-  font-size:13px;
-  padding:8px 0 36px;
-}
-
-.hero{
-  text-align:center;
-  padding:18px 0 34px;
-}
-
-.hero-logo{
-  width:min(86vw,520px);
-  aspect-ratio:1/1;
-  margin:0 auto 20px;
-  border-radius:28px;
-  object-fit:cover;
-  display:block;
-  box-shadow:0 0 50px rgba(214,178,94,.18);
-  border:1px solid rgba(214,178,94,.16);
-}
-
-.hero h1{
-  margin:0 0 14px;
-  font-size:clamp(34px,8vw,58px);
-  line-height:1.05;
-  font-weight:700;
-  letter-spacing:.01em;
-}
-
-.hero p{
-  margin:0 auto;
-  max-width:700px;
-  color:var(--muted);
-  font-size:clamp(15px,3.7vw,20px);
-  line-height:1.7;
-}
-
-.product{
-  max-width:480px;
-  margin:34px auto 0;
-  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
-  border:1px solid var(--line);
-  border-radius:22px;
-  padding:28px;
-  box-shadow:0 24px 60px rgba(0,0,0,.28);
-}
-
-.product .eyebrow{
-  color:var(--gold);
-  letter-spacing:.12em;
-  font-weight:700;
-  font-size:13px;
-  margin-bottom:14px;
-}
-
-.price{
-  font-size:clamp(46px,10vw,68px);
-  line-height:1;
-  font-weight:800;
-  margin:0 0 18px;
-}
-
-.desc{
-  color:var(--muted);
-  font-size:16px;
-  line-height:1.75;
-  margin-bottom:24px;
-}
-
-.btn{
-  display:block;
-  width:100%;
-  text-align:center;
-  text-decoration:none;
-  border-radius:12px;
-  padding:17px 18px;
-  margin-top:12px;
-  font-weight:800;
-  letter-spacing:.04em;
-  transition:transform .15s ease, opacity .15s ease, background .15s ease;
-}
-
-.btn:hover{opacity:.92}
-.btn:active{transform:scale(.985)}
-
-.btn-basic{
-  background:var(--gold);
-  color:#000;
-}
-
-.btn-pro{
-  background:#171717;
-  color:var(--gold);
-  border:1px solid rgba(214,178,94,.55);
-}
-
-.btn-launch{
-  background:transparent;
-  color:#d8d8d8;
-  border:1px solid #353535;
-}
-
-.legal{
-  text-align:center;
-  margin-top:52px;
-  font-size:13px;
-  color:var(--muted);
-}
-
-.legal a{
-  color:var(--gold);
-  text-decoration:none;
-  margin:0 10px;
-}
-
-/* 言語選択UI */
-.lang-selector-top{
-  position:fixed;
-  top:20px;
-  right:20px;
-  z-index:1000;
-}
-
-.lang-selector-top select{
-  padding:10px 16px;
-  background:rgba(0,0,0,.6);
-  border:1px solid rgba(214,178,94,.4);
-  border-radius:8px;
-  color:var(--gold);
-  font-size:13px;
-  cursor:pointer;
-  backdrop-filter:blur(10px);
-  transition:all .3s;
-}
-
-.lang-selector-top select:hover{
-  background:rgba(0,0,0,.8);
-  border-color:var(--gold);
-}
-
-.lang-selector-top select:focus{
-  outline:none;
-  border-color:var(--gold);
-  box-shadow:0 0 0 2px rgba(214,178,94,.2);
-}
-
-@media (max-width:640px){
-  .container{padding:22px 16px 44px}
-  .product{padding:22px}
-  .lang-selector-top{
-    top:12px;
-    right:12px;
-  }
-  .lang-selector-top select{
-    padding:8px 12px;
-    font-size:12px;
-  }
-}
-</style>
+        .screen h1 { font-size: clamp(28px, 6vw, 42px); letter-spacing: 6px; margin: 0 0 8px; }
+        .screen .lead { font-size: clamp(16px, 2.5vw, 20px); color: #bbb; margin: 0 0 24px; line-height: 1.5; }
+        .lang-select-wrap { margin: 24px 0; min-width: 280px; }
+        .lang-select-wrap select { width: 100%; padding: 16px 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(214,178,94,.45); border-radius: 14px; color: var(--gold); font-size: 18px; cursor: pointer; }
+        .opening-note { font-size: 15px; color: #888; margin-top: 10px; line-height: 1.5; }
+        .main-btn { background: var(--gold); color: #000; padding: 20px 88px; border-radius: 44px; font-weight: bold; border: none; font-size: 20px; cursor: pointer; margin-top: 32px; }
+        .main-btn.ghost { background: transparent; color: var(--gold); border: 2px solid rgba(214,178,94,.5); margin-top: 20px; font-size: 18px; }
+        .row { display: flex; gap: 16px; align-items: center; justify-content: center; margin: 24px 0; flex-wrap: wrap; }
+        .row select { padding: 14px 18px; border-radius: 10px; background: rgba(0,0,0,.5); border: 1px solid #444; color: #fff; font-size: 17px; min-width: 140px; }
+        .row .arrow { font-size: 22px; color: var(--gold); }
+        #input-text { width: 100%; max-width: 420px; min-height: 120px; border-radius: 14px; padding: 18px; background: rgba(255,255,255,.06); border: 1px solid #333; color: #fff; font-size: 18px; margin-top: 8px; }
+        #input-text::placeholder { color: #666; font-size: 17px; }
+        #result-area { margin-top: 24px; font-size: 20px; color: var(--gold); max-width: 420px; text-align: left; line-height: 1.6; min-height: 2em; }
+        #stella-tag { font-size: 12px; color: #666; margin-top: 32px; }
+        .main-desc { font-size: 16px; color: #999; margin-bottom: 8px; }
+    </style>
 </head>
 <body>
 
-<div id="intro">
-  <video id="introVideo" autoplay muted playsinline>
-    <source src="door.mp4" type="video/mp4">
-  </video>
-  <button id="skip" type="button">SKIP</button>
-</div>
+    <div class="hero"><img src="/glb-hero.jpg" alt=""></div>
 
-<div id="main">
-  <!-- 言語選択（右上固定） -->
-  <div class="lang-selector-top">
-    <select id="top-lang-select">
-      <option value="ja">日本語</option>
-      <option value="en">English</option>
-      <option value="zh">中文</option>
-      <option value="ko">한국어</option>
-      <option value="es">Español</option>
-      <option value="fr">Français</option>
-      <option value="de">Deutsch</option>
-      <option value="it">Italiano</option>
-      <option value="pt">Português</option>
-      <option value="ru">Русский</option>
-      <option value="ar">العربية</option>
-      <option value="hi">हिन्दी</option>
-      <option value="th">ไทย</option>
-      <option value="vi">Tiếng Việt</option>
-      <option value="id">Bahasa Indonesia</option>
-      <option value="tr">Türkçe</option>
-      <option value="pl">Polski</option>
-      <option value="nl">Nederlands</option>
-      <option value="sv">Svenska</option>
-      <option value="no">Norsk</option>
-      <option value="da">Dansk</option>
-      <option value="fi">Suomi</option>
-      <option value="el">Ελληνικά</option>
-      <option value="cs">Čeština</option>
-      <option value="hu">Magyar</option>
-      <option value="ro">Română</option>
-    </select>
-  </div>
-
-  <div class="container">
-    <div class="topbar" data-i18n="topbar">NEXT BASE</div>
-
-    <section class="hero">
-      <!-- ここは後でGLB画像に差し替え可 -->
-      <img class="hero-logo" src="glb-hero.jpg" alt="">
-
-      <h1 data-i18n="title">NEXT BASE Apps</h1>
-      <p data-i18n="subtitle">
-        Break the language barrier.<br>
-        Fast, simple, and built for real situations.
-      </p>
-
-      <!-- アプリ紹介セクション -->
-      <div style="max-width:900px; margin:32px auto;">
-        
-        <!-- GLBトラベル -->
-        <div class="product" style="margin-bottom:32px;">
-          <div class="eyebrow" data-i18n="glbTravelEyebrow">GLBトラベル / GLOBAL LANGUAGE BREAKER TRAVEL</div>
-          <div class="price">$1.99 / $7.99</div>
-          <div class="desc" data-i18n="glbTravelDesc">
-            旅行特化の翻訳アプリ<br>
-            Offline dictionary + AI fallback.<br>
-            Built for travelers who need answers now.
-          </div>
-          
-          <!-- 機能一覧 -->
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin:20px 0; padding:16px; background:rgba(255,255,255,.02); border-radius:12px;">
-            <div style="text-align:center;">
-              <div style="font-size:24px; margin-bottom:6px;">📚</div>
-              <div style="font-size:11px; font-weight:700; color:var(--gold);">150k辞書</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:24px; margin-bottom:6px;">🤖</div>
-              <div style="font-size:11px; font-weight:700; color:var(--gold);">AI翻訳</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:24px; margin-bottom:6px;">📷</div>
-              <div style="font-size:11px; font-weight:700; color:var(--gold);">カメラ翻訳</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:24px; margin-bottom:6px;">🌍</div>
-              <div style="font-size:11px; font-weight:700; color:var(--gold);">25言語</div>
-            </div>
-            <div style="text-align:center;">
-              <div style="font-size:24px; margin-bottom:6px;">✈️</div>
-              <div style="font-size:11px; font-weight:700; color:var(--gold);">旅行特化</div>
-            </div>
-          </div>
-          
-          <div style="text-align:center; padding:12px; background:rgba(214,178,94,.05); border-radius:8px; margin-bottom:16px; font-size:12px; color:var(--muted);" data-i18n="basicPlanBonus">
-            🌟 BASICプラン特典: 登録から1ヶ月間の好きな2日間が全開放
-          </div>
-
-          <a class="btn btn-basic" href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" data-i18n="getBasic">GET BASIC</a>
-          <a class="btn btn-pro" href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" data-i18n="getTraveler">GET TRAVELER</a>
-          <a class="btn btn-launch" href="apps/glb/index.html" data-i18n="launchApp">LAUNCH APP</a>
+    <div id="view-start" class="screen active">
+        <h1 style="color:var(--gold);">GLB TRAVEL</h1>
+        <p class="lead" id="t-select-label">表示言語を選んでください</p>
+        <p class="opening-note" id="t-select-note">※アプリの表示言語です（翻訳する言語は次の画面で選択）</p>
+        <div class="lang-select-wrap">
+            <select id="opening-lang">
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+                <option value="ko">한국어</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="pt">Português</option>
+                <option value="ru">Русский</option>
+                <option value="it">Italiano</option>
+                <option value="ar">العربية</option>
+                <option value="th">ไทย</option>
+                <option value="vi">Tiếng Việt</option>
+                <option value="id">Bahasa Indonesia</option>
+                <option value="tr">Türkçe</option>
+                <option value="pl">Polski</option>
+                <option value="nl">Nederlands</option>
+                <option value="sv">Svenska</option>
+                <option value="el">Ελληνικά</option>
+            </select>
         </div>
-
-        <!-- 今後追加予定のアプリ（プレースホルダー） -->
-        <div style="text-align:center; padding:40px 20px; color:var(--muted); border-top:1px solid var(--line); margin-top:40px;">
-          <div style="font-size:14px; margin-bottom:8px;" data-i18n="comingSoon">More apps coming soon...</div>
-          <div style="font-size:12px;" data-i18n="comingSoonDesc">GLBビジネス、GLB学習、GLB日常など</div>
-        </div>
-        
-      </div>
-    </section>
-
-    <div class="legal">
-      <a href="legal.html" data-i18n="legal">Legal</a>
-      <a href="terms.html" data-i18n="terms">Terms</a>
-      <a href="privacy.html" data-i18n="privacy">Privacy</a>
-      <a href="support.html" data-i18n="support">Support</a>
-      <div style="margin-top:14px;">© 2026 NEXT BASE</div>
+        <button class="main-btn" id="t-start-btn" onclick="tapStart()">始める</button>
+        <p id="stella-tag">STELLA ADMIN ACTIVE: v1.0.2603</p>
     </div>
-  </div>
-</div>
 
-<script>
-const intro = document.getElementById('intro');
-const introVideo = document.getElementById('introVideo');
-const main = document.getElementById('main');
-const skip = document.getElementById('skip');
+    <div id="view-main" class="screen">
+        <h1 style="color:var(--gold);">GLB</h1>
+        <p class="main-desc" id="t-main-desc">翻訳する言語を選んで GLB を実行</p>
+        <div class="row">
+            <select id="lang-from"></select>
+            <span class="arrow">→</span>
+            <select id="lang-to"></select>
+        </div>
+        <textarea id="input-text" placeholder=""></textarea>
+        <button class="main-btn" id="t-glb-btn" onclick="doGLB()">GLB</button>
+        <div id="result-area"></div>
+        <button class="main-btn ghost" id="t-back-btn" onclick="location.reload()">最初に戻る</button>
+        <p id="stella-tag">STELLA ADMIN ACTIVE: v1.0.2603</p>
+    </div>
 
-function enterSite(){
-  if (intro.classList.contains('hidden')) return;
-  intro.classList.add('hidden');
-  main.classList.add('show');
-  setTimeout(() => {
-    intro.style.display = 'none';
-  }, 900);
-}
+    <script>
+        var LANG_LIST = [
+            { v: 'ja', n: '日本語' }, { v: 'en', n: 'English' }, { v: 'zh', n: '中文' }, { v: 'ko', n: '한국어' },
+            { v: 'es', n: 'Español' }, { v: 'fr', n: 'Français' }, { v: 'de', n: 'Deutsch' }, { v: 'pt', n: 'Português' },
+            { v: 'ru', n: 'Русский' }, { v: 'it', n: 'Italiano' }, { v: 'ar', n: 'العربية' }, { v: 'th', n: 'ไทย' },
+            { v: 'vi', n: 'Tiếng Việt' }, { v: 'id', n: 'Indonesia' }, { v: 'tr', n: 'Türkçe' }, { v: 'pl', n: 'Polski' },
+            { v: 'nl', n: 'Nederlands' }, { v: 'sv', n: 'Svenska' }, { v: 'el', n: 'Ελληνικά' }
+        ];
 
-skip.addEventListener('click', enterSite);
-introVideo.addEventListener('ended', enterSite);
+        var T = {
+            ja: { selectLabel: '表示言語を選んでください', selectNote: '※アプリの表示言語です（翻訳する言語は次の画面で選択）', start: '始める', mainDesc: '翻訳する言語を選んで GLB を実行', placeholder: 'ここに言葉を入力...', glb: 'GLB', back: '最初に戻る', thinking: '翻訳中...', error: '通信エラー。もう一度お試しください。' },
+            en: { selectLabel: 'Choose display language', selectNote: 'App UI language. Translation languages are selected on the next screen.', start: 'Start', mainDesc: 'Select languages and run GLB', placeholder: 'Enter text here...', glb: 'GLB', back: 'Back to start', thinking: 'Translating...', error: 'Network error. Please try again.' },
+            zh: { selectLabel: '请选择显示语言', selectNote: '应用界面语言。翻译语言在下一画面选择。', start: '开始', mainDesc: '选择语言并执行 GLB', placeholder: '在此输入文字...', glb: 'GLB', back: '返回开始', thinking: '翻译中...', error: '网络错误，请重试。' },
+            ko: { selectLabel: '표시 언어를 선택하세요', selectNote: '앱 UI 언어입니다. 번역 언어는 다음 화면에서 선택합니다.', start: '시작', mainDesc: '언어를 선택하고 GLB 실행', placeholder: '여기에 입력...', glb: 'GLB', back: '처음으로', thinking: '번역 중...', error: '오류. 다시 시도해 주세요.' },
+            es: { selectLabel: 'Elige el idioma de la app', selectNote: 'Idioma de la interfaz. Los idiomas de traducción se eligen en la siguiente pantalla.', start: 'Empezar', mainDesc: 'Elige idiomas y ejecuta GLB', placeholder: 'Escribe aquí...', glb: 'GLB', back: 'Volver al inicio', thinking: 'Traduciendo...', error: 'Error de red. Intenta de nuevo.' },
+            fr: { selectLabel: 'Choisissez la langue de l\'app', selectNote: 'Langue de l\'interface. Les langues de traduction se choisissent à l\'écran suivant.', start: 'Commencer', mainDesc: 'Choisissez les langues et lancez GLB', placeholder: 'Entrez le texte ici...', glb: 'GLB', back: 'Retour au début', thinking: 'Traduction...', error: 'Erreur réseau. Réessayez.' },
+            de: { selectLabel: 'Sprache der App wählen', selectNote: 'Oberflächensprache. Übersetzungssprachen wählen Sie auf dem nächsten Bildschirm.', start: 'Starten', mainDesc: 'Sprachen wählen und GLB ausführen', placeholder: 'Text hier eingeben...', glb: 'GLB', back: 'Zurück zum Start', thinking: 'Übersetzen...', error: 'Netzwerkfehler. Bitte erneut versuchen.' },
+            pt: { selectLabel: 'Escolha o idioma da app', selectNote: 'Idioma da interface. Idiomas de tradução na próxima tela.', start: 'Começar', mainDesc: 'Escolha os idiomas e execute GLB', placeholder: 'Digite aqui...', glb: 'GLB', back: 'Voltar ao início', thinking: 'Traduzindo...', error: 'Erro de rede. Tente novamente.' },
+            ru: { selectLabel: 'Выберите язык интерфейса', selectNote: 'Язык приложения. Языки перевода выбираются на следующем экране.', start: 'Начать', mainDesc: 'Выберите языки и нажмите GLB', placeholder: 'Введите текст...', glb: 'GLB', back: 'В начало', thinking: 'Перевод...', error: 'Ошибка сети. Попробуйте снова.' }
+        };
 
-// 10秒で自動終了
-setTimeout(enterSite, 10900);
+        function getLang() { return localStorage.getItem('glb_app_lang') || 'ja'; }
 
-introVideo.play().catch(() => {
-  setTimeout(enterSite, 1200);
-});
+        function applyUI(lang) {
+            var t = T[lang] || T.en;
+            var el;
+            if (el = document.getElementById('t-select-label')) el.textContent = t.selectLabel;
+            if (el = document.getElementById('t-select-note')) el.textContent = t.selectNote;
+            if (el = document.getElementById('t-start-btn')) el.textContent = t.start;
+            if (el = document.getElementById('t-main-desc')) el.textContent = t.mainDesc;
+            if (el = document.getElementById('input-text')) el.placeholder = t.placeholder;
+            if (el = document.getElementById('t-glb-btn')) el.textContent = t.glb;
+            if (el = document.getElementById('t-back-btn')) el.textContent = t.back;
+        }
 
-// 多言語対応
-const topLangTexts = {
-  ja: {
-    topbar: "NEXT BASE",
-    title: "NEXT BASE Apps",
-    subtitle: "言葉の壁を突破する。<br>速く、シンプルに、実用的に。",
-    glbTravelEyebrow: "GLBトラベル / GLOBAL LANGUAGE BREAKER TRAVEL",
-    glbTravelDesc: "旅行特化の翻訳アプリ<br>オフライン辞書 + AIフォールバック<br>今すぐ答えが必要な旅行者のために作られました。",
-    basicPlanBonus: "🌟 BASICプラン特典: 登録から1ヶ月間の好きな2日間が全開放",
-    getBasic: "GET BASIC",
-    getTraveler: "GET TRAVELER",
-    launchApp: "アプリを起動",
-    comingSoon: "さらに多くのアプリが近日公開...",
-    comingSoonDesc: "GLBビジネス、GLB学習、GLB日常など",
-    legal: "法的表示",
-    terms: "利用規約",
-    privacy: "プライバシー",
-    support: "サポート"
-  },
-  en: {
-    topbar: "NEXT BASE",
-    title: "NEXT BASE Apps",
-    subtitle: "Break the language barrier.<br>Fast, simple, and built for real situations.",
-    glbTravelEyebrow: "GLB Travel / GLOBAL LANGUAGE BREAKER TRAVEL",
-    glbTravelDesc: "Travel-focused translation app<br>Offline dictionary + AI fallback.<br>Built for travelers who need answers now.",
-    basicPlanBonus: "🌟 BASIC Plan Bonus: 2 full-access days within 1 month of registration",
-    getBasic: "GET BASIC",
-    getTraveler: "GET TRAVELER",
-    launchApp: "LAUNCH APP",
-    comingSoon: "More apps coming soon...",
-    comingSoonDesc: "GLB Business, GLB Learning, GLB Daily, and more",
-    legal: "Legal",
-    terms: "Terms",
-    privacy: "Privacy",
-    support: "Support"
-  },
-  zh: {
-    topbar: "NEXT BASE",
-    title: "NEXT BASE 应用",
-    subtitle: "打破语言障碍。<br>快速、简单，专为实际场景打造。",
-    glbTravelEyebrow: "GLB旅行 / 全球语言突破者旅行版",
-    glbTravelDesc: "专为旅行设计的翻译应用<br>离线词典 + AI备用方案<br>为需要即时答案的旅行者打造。",
-    basicPlanBonus: "🌟 BASIC套餐福利：注册后1个月内任选2天全开放",
-    getBasic: "获取BASIC",
-    getTraveler: "获取TRAVELER",
-    launchApp: "启动应用",
-    comingSoon: "更多应用即将推出...",
-    comingSoonDesc: "GLB商务、GLB学习、GLB日常等",
-    legal: "法律声明",
-    terms: "服务条款",
-    privacy: "隐私",
-    support: "支持"
-  },
-  ko: {
-    topbar: "NEXT BASE",
-    title: "NEXT BASE 앱",
-    subtitle: "언어의 장벽을 깨다.<br>빠르고, 간단하며, 실제 상황을 위해 만들어졌습니다.",
-    glbTravelEyebrow: "GLB 트래블 / 글로벌 언어 브레이커 트래블",
-    glbTravelDesc: "여행 특화 번역 앱<br>오프라인 사전 + AI 폴백<br>지금 답이 필요한 여행자를 위해 만들어졌습니다.",
-    basicPlanBonus: "🌟 BASIC 플랜 특전: 등록 후 1개월 내 원하는 2일간 전체 오픈",
-    getBasic: "BASIC 받기",
-    getTraveler: "TRAVELER 받기",
-    launchApp: "앱 실행",
-    comingSoon: "더 많은 앱이 곧 출시됩니다...",
-    comingSoonDesc: "GLB 비즈니스, GLB 학습, GLB 일상 등",
-    legal: "법적 고지",
-    terms: "이용약관",
-    privacy: "개인정보",
-    support: "지원"
-  }
-};
+        function fillLangSelects() {
+            var from = document.getElementById('lang-from');
+            var to = document.getElementById('lang-to');
+            from.innerHTML = LANG_LIST.map(function (x) { return '<option value="' + x.v + '">' + x.n + '</option>'; }).join('');
+            to.innerHTML = LANG_LIST.map(function (x) { return '<option value="' + x.v + '">' + x.n + '</option>'; }).join('');
+            from.value = 'ja';
+            to.value = 'en';
+        }
 
-// その他の言語は英語をフォールバック
-const topLangSelect = document.getElementById('top-lang-select');
+        function tapStart() {
+            var lang = document.getElementById('opening-lang').value;
+            localStorage.setItem('glb_app_lang', lang);
+            applyUI(lang);
+            fillLangSelects();
+            document.getElementById('view-start').classList.remove('active');
+            document.getElementById('view-main').classList.add('active');
+        }
 
-function updateTopPageLanguage(lang) {
-  const texts = topLangTexts[lang] || topLangTexts.en;
-  const elements = document.querySelectorAll('[data-i18n]');
-  
-  elements.forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (texts[key]) {
-      if (el.tagName === 'A' || el.tagName === 'BUTTON') {
-        el.textContent = texts[key];
-      } else {
-        el.innerHTML = texts[key];
-      }
-    }
-  });
-  
-  localStorage.setItem('nextbase_top_lang', lang);
-}
+        var FALLBACK = { 'ja|en': { 'おはよう': 'Good morning', 'おやすみ': 'Good night', 'ありがとう': 'Thank you', 'こんにちは': 'Hello', 'さようなら': 'Goodbye' }, 'en|ja': { 'Good morning': 'おはよう', 'Good night': 'おやすみ', 'Thank you': 'ありがとう', 'Hello': 'こんにちは', 'Goodbye': 'さようなら' }, 'ja|fr': { 'おはよう': 'Bonjour', 'おやすみ': 'Bonne nuit', 'ありがとう': 'Merci', 'こんにちは': 'Bonjour' }, 'fr|ja': { 'Bonjour': 'こんにちは', 'Bonne nuit': 'おやすみ', 'Merci': 'ありがとう' } };
 
-// 初期言語設定
-const savedTopLang = localStorage.getItem('nextbase_top_lang');
-const browserLang = (navigator.language || navigator.userLanguage).split('-')[0];
-const initialLang = savedTopLang || (topLangTexts[browserLang] ? browserLang : 'en');
+        function doGLB() {
+            var text = document.getElementById('input-text').value.trim();
+            var from = document.getElementById('lang-from').value;
+            var to = document.getElementById('lang-to').value;
+            var resultArea = document.getElementById('result-area');
+            var t = T[getLang()] || T.en;
+            if (!text) return;
+            resultArea.textContent = t.thinking;
+            var pair = from + '|' + to;
+            var key = text.toLowerCase();
+            var fallback = FALLBACK[pair] && (FALLBACK[pair][text] || FALLBACK[pair][key]);
+            if (fallback) {
+                resultArea.innerHTML = '<strong>' + fallback + '</strong>';
+                return;
+            }
+            var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + from + '|' + to;
+            fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+                    resultArea.innerHTML = '<strong>' + data.responseData.translatedText + '</strong>';
+                } else {
+                    resultArea.textContent = (data.responseData && data.responseData.translatedText) ? data.responseData.translatedText : text;
+                }
+            }).catch(function () {
+                resultArea.innerHTML = '<span style="color:#c44;">' + t.error + '</span>';
+            });
+        }
 
-if (topLangSelect) {
-  topLangSelect.value = initialLang;
-  updateTopPageLanguage(initialLang);
-  
-  topLangSelect.addEventListener('change', (e) => {
-    updateTopPageLanguage(e.target.value);
-  });
-}
-</script>
-
+        (function init() {
+            fillLangSelects();
+            var langSelect = document.getElementById('opening-lang');
+            var saved = getLang();
+            if (saved && langSelect.querySelector('option[value="' + saved + '"]')) langSelect.value = saved;
+            applyUI(getLang());
+            langSelect.addEventListener('change', function () {
+                localStorage.setItem('glb_app_lang', langSelect.value);
+                applyUI(langSelect.value);
+            });
+        })();
+    </script>
 </body>
 </html>
