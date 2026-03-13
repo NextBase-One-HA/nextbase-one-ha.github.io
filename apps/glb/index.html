@@ -12,17 +12,17 @@
         input { width: 90%; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); background: #222; color: #fff; font-size: 18px; margin-bottom: 20px; outline: none; }
         #momoriri-ticker {
             width: 90%;
-            margin: 0 auto 12px;
-            padding: 8px 12px;
+            margin: 0 auto 14px;
+            padding: 10px 14px;
             background: #000;
             color: #ff0000;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 14px;
             border-radius: 8px;
-            border: 1px solid rgba(255,0,0,0.6);
+            border: 2px solid rgba(255,0,0,0.8);
             text-align: left;
             letter-spacing: 1px;
-            text-shadow: 0 0 4px rgba(255,0,0,0.7);
+            text-shadow: 0 0 4px rgba(255,0,0,0.9);
             position: relative;
             overflow: hidden;
         }
@@ -117,16 +117,16 @@
                             el.textContent = '（ momoriri 待機中... ）';
                         }
                     } else {
-                        el.textContent = '（ momoriri 待機中... ）';
+                        el.textContent = '（ momoriri 信号待機中... ）';
                     }
                 } catch (e) {
-                    el.textContent = '（ momoriri 待機中... ）';
+                    el.textContent = '（ momoriri 信号待機中... ）';
                 }
             }
 
             function tick() {
                 if (!phrases.length) {
-                    el.textContent = '（ momoriri 待機中... ）';
+                    el.textContent = '（ momoriri 信号待機中... ）';
                     return;
                 }
                 const p = phrases[index % phrases.length];
@@ -135,9 +135,9 @@
             }
 
             loadPhrases();
-            setInterval(tick, 3000);
+            setInterval(tick, 3500);
             // 失敗しても止めず、バックグラウンドで定期的にリロード
-            setInterval(loadPhrases, 30000);
+            setInterval(loadPhrases, 10000);
         })();
     </script>
 </body>
