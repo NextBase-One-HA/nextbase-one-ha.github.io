@@ -47,14 +47,21 @@
         <div style="font-size: 10px; color: #555;">v1.0.2603 | STELLA ADMIN</div>
     </div>
 
-    <input type="text" id="q" placeholder="150k辞書を爆速検索..." autocomplete="off">
-    <div id="momoriri-ticker">（ momoriri 待機中... ）</div>
-    <div id="result-area">結果がここに表示されます</div>
-
-    <div class="billing">
-        <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn">BASIC 有効化 ($1.99)</a>
-        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn">TRAVELER 有効化 ($7.99)</a>
+    <div style="max-width: 480px; margin: 0 auto 20px;">
+        <p style="font-size: 13px; color: #f5e6b8; margin: 0 0 10px; line-height: 1.5;">
+            ※150,000語のフル機能制限を解除して、生活動線を確保せよ
+        </p>
+        <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn" style="font-size:18px; padding:18px 20px; border-radius:999px; margin-top:4px;">
+            BASIC 有効化 ($1.99)
+        </a>
+        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn" style="font-size:18px; padding:18px 20px; border-radius:999px; margin-top:8px;">
+            TRAVELER 有効化 ($7.99)
+        </a>
     </div>
+
+    <input type="text" id="q" placeholder="150k辞書を爆速検索..." autocomplete="off">
+    <div id="momoriri-ticker">（ momoriri 信号待機中... ）</div>
+    <div id="result-area">結果がここに表示されます</div>
 
     <div class="footer">
         <div style="margin-bottom: 15px;">
@@ -99,12 +106,10 @@
 
         STELLA_BUS.init();
 
-        // momoriri ノワールテレビ: ライブ受信 ticker
+        // momoriri ノワールテレビ: システム稼働状況（1行だけ）
         (function initMomoririTicker() {
             const el = document.getElementById('momoriri-ticker');
             if (!el) return;
-            let phrases = [];
-            let index = 0;
 
             async function loadPhrases() {
                 try {
@@ -112,10 +117,8 @@
                     if (!res.ok) throw new Error('status ' + res.status);
                     const json = await res.json();
                     if (Array.isArray(json) && json.length) {
-                        phrases = json.filter(x => typeof x === 'string' && x.trim().length > 0);
-                        if (phrases.length === 0) {
-                            el.textContent = '（ momoriri 待機中... ）';
-                        }
+                        const first = json.find(x => typeof x === 'string' && x.trim().length > 0);
+                        el.textContent = first || '（ momoriri 信号待機中... ）';
                     } else {
                         el.textContent = '（ momoriri 信号待機中... ）';
                     }
@@ -124,19 +127,8 @@
                 }
             }
 
-            function tick() {
-                if (!phrases.length) {
-                    el.textContent = '（ momoriri 信号待機中... ）';
-                    return;
-                }
-                const p = phrases[index % phrases.length];
-                index++;
-                el.textContent = p;
-            }
-
             loadPhrases();
-            setInterval(tick, 3500);
-            // 失敗しても止めず、バックグラウンドで定期的にリロード
+            // 失敗しても止めず、10秒ごとに再試行
             setInterval(loadPhrases, 10000);
         })();
     </script>
