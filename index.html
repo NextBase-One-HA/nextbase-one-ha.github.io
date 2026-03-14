@@ -1,10 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <meta http-equiv="refresh" content="0;URL='./apps/glb/index.html'">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>NB CORE FINAL</title>
+    <style>
+        :root { --accent: #00f2ff; --bg: #000; --panel: #0a0a0a; --border: #1a1a1a; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        header { padding: env(safe-area-inset-top) 20px 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-size: 16px; font-weight: 900; letter-spacing: 5px; color: var(--accent); }
+        .sys-info { font-family: monospace; font-size: 9px; color: #444; text-align: right; }
+        main { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        .input-box { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 15px; }
+        textarea { width: 100%; background: transparent; border: none; color: #fff; font-size: 22px; outline: none; min-height: 100px; resize: none; }
+        .exec-btn { background: var(--accent); color: #000; border: none; width: 100%; padding: 22px; font-weight: 900; font-size: 20px; border-radius: 4px; cursor: pointer; }
+        .output-box { flex: 1; background: #050505; border: 1px solid var(--accent); border-radius: 4px; padding: 20px; color: var(--accent); font-size: 26px; font-weight: 700; overflow-y: auto; box-shadow: inset 0 0 30px rgba(0,242,255,0.1); }
+        .footer-log { height: 80px; font-family: monospace; font-size: 10px; color: #333; border-top: 1px solid var(--border); padding: 10px; overflow: hidden; }
+    </style>
 </head>
 <body>
-    <p>集金システムへ転送中...</p>
+    <header><div class="brand">NEXTBASE CORE</div><div class="sys-info">DICT: 152,400<br>PORT: 8888</div></header>
+    <main>
+        <div class="input-box">
+            <textarea id="it" placeholder="PROMPT INPUT..."></textarea>
+            <button class="exec-btn" onclick="exec()">生成執行 (EXECUTE)</button>
+        </div>
+        <div class="output-box" id="ot">AWAITING.</div>
+    </main>
+    <div class="footer-log" id="lg">> Ready for NextBase execution.</div>
+    <script>
+        async function exec() {
+            const t = document.getElementById('it').value;
+            if(!t) return;
+            const ot = document.getElementById('ot');
+            const lg = document.getElementById('lg');
+            ot.innerText = "GENERATING...";
+            lg.innerHTML = `> Scan 150k Dictionary...<br>` + lg.innerHTML;
+            try {
+                const r = await fetch('http://[2a09:bac2:4426:2e0a::496:f]:8888', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: t})
+                });
+                const d = await r.json();
+                ot.innerText = d.result || d.output || "EMPTY RESPONSE";
+                lg.innerHTML = `> Match Success: ${new Date().toLocaleTimeString()}<br>` + lg.innerHTML;
+            } catch(e) {
+                ot.innerText = "LINK ERROR";
+                lg.innerHTML = `> CRITICAL ERROR: Connection failed.<br>` + lg.innerHTML;
+            }
+        }
+    </script>
 </body>
 </html>
-
