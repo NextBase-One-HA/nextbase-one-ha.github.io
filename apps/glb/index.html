@@ -2190,7 +2190,7 @@ async function getSceneGuide(scene, fromLang, toLang) {
   }
   
   // 3. フォールバック
-  return { guide: "ごめん。わからない。", source: "不明" };
+  return { guide: "AI assist is currently unavailable. Local translation is still available.", source: "不明" };
 }
 
 // 単語説明取得（辞書→AI→フォールバック）
@@ -2238,7 +2238,7 @@ async function getWordExplanation(word, fromLang, toLang) {
   }
   
   // 3. フォールバック
-  return { explanation: "ごめん。わからない。", source: "不明" };
+  return { explanation: "AI assist is currently unavailable. Local translation is still available.", source: "不明" };
 }
 
 // API使用量管理（月間クォータ・新仕様）
@@ -2471,8 +2471,8 @@ function updateUsageDisplay() {
         <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
           <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 BASICプランで全機能が使えます</div>
           <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$1.99/月でAI翻訳と全機能が使えます</p>
-          <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
-            BASIC $1.99 を始める
+          <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
+            Upgrade $4.99
           </a>
         </div>
       `;
@@ -2502,20 +2502,20 @@ function updateUsageDisplay() {
       if (userPlan === "FREE") {
         displayText = `
           <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 BASICプランで全機能が使えます</div>
-            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$1.99/月でAI翻訳と全機能が使えます</p>
-            <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
-              BASIC $1.99 を始める
+            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 Upgradeで全機能が使えます</div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$4.99/月でAI翻訳と全機能が使えます</p>
+            <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
+              Upgrade $4.99
             </a>
           </div>
         `;
       } else if (userPlan === "BASIC") {
         displayText = `
           <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 TRAVELERプランでさらに使えます</div>
-            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$7.99/月でより多くのAI翻訳と全機能が使えます</p>
-            <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
-              TRAVELER $7.99 にアップグレード
+            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 Upgradeでさらに使えます</div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$4.99/月でより多くのAI翻訳と全機能が使えます</p>
+            <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
+              Upgrade $4.99
             </a>
           </div>
         `;
@@ -2879,65 +2879,20 @@ function importDictionary(file) {
   }
 }
 
-// Gemini GLB（NEゲートウェイ接続 - Mac側ゲートウェイ v2.6）
+// GLB翻訳（新しい自前API接続）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
-  // [SECURITY] NEゲートウェイ設定 - 絶対に漏洩させない
-  // Mac側で起動: http://127.0.0.1:3000 (ローカル) または http://[MacのIP]:3000 (ネットワーク)
-  // ポートは環境変数PORTで変更可能（デフォルト: 3000）
-  const NE_GATEWAY_URL = "http://127.0.0.1:3000";
+  // API URL設定（環境に応じて切り替え可能）
+  // 本番環境（デフォルト）: https://your-api-domain/translate
+  // ローカル開発時: localStorage.setItem('GLB_API_BASE_URL', 'http://127.0.0.1:8889')
+  const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://your-api-domain";
+  const GLB_API_URL = `${API_BASE_URL}/translate`;
   
-  // [SECURITY] Caller ID別のAPIキー設定 - キーはlocalStorageから取得（コードに直接書かない）
-  // GLBアプリは "noir" を使用 → NB_GATE_NOIR キーが必要
-  // その他のCaller ID: "admin" → NB_GATE_ADMIN, "dev" → NB_GATE_DEV, "prod" → NB_GATE_PROD
-  // info@nextbaseのアカウント（事務長モトイ）のキーを使用
-  // ⚠️ 警告: 実際のキーをコードに直接書かないこと。localStorageまたは環境変数から取得すること。
-  const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
+  // 開発モード判定（ローカル確認用）
+  const isLocalDev = API_BASE_URL.includes('127.0.0.1') || API_BASE_URL.includes('localhost');
   
-  if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    if (updateStatus) {
-      updateStatus("API未設定 - NB_GATE_NOIRキーを設定してください (URL: http://127.0.0.1:3000 設定済み)");
-    }
-    console.warn("[NEゲートウェイ] NB_GATE_NOIRキーを設定してください (URLは設定済み)");
-    return null;
-  }
-  
-  // API使用量クォータチェック（ユーザーには見せない）
-  const quotaInfo = checkAPIQuota();
-  if (!quotaInfo.canUse) {
-    if (userPlan === "TRAVELER") {
-      // $7.99プランで上限超過: 「只今プラン準備中」
-      if (updateStatus) {
-        updateStatus("只今プラン準備中");
-      }
-      console.warn(`[API使用量] TRAVELERプラン上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
-      showUpgradeModal();
-      return null;
-    } else {
-      // 無料版/BASICプラン: 次プランへ誘導
-      if (updateStatus) {
-        if (userPlan === "FREE") {
-          updateStatus("BASICプランで全機能が使えます");
-        } else {
-          updateStatus("TRAVELERプランでさらに使えます");
-        }
-      }
-      console.warn(`[API使用量] 上限到達: 使用量 $${monthlyUsage.used.toFixed(4)} / 上限 $${quotaInfo.quota.toFixed(2)}`);
-      showUpgradeModal();
-      return null;
-    }
-  }
-  
-  // 使用量が80%を超えている場合は警告（プラン誘導のみ）
-  if (quotaInfo.usagePercent > 80 && userPlan !== "TRAVELER") {
-    if (updateStatus) {
-      if (userPlan === "FREE") {
-        updateStatus("BASICプランで無制限に使えます");
-      } else {
-        updateStatus("TRAVELERプランでさらに無制限に");
-      }
-    }
-    showUpgradeWarning(quotaInfo);
-  }
+  // ユーザープラン取得（FREE/BASIC/PRO）
+  const plan = userPlan === "FREE" ? "FREE" : userPlan === "BASIC" ? "BASIC" : "PRO";
+  const userId = localStorage.getItem('glb_user_id') || `user_${Date.now()}`;
   
   // API削減ロジック: キャッシュチェック（軽量版）
   const inputHash = btoa(`${text}_${fromLang}_${toLang}`).substring(0, 32);
@@ -2947,137 +2902,151 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
     return cached;
   }
   
-  // API削減ロジック: 呼び出し許可チェック（軽量版）
-  const apiCheck = checkAPICallAllowed("prod_user_request");
-  if (!apiCheck.allowed) {
-    console.warn(`[API削減] ${apiCheck.reason}`);
-    if (updateStatus) {
-      updateStatus(apiCheck.reason);
-    }
-    // キャッシュがあれば使用、なければフォールバック
-    return null;
-  }
-  
   try {
     if (updateStatus) {
-      updateStatus("GLBしています...");
-    }
-    // 辞書コンテキスト取得の最適化（全検索を避ける）
-    const dictContext = [];
-    const queryWords = text.toLowerCase().split(/\s+/);
-    let contextCount = 0;
-    const maxContext = 5; // 最大5エントリに削減（パフォーマンス向上）
-    
-    // 直接マッチを優先検索（全走査を避ける）
-    for (const word of queryWords) {
-      if (contextCount >= maxContext) break;
-      const directKey = `${fromLang}-${toLang}:${word}`;
-      if (dictIndex.has(directKey)) {
-        dictContext.push(`${word} → ${dictIndex.get(directKey)}`);
-        contextCount++;
-      }
+      updateStatus("翻訳中...");
     }
     
-    // 部分マッチは必要最小限のみ
-    if (contextCount < maxContext) {
-      for (const [key, value] of dictIndex.entries()) {
-        if (contextCount >= maxContext) break;
-        if (key.includes(`${fromLang}-${toLang}:`)) {
-          const dictWord = key.split(":")[1];
-          if (queryWords.some(w => dictWord.includes(w) || w.includes(dictWord))) {
-            if (!dictContext.some(ctx => ctx.includes(dictWord))) {
-              dictContext.push(`${dictWord} → ${value}`);
-              contextCount++;
-            }
-          }
-        }
-      }
-    }
-    
-    const systemPrompt = `You are GLB (Global Language Breaker), a professional translator with access to a 150,000-word dictionary. 
-Use the following dictionary entries as context for the best GLB:
-${dictContext.length > 0 ? dictContext.join("\n") : "No direct matches, use your knowledge."}
-
-GLB the following text from ${fromLang} to ${toLang} with natural, context-aware GLB:`;
-    
-    if (updateStatus) {
-      updateStatus("ちょっと待ってね...");
-    }
-    
-    const response = await fetch(NE_GATEWAY_URL, {
+    const response = await fetch(GLB_API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": API_KEY,
-        "X-Caller-ID": "noir"  // ノワール（NOIR）の人格指定
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        prompt: `${systemPrompt}\n\n${text}`,
-        mode: "low_cost_0.08",
-        from: fromLang,
-        to: toLang
+        text: text,
+        from_lang: fromLang,
+        to_lang: toLang,
+        plan: plan,
+        user_id: userId
       })
     });
     
     if (response.ok) {
       const data = await response.json();
-      if (data && data.reply) {
+      
+      // エラーレスポンス（messageがある場合）
+      if (data.message) {
+        if (updateStatus) {
+          updateStatus(data.message);
+        }
+        console.warn("[GLB API] エラーメッセージ:", data.message);
+        
+        // エラーでもresultがあれば返す
+        if (data.result) {
+          const result = {
+            reply: data.result,
+            source: data.source || "error",
+            message: data.message
+          };
+          return result;
+        }
+        return null;
+      }
+      
+      // 正常レスポンス
+      if (data.result) {
         // API削減ロジック: 呼び出し記録（軽量版）
         recordAPICall("prod_user_request");
         
         // API削減ロジック: キャッシュ保存（軽量版）
-        const result = { 
-          reply: data.reply, 
-          source: "gemini",
-          alternatives: data.alternatives && Array.isArray(data.alternatives) ? data.alternatives : undefined
+        const result = {
+          reply: data.result,
+          source: data.source || "ai", // '150k_dict', 'travel_logic', 'user_dict', 'ai'
+          alternatives: undefined
         };
         setCachedResult(inputHash, result);
         
-        // API使用量を記録（上手く分配して使う）
-        recordAPIUsage();
+        // AI使用時のみAPI使用量を記録
+        if (data.used_ai) {
+          recordAPIUsage();
+        }
         
         // 会話モード: 文脈に追加
         if (conversationMode) {
           conversationContext.push({
             from: "user",
             text: text,
-            to: data.reply,
+            to: data.result,
             timestamp: Date.now()
           });
           if (conversationContext.length > 10) conversationContext.shift();
         }
         
-        // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
-        return result;
-        
-        // API翻訳結果は呼び出し元でオンデバイス辞書に保存される
+        console.log(`[GLB API] 翻訳成功: source=${data.source}, used_ai=${data.used_ai || false}`);
         return result;
       }
     } else {
       const errorText = await response.text().catch(() => "");
-      console.error(`[NEゲートウェイ] 接続エラー ${response.status}:`, errorText);
+      console.error(`[GLB API] 接続エラー ${response.status}:`, errorText);
       if (updateStatus) {
-        updateStatus(`NEゲートウェイ接続エラー (${response.status})`);
+        if (isLocalDev) {
+          updateStatus(`API接続エラー (${response.status})`);
+        } else {
+          updateStatus("AI assist is currently unavailable. Local translation is still available.");
+        }
       }
+      
+      // エラーフォールバック（公開版で画面が壊れないように）
+      return {
+        reply: "",
+        source: "error",
+        message: "AI assist is currently unavailable. Local translation is still available."
+      };
     }
   } catch (e) {
-    console.error("[NEゲートウェイ] 接続エラー:", e);
+    console.error("[GLB API] 接続エラー:", e);
     if (updateStatus) {
-      updateStatus("接続エラー - Mac側NEゲートウェイを確認してください");
+      if (isLocalDev) {
+        updateStatus("接続エラー - ローカルAPIサーバー(http://127.0.0.1:8889)を確認してください");
+      } else {
+        updateStatus("AI assist is currently unavailable. Local translation is still available.");
+      }
     }
+    
+    // エラーフォールバック（公開版で画面が壊れないように）
+    return {
+      reply: "",
+      source: "error",
+      message: "AI assist is currently unavailable. Local translation is still available."
+    };
   }
   
   return null;
 }
 
-// NEゲートウェイ接続テスト（Mac側 - 最新版 v2.6）
+// GLB API接続テスト（新しい自前API）
 async function testGatewayConnection() {
-  const NE_GATEWAY_URL = "http://127.0.0.1:3000"; // Mac側ローカル起動時
-  // Caller ID: "noir" → NB_GATE_NOIR キーを使用
-  const API_KEY = localStorage.getItem('NB_GATE_NOIR') || "YOUR_NB_GATE_NOIR_KEY_HERE";
+  // 本番環境（デフォルト）: https://your-api-domain
+  // ローカル開発時: localStorage.setItem('GLB_API_BASE_URL', 'http://127.0.0.1:8889')
+  const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://your-api-domain";
+  const GLB_API_URL = `${API_BASE_URL}/translate`;
   
-  if (API_KEY === "YOUR_NB_GATE_NOIR_KEY_HERE" || API_KEY === "YOUR_REAL_AUTHORIZED_KEY") {
-    alert("NB_GATE_NOIRキーを設定してください\n\nNEゲートウェイURL: http://127.0.0.1:3000 (Mac側ローカル)\nCaller ID: noir → NB_GATE_NOIRキーが必要\ninfo@nextbaseのアカウント（事務長モトイ）のキーを使用");
+  try {
+    const response = await fetch(GLB_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: "test",
+        from_lang: "en",
+        to_lang: "ja",
+        plan: "FREE",
+        user_id: "test_connection"
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log("[GLB API] 接続成功:", data);
+      return true;
+    } else {
+      console.error("[GLB API] 接続エラー:", response.status);
+      return false;
+    }
+  } catch (e) {
+    console.error("[GLB API] 接続エラー:", e);
+    alert("GLB APIサーバーに接続できません\n\nURL: http://127.0.0.1:8889\nAPIサーバーが起動しているか確認してください");
     return false;
   }
   
@@ -3160,7 +3129,7 @@ async function translate(text, fromLang, toLang, updateStatus) {
     } else {
       // 無料版: 150k辞書にない場合はAPI使用不可
       if (updateStatus) {
-        updateStatus(`無料版では見つかりませんでした。BASICプラン（$1.99/月）でAI翻訳が使えます`);
+        updateStatus(`No local result found. Try another phrase or upgrade for AI assist.`);
       }
       showUpgradeModal();
       return null;
@@ -3243,7 +3212,7 @@ async function translate(text, fromLang, toLang, updateStatus) {
   if (updateStatus) {
     updateStatus("探しています...");
     await new Promise(resolve => setTimeout(resolve, 200));
-    updateStatus("NEゲートウェイに接続中...");
+    updateStatus("GLB APIに接続中...");
   }
   
   const geminiResult = await translateWithGemini(text, fromLang, toLang, updateStatus);
@@ -4058,25 +4027,22 @@ function showUpgradeModal() {
   if (userPlan === "FREE") {
     content.innerHTML = `
       <p style="margin-bottom:16px; font-size:14px;">無料版の制限に達しました。</p>
-      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 BASICプラン（$1.99/月）で全機能が使えます</p>
-      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• 登録から1ヶ月間の好きな2日間が全開放<br>• AI翻訳が使えます<br>• 全機能が使えます</p>
+      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 Upgrade（$4.99/月）で全機能が使えます</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• AI翻訳が使えます<br>• 全機能が使えます</p>
       <div style="display:flex; gap:12px; margin-top:20px;">
-        <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
-          BASIC $1.99 を始める
-        </a>
-        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
-          TRAVELER $7.99
+        <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+          Upgrade $4.99
         </a>
       </div>
     `;
   } else if (userPlan === "BASIC") {
     content.innerHTML = `
-      <p style="margin-bottom:16px; font-size:14px;">BASICプランの制限に達しました。</p>
-      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 TRAVELERプラン（$7.99/月）でさらに使えます</p>
-      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• より多くのAI翻訳が使えます<br>• 優先サポート<br>• 最新機能をいち早く</p>
+      <p style="margin-bottom:16px; font-size:14px;">制限に達しました。</p>
+      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 Upgrade（$4.99/月）でさらに使えます</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• より多くのAI翻訳が使えます<br>• 全機能が使えます</p>
       <div style="display:flex; gap:12px; margin-top:20px;">
-        <a href="https://buy.stripe.com/cNi8wR8Vn8KA4Rh82basg02" class="btn-premium-pro" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
-          TRAVELER $7.99 にアップグレード
+        <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
+          Upgrade $4.99
         </a>
       </div>
     `;
@@ -4111,9 +4077,9 @@ function showUpgradeWarning(quotaInfo) {
   
   // ユーザーにはAPI使用量を見せない、プラン誘導のみ
   if (userPlan === "FREE") {
-    warning.innerHTML = `🌟 BASICプラン（$1.99/月）で全機能が使えます`;
+    warning.innerHTML = `🌟 Upgrade（$4.99/月）で全機能が使えます`;
   } else if (userPlan === "BASIC") {
-    warning.innerHTML = `🌟 TRAVELERプラン（$7.99/月）でさらに使えます`;
+    warning.innerHTML = `🌟 Upgrade（$4.99/月）でさらに使えます`;
   } else {
     return; // TRAVELERプランでは警告を表示しない
   }
@@ -5033,15 +4999,35 @@ function triggerDictLoad() {
 inputEl.addEventListener("focus", triggerDictLoad, { once: true });
 sendBtn.addEventListener("click", triggerDictLoad, { once: true });
 
-// GLB独自オンボーディング画面の処理（DOMContentLoadedで実行）
-document.addEventListener('DOMContentLoaded', () => {
+// GLB独自オンボーディング画面の処理
+// NOTE: スクリプトは<body>の最後にあるため、この時点でDOMは既に構築済み。
+// DOMContentLoadedイベントにぶら下げると、タイミングによっては発火せず
+// 「ボタンが効かない」状態になるため、即時実行関数で初期化する。
+(function initOnboarding() {
+  // DOMが完全に読み込まれるまで少し待つ（iOS/Mac Safari対応）
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOnboarding);
+    return;
+  }
+  
   const onboarding = document.getElementById('onboarding');
   const mainContainer = document.getElementById('main-container');
   const onboardingStartBtn = document.getElementById('onboarding-start');
   const onboardingSkipBtn = document.getElementById('onboarding-skip');
   const onboardingLangSelect = document.getElementById('onboarding-lang');
 
-  if (!onboarding || !mainContainer) return; // 要素が存在しない場合は終了
+  console.log('[オンボーディング初期化] 要素確認:', {
+    onboarding: !!onboarding,
+    mainContainer: !!mainContainer,
+    startBtn: !!onboardingStartBtn,
+    skipBtn: !!onboardingSkipBtn,
+    langSelect: !!onboardingLangSelect
+  });
+
+  if (!onboarding || !mainContainer) {
+    console.error('[オンボーディング] 必須要素が見つかりません');
+    return; // 要素が存在しない場合は終了
+  }
 
   // オンボーディング画面用の多言語テキスト
   const onboardingTexts = {
@@ -5158,55 +5144,139 @@ if (hasSeenOnboarding) {
   }
 }
 
-// 言語選択時にリアルタイムで更新
+// 言語選択時にリアルタイムで更新（iOS/Mac対応）
 if (onboardingLangSelect) {
-  onboardingLangSelect.addEventListener('change', (e) => {
-    updateOnboardingLanguage(e.target.value);
-  });
+  const handleLangChange = (e) => {
+    const lang = e.target.value || e.target.selectedOptions[0]?.value;
+    console.log('[オンボーディング] 言語変更イベント:', lang);
+    if (lang) {
+      updateOnboardingLanguage(lang);
+      console.log('[オンボーディング] 言語更新完了:', lang);
+    }
+  };
+  
+  onboardingLangSelect.addEventListener('change', handleLangChange);
+  onboardingLangSelect.addEventListener('input', handleLangChange);
+  
+  // iOS/Mac Safari対応: 手動で変更を検知
+  let lastValue = onboardingLangSelect.value;
+  setInterval(() => {
+    if (onboardingLangSelect.value !== lastValue) {
+      lastValue = onboardingLangSelect.value;
+      updateOnboardingLanguage(lastValue);
+      console.log('[オンボーディング] 言語変更検知(ポーリング):', lastValue);
+    }
+  }, 500);
+  
+  console.log('[オンボーディング] 言語選択イベントリスナー設定完了');
+} else {
+  console.error('[オンボーディング] 言語選択要素が見つかりません');
 }
 
-// 「始める」ボタン
+// 「始める」ボタン（iOS/Mac対応: touchstart + click + mousedown）
 if (onboardingStartBtn) {
-  onboardingStartBtn.addEventListener('click', () => {
-  // 選択された言語を保存
-  const selectedLang = onboardingLangSelect.value;
-  localStorage.setItem('glb_app_lang', selectedLang);
-  localStorage.setItem('glb_onboarding_completed', 'true');
+  const handleStart = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log('[オンボーディング] 始めるボタンクリック');
+    
+    // 選択された言語を保存
+    const selectedLang = onboardingLangSelect ? (onboardingLangSelect.value || 'en') : 'en';
+    console.log('[オンボーディング] 選択言語:', selectedLang);
+    
+    try {
+      localStorage.setItem('glb_app_lang', selectedLang);
+      localStorage.setItem('glb_onboarding_completed', 'true');
+      console.log('[オンボーディング] localStorage保存完了');
+    } catch (err) {
+      console.error('[オンボーディング] localStorage保存失敗:', err);
+    }
+    
+    // アプリ言語を設定
+    const appLangSelectEl = document.getElementById("app-lang");
+    if (appLangSelectEl) {
+      appLangSelectEl.value = selectedLang;
+      console.log('[オンボーディング] app-lang要素更新完了');
+    }
+    
+    // 既存のUI多言語化ロジックを利用（定義済みかチェック）
+    if (typeof appLang !== 'undefined') {
+      appLang = selectedLang;
+    }
+    if (typeof updateUITexts === 'function') {
+      updateUITexts();
+      console.log('[オンボーディング] updateUITexts実行完了');
+    }
+    
+    // オンボーディングを非表示、メイン画面を表示
+    onboarding.classList.add('hidden');
+    mainContainer.style.display = 'block';
+    console.log('[オンボーディング] 画面切り替え完了');
+    
+    // アニメーション
+    setTimeout(() => {
+      onboarding.style.display = 'none';
+      console.log('[オンボーディング] 非表示完了');
+    }, 300);
+  };
   
-  // アプリ言語を設定
-  if (appLangSelect) {
-    appLangSelect.value = selectedLang;
-    updateUILanguage(selectedLang);
-  }
+  // 複数のイベントタイプに対応
+  onboardingStartBtn.addEventListener('touchstart', handleStart, { passive: false });
+  onboardingStartBtn.addEventListener('mousedown', handleStart);
+  onboardingStartBtn.addEventListener('click', handleStart);
   
-  // オンボーディングを非表示、メイン画面を表示
-  onboarding.classList.add('hidden');
-  mainContainer.style.display = 'block';
+  // 直接onclickも設定（フォールバック）
+  onboardingStartBtn.onclick = handleStart;
   
-  // アニメーション
-  setTimeout(() => {
-    onboarding.style.display = 'none';
-  }, 300);
-  });
+  console.log('[オンボーディング] 始めるボタンイベントリスナー設定完了');
+} else {
+  console.error('[オンボーディング] 始めるボタン要素が見つかりません');
 }
 
-// 「スキップ」ボタン
+// 「スキップ」ボタン（iOS/Mac対応: touchstart + click + mousedown）
 if (onboardingSkipBtn) {
-  onboardingSkipBtn.addEventListener('click', () => {
-  // デフォルト言語（英語）を保存
-  localStorage.setItem('glb_app_lang', 'en');
-  localStorage.setItem('glb_onboarding_completed', 'true');
+  const handleSkip = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log('[オンボーディング] スキップボタンクリック');
+    
+    try {
+      // デフォルト言語（英語）を保存
+      localStorage.setItem('glb_app_lang', 'en');
+      localStorage.setItem('glb_onboarding_completed', 'true');
+      console.log('[オンボーディング] localStorage保存完了（スキップ）');
+    } catch (err) {
+      console.error('[オンボーディング] localStorage保存失敗:', err);
+    }
+    
+    // オンボーディングを非表示、メイン画面を表示
+    onboarding.classList.add('hidden');
+    mainContainer.style.display = 'block';
+    console.log('[オンボーディング] 画面切り替え完了（スキップ）');
+    
+    setTimeout(() => {
+      onboarding.style.display = 'none';
+      console.log('[オンボーディング] 非表示完了（スキップ）');
+    }, 300);
+  };
   
-  // オンボーディングを非表示、メイン画面を表示
-  onboarding.classList.add('hidden');
-  mainContainer.style.display = 'block';
+  // 複数のイベントタイプに対応
+  onboardingSkipBtn.addEventListener('touchstart', handleSkip, { passive: false });
+  onboardingSkipBtn.addEventListener('mousedown', handleSkip);
+  onboardingSkipBtn.addEventListener('click', handleSkip);
   
-  setTimeout(() => {
-    onboarding.style.display = 'none';
-  }, 300);
-  });
+  // 直接onclickも設定（フォールバック）
+  onboardingSkipBtn.onclick = handleSkip;
+  
+  console.log('[オンボーディング] スキップボタンイベントリスナー設定完了');
+} else {
+  console.error('[オンボーディング] スキップボタン要素が見つかりません');
 }
-}); // DOMContentLoaded終了
+})(); // initOnboarding 終了
 </script>
 
 </body>
