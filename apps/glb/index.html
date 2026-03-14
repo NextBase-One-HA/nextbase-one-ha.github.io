@@ -1180,16 +1180,16 @@ button.btn-primary:disabled{
     <div class="label">API使用量管理</div>
     <div id="api-usage-display" style="margin-bottom:16px;"></div>
     <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <button class="icon-btn" id="set-plan-basic" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'BASIC' ? 'background:var(--gold); color:#000;' : ''}">
-        BASIC ($1.99/月)
+      <button class="icon-btn" id="set-plan-basic" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'BASIC' || userPlan === 'PRO' ? 'background:var(--gold); color:#000;' : ''}">
+        GLB PRO ($4.99/月)
       </button>
-      <button class="icon-btn" id="set-plan-traveler" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'TRAVELER' ? 'background:var(--gold); color:#000;' : ''}">
+      <button class="icon-btn" id="set-plan-traveler" style="display:none; flex:1; padding:10px; font-size:12px; ${userPlan === 'TRAVELER' ? 'background:var(--gold); color:#000;' : ''}">
         TRAVELER ($7.99/月)
       </button>
     </div>
     <p style="font-size:11px; color:var(--muted); text-align:center; margin:0;">
-      BASIC: 月間$0.12相当 / TRAVELER: 月間$1.99相当<br>
-      使用量を上手く分配して使用してください
+      GLB PRO: 月間制限なし<br>
+      全機能が使えます
     </p>
   </div>
 
@@ -2244,9 +2244,11 @@ async function getWordExplanation(word, fromLang, toLang) {
 // API使用量管理（月間クォータ・新仕様）
 const API_QUOTA = {
   FREE: 0,        // 無料版: 0（150k辞書のみ、API使用不可）
-  BASIC: 0.5,    // $1.99プラン: 初回月間$0.5相当（登録から1ヶ月間）
-  BASIC_NORMAL: 0.12,  // $1.99プラン: 2ヶ月後から通常月間$0.12相当
-  TRAVELER: 1.99  // $7.99プラン: 月間$1.99相当
+  PRO: 50,        // $4.99プラン: 月間50回相当（Web版の有料プラン）
+  // 後方互換性のため残す（古いコード参照用）
+  BASIC: 50,      // PROと同じ（後方互換性）
+  BASIC_NORMAL: 50,  // PROと同じ（後方互換性）
+  TRAVELER: 50    // PROと同じ（後方互換性）
 };
 
 // API使用量の推定（1回あたりのコスト・NEゲートウェイ計算）
@@ -2268,7 +2270,7 @@ let monthlyUsage = {
   freeTranslations: 0  // 無料版の翻訳回数
 };
 
-// $1.99プラン: 登録から1ヶ月間の好きな2日間全開放（旅行予定日をゲット）
+// $4.99プラン: 月間制限なし（全機能が使えます）
 let premiumFreeDays = {
   registrationDate: null,  // 登録日
   selectedDays: [],  // 選択した2日間（例: ['2025-01-15', '2025-01-20']）
@@ -2405,6 +2407,26 @@ function recordFreeTranslation() {
   updateUsageDisplay();
 }
 
+// 現在のプランに応じたクォータ情報を取得（FREE/PROの2状態に統一）
+function getCurrentQuota() {
+  // Web版はFREE/PROの2状態に統一
+  // BASIC/TRAVELERはPROとして扱う
+  if (userPlan === "FREE") {
+    return {
+      quota: API_QUOTA.FREE,
+      type: "FREE",
+      limit: FREE_LIMIT.translations
+    };
+  }
+  
+  // 有料プラン（BASIC/TRAVELER/PRO）は全てPROとして扱う
+  return {
+    quota: API_QUOTA.PRO,
+    type: "PRO",
+    limit: API_QUOTA.PRO
+  };
+}
+
 // API使用量が上限内かチェック（新仕様対応）
 function checkAPIQuota() {
   // 無料版: 翻訳回数で制限
@@ -2469,8 +2491,8 @@ function updateUsageDisplay() {
     if (quotaInfo.remaining <= 0) {
       displayText = `
         <div style="background:linear-gradient(135deg, rgba(212,175,55,.1) 0%, rgba(212,175,55,.05) 100%); border:1px solid var(--gold); border-radius:8px; padding:16px; text-align:center;">
-          <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 BASICプランで全機能が使えます</div>
-          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$1.99/月でAI翻訳と全機能が使えます</p>
+          <div style="font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px;">🌟 GLB PROで全機能が使えます</div>
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">$4.99/月でAI翻訳と全機能が使えます</p>
           <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="display:inline-block; padding:10px 20px; text-decoration:none; border-radius:6px;">
             Upgrade $4.99
           </a>
@@ -2490,7 +2512,7 @@ function updateUsageDisplay() {
         </div>
       `;
     } else if (quotaInfo.type === "TRAVELER" && !quotaInfo.canUse) {
-      // $7.99プランで上限超過: 「只今プラン準備中」
+      // $4.99プランで上限超過: 「只今プラン準備中」（後方互換性のため残す）
       displayText = `
         <div style="background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center;">
           <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:8px;">只今プラン準備中</div>
@@ -2890,8 +2912,8 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   // 開発モード判定（ローカル確認用）
   const isLocalDev = API_BASE_URL.includes('127.0.0.1') || API_BASE_URL.includes('localhost');
   
-  // ユーザープラン取得（FREE/BASIC/PRO）
-  const plan = userPlan === "FREE" ? "FREE" : userPlan === "BASIC" ? "BASIC" : "PRO";
+  // ユーザープラン取得（FREE/PROの2状態に統一）
+  const plan = userPlan === "FREE" ? "FREE" : "PRO";
   const userId = localStorage.getItem('glb_user_id') || `user_${Date.now()}`;
   
   // API削減ロジック: キャッシュチェック（軽量版）
@@ -3092,7 +3114,7 @@ async function translate(text, fromLang, toLang, updateStatus) {
     const quotaInfo = checkAPIQuota();
     if (!quotaInfo.canUse) {
       if (updateStatus) {
-        updateStatus(`無料版の上限に達しました（${FREE_LIMIT.translations}回/月）。BASICプラン（$1.99/月）で全機能が使えます`);
+        updateStatus(`無料版の上限に達しました（${FREE_LIMIT.translations}回/月）。GLB PRO（$4.99/月）で全機能が使えます`);
       }
       showUpgradeModal();
       return null;
@@ -3175,7 +3197,7 @@ async function translate(text, fromLang, toLang, updateStatus) {
   const quotaInfo = checkAPIQuota();
   if (!quotaInfo.canUse) {
     if (userPlan === "TRAVELER") {
-      // $7.99プランで上限超過: 「只今プラン準備中」
+      // $4.99プランで上限超過: 「只今プラン準備中」（後方互換性のため残す）
       if (updateStatus) {
         updateStatus("只今プラン準備中");
       }
@@ -4024,6 +4046,7 @@ function showUpgradeModal() {
   const content = document.getElementById("upgrade-modal-content");
 
   // ユーザーにはAPI使用量を見せない、プラン誘導のみ
+  // FREE/PROの2状態に統一
   if (userPlan === "FREE") {
     content.innerHTML = `
       <p style="margin-bottom:16px; font-size:14px;">無料版の制限に達しました。</p>
@@ -4035,22 +4058,11 @@ function showUpgradeModal() {
         </a>
       </div>
     `;
-  } else if (userPlan === "BASIC") {
+  } else {
+    // PROプラン: アップグレード不要
     content.innerHTML = `
-      <p style="margin-bottom:16px; font-size:14px;">制限に達しました。</p>
-      <p style="margin-bottom:16px; color:var(--primary); font-weight:700; font-size:16px;">🌟 Upgrade（$4.99/月）でさらに使えます</p>
-      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">• より多くのAI翻訳が使えます<br>• 全機能が使えます</p>
-      <div style="display:flex; gap:12px; margin-top:20px;">
-        <a href="https://buy.stripe.com/fZuaEZ0oRgd25Vl96fasg00" class="btn-premium" style="flex:1; text-align:center; padding:12px; text-decoration:none;">
-          Upgrade $4.99
-        </a>
-      </div>
-    `;
-  } else if (userPlan === "TRAVELER") {
-    // $7.99プランで上限超過: 「只今プラン準備中」
-    content.innerHTML = `
-      <p style="margin-bottom:16px; font-size:14px; font-weight:700;">只今プラン準備中</p>
-      <p style="margin-bottom:16px; font-size:12px; color:var(--muted);">より高機能なプランを準備しています。<br>しばらくお待ちください。</p>
+      <p style="margin-bottom:16px; font-size:14px; font-weight:700;">GLB PRO プラン</p>
+      <p style="margin-bottom:16px; font-size:12px; color:var(--text-secondary);">全機能がご利用いただけます。</p>
     `;
   }
 
