@@ -191,25 +191,26 @@ GLB PRO 有効化 ($4.99)
                 if (result) {
                     source = '150k辞書';
                 } else {
-                    // 2. 旅行ロジック
-                    result = this.travelLogic(q);
+                    // 2. ユーザー辞書
+                    result = this.userDict.get(lower);
                     if (result) {
-                        source = '旅行ロジック';
+                        source = 'ユーザー辞書';
                     } else {
-                        // 3. ユーザー辞書
-                        result = this.userDict.get(lower);
-                        if (result) {
-                            source = 'ユーザー辞書';
-                        } else {
-                            // 4. AI fallback
-                            const apiResult = await this.translateWithAPI(q);
-                            if (apiResult.translation) {
-                                result = apiResult.translation;
+                        // 3. API fallback (旅行ロジック + AI翻訳を含む)
+                        const apiResult = await this.translateWithAPI(q);
+                        if (apiResult.translation) {
+                            result = apiResult.translation;
+                            // API側のsourceに基づいて表示
+                            if (apiResult.source === 'travel_logic') {
+                                source = '旅行ロジック';
+                            } else if (apiResult.source === 'ai') {
                                 source = 'AI翻訳';
-                            } else if (apiResult.error) {
-                                result = apiResult.error;
-                                source = 'エラー';
+                            } else {
+                                source = 'API翻訳';
                             }
+                        } else if (apiResult.error) {
+                            result = apiResult.error;
+                            source = 'エラー';
                         }
                     }
                 }
