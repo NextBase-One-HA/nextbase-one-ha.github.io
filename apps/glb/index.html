@@ -88,8 +88,14 @@ GLB PRO 有効化 ($4.99)
     </div>
 
     <script>
+        const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://glb-noir.onrender.com";
+        
         const STELLA_BUS = {
             dict: new Map(),
+            userDict: new Map(),
+            lastTranslateTime: 0,
+            cooldownMs: 5000,
+            quota: { FREE: 0, PRO: 50 },
             async init() {
                 try {
                     const res = await fetch('/dictionary/150k.csv');
@@ -106,17 +112,122 @@ GLB PRO 有効化 ($4.99)
                 } catch (e) {
                     document.getElementById('result-area').innerText = "辞書ロード失敗。パスを確認。";
                 }
+                const saved = localStorage.getItem('GLB_USER_DICT');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        Object.entries(data).forEach(([k, v]) => this.userDict.set(k.toLowerCase(), v));
+                    } catch (e) {}
+                }
             },
-            search(q) {
-                const res = this.dict.get(q.toLowerCase().trim());
-                document.getElementById('result-area').innerHTML = res 
-                    ? `<strong>${res}</strong>` 
-                    : `<span style="color:#666;">見つかりません</span>`;
+            getPlan() {
+                const plan = localStorage.getItem('GLB_PLAN') || 'FREE';
+                return plan === 'FREE' ? 'FREE' : 'PRO';
+            },
+            checkQuota() {
+                const plan = this.getPlan();
+                const used = parseInt(localStorage.getItem('GLB_QUOTA_USED') || '0', 10);
+                return used < this.quota[plan];
+            },
+            useQuota() {
+                const used = parseInt(localStorage.getItem('GLB_QUOTA_USED') || '0', 10);
+                localStorage.setItem('GLB_QUOTA_USED', String(used + 1));
+            },
+            travelLogic(q) {
+                const lower = q.toLowerCase().trim();
+                const patterns = {
+                    'where is the station': '駅はどこですか',
+                    'lost passport': 'パスポートをなくしました',
+                    'how much': 'いくらですか',
+                    'thank you': 'ありがとうございます',
+                    'excuse me': 'すみません'
+                };
+                return patterns[lower] || null;
+            },
+            async translateWithAPI(text) {
+                if (text.length >= 200) {
+                    return { error: '文字数が200文字を超えています' };
+                }
+                const now = Date.now();
+                if (now - this.lastTranslateTime < this.cooldownMs) {
+                    return { error: 'クールダウン中です。しばらくお待ちください。' };
+                }
+                if (!this.checkQuota()) {
+                    return { error: 'クォータが上限に達しました。PROプランにアップグレードしてください。' };
+                }
+                try {
+                    const res = await fetch(API_BASE_URL + '/translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text })
+                    });
+                    if (!res.ok) throw new Error('API error');
+                    const data = await res.json();
+                    this.lastTranslateTime = now;
+                    this.useQuota();
+                    return data;
+                } catch (e) {
+                    return { error: 'API接続エラー: ' + e.message };
+                }
+            },
+            async search(q) {
+                if (!q || !q.trim()) {
+                    document.getElementById('result-area').innerHTML = '<span style="color:#666;">入力してください</span>';
+                    return;
+                }
+                const lower = q.toLowerCase().trim();
+                let result = null;
+                let source = '';
+                
+                // 1. 150k辞書
+                result = this.dict.get(lower);
+                if (result) {
+                    source = '150k辞書';
+                } else {
+                    // 2. 旅行ロジック
+                    result = this.travelLogic(q);
+                    if (result) {
+                        source = '旅行ロジック';
+                    } else {
+                        // 3. ユーザー辞書
+                        result = this.userDict.get(lower);
+                        if (result) {
+                            source = 'ユーザー辞書';
+                        } else {
+                            // 4. AI fallback
+                            const apiResult = await this.translateWithAPI(q);
+                            if (apiResult.translation) {
+                                result = apiResult.translation;
+                                source = 'AI翻訳';
+                            } else if (apiResult.error) {
+                                result = apiResult.error;
+                                source = 'エラー';
+                            }
+                        }
+                    }
+                }
+                
+                const display = result 
+                    ? `<strong>${result}</strong><br><span style="color:#666; font-size:12px;">[${source}]</span>` 
+                    : '<span style="color:#666;">見つかりません</span>';
+                document.getElementById('result-area').innerHTML = display;
             }
         };
 
         const input = document.getElementById('q');
-        input.addEventListener('input', (e) => STELLA_BUS.search(e.target.value));
+        let debounceTimer = null;
+        input.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                STELLA_BUS.search(e.target.value);
+            }, 300);
+        });
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                clearTimeout(debounceTimer);
+                STELLA_BUS.search(e.target.value);
+            }
+        });
 
         STELLA_BUS.init();
 
