@@ -133,17 +133,8 @@ GLB PRO 有効化 ($4.99)
                 const used = parseInt(localStorage.getItem('GLB_QUOTA_USED') || '0', 10);
                 localStorage.setItem('GLB_QUOTA_USED', String(used + 1));
             },
-            travelLogic(q) {
-                const lower = q.toLowerCase().trim();
-                const patterns = {
-                    'where is the station': '駅はどこですか',
-                    'lost passport': 'パスポートをなくしました',
-                    'how much': 'いくらですか',
-                    'thank you': 'ありがとうございます',
-                    'excuse me': 'すみません'
-                };
-                return patterns[lower] || null;
-            },
+            // 旅行ロジックはAPI側に一本化（削除）
+            // travelLogic() は API側の40パターンを使用
             async translateWithAPI(text) {
                 if (text.length >= 200) {
                     return { error: '文字数が200文字を超えています' };
