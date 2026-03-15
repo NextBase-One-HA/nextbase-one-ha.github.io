@@ -1,8 +1,10 @@
 # NEゲートウェイ関連（絶対に漏洩させない）
 ne_gateway/
 ne_gateway.2/
+momoriri/
 **/ne_gateway/
 **/ne_gateway.2/
+**/momoriri/
 *.gateway
 gateway/
 
