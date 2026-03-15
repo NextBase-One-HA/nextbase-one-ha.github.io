@@ -156,16 +156,32 @@ GLB PRO 有効化 ($4.99)
                     return { error: 'クォータが上限に達しました。PROプランにアップグレードしてください。' };
                 }
                 try {
+                    const plan = this.getPlan();
                     const res = await fetch(API_BASE_URL + '/translate', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text })
+                        body: JSON.stringify({ 
+                            text: text,
+                            from_lang: 'en',
+                            to_lang: 'ja',
+                            plan: plan,
+                            user_id: localStorage.getItem('GLB_USER_ID') || null
+                        })
                     });
-                    if (!res.ok) throw new Error('API error');
+                    if (!res.ok) {
+                        const errorData = await res.json().catch(() => ({ detail: 'API error' }));
+                        throw new Error(errorData.detail || 'API error');
+                    }
                     const data = await res.json();
                     this.lastTranslateTime = now;
                     this.useQuota();
-                    return data;
+                    // API側は result フィールドを返すが、GLB側は translation を期待
+                    return { 
+                        translation: data.result || '',
+                        error: data.message || null,
+                        source: data.source || 'ai',
+                        used_ai: data.used_ai || false
+                    };
                 } catch (e) {
                     return { error: 'API接続エラー: ' + e.message };
                 }
