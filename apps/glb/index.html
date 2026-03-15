@@ -1180,11 +1180,8 @@ button.btn-primary:disabled{
     <div class="label">API使用量管理</div>
     <div id="api-usage-display" style="margin-bottom:16px;"></div>
     <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <button class="icon-btn" id="set-plan-basic" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'BASIC' || userPlan === 'PRO' ? 'background:var(--gold); color:#000;' : ''}">
+      <button class="icon-btn" id="set-plan-pro" style="flex:1; padding:10px; font-size:12px; ${userPlan === 'PRO' ? 'background:var(--gold); color:#000;' : ''}">
         GLB PRO ($4.99/月)
-      </button>
-      <button class="icon-btn" id="set-plan-traveler" style="display:none; flex:1; padding:10px; font-size:12px; ${userPlan === 'TRAVELER' ? 'background:var(--gold); color:#000;' : ''}">
-        TRAVELER ($7.99/月)
       </button>
     </div>
     <p style="font-size:11px; color:var(--muted); text-align:center; margin:0;">
@@ -2904,9 +2901,9 @@ function importDictionary(file) {
 // GLB翻訳（新しい自前API接続）
 async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   // API URL設定（環境に応じて切り替え可能）
-  // 本番環境（デフォルト）: https://your-api-domain/translate
+  // 本番環境（デフォルト）: https://glb-api.onrender.com
   // ローカル開発時: localStorage.setItem('GLB_API_BASE_URL', 'http://127.0.0.1:8889')
-  const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://your-api-domain";
+  const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://glb-api.onrender.com";
   const GLB_API_URL = `${API_BASE_URL}/translate`;
   
   // 開発モード判定（ローカル確認用）
@@ -2916,12 +2913,29 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
   const plan = userPlan === "FREE" ? "FREE" : "PRO";
   const userId = localStorage.getItem('glb_user_id') || `user_${Date.now()}`;
   
+  // API制限チェック: 文字数<200
+  if (text.length >= 200) {
+    if (updateStatus) {
+      updateStatus("エラー: 文字数は200文字未満にしてください");
+    }
+    return { reply: "エラー: 文字数は200文字未満にしてください", source: "error" };
+  }
+  
   // API削減ロジック: キャッシュチェック（軽量版）
   const inputHash = btoa(`${text}_${fromLang}_${toLang}`).substring(0, 32);
   const cached = getCachedResult(inputHash);
   if (cached) {
     console.log("[API削減] キャッシュヒット");
     return cached;
+  }
+  
+  // quotaチェック
+  const quotaInfo = checkAPIQuota();
+  if (!quotaInfo.canUse) {
+    if (updateStatus) {
+      updateStatus(`API使用量上限に達しました。プラン: ${quotaInfo.type}`);
+    }
+    return { reply: "API使用量上限に達しました", source: "error" };
   }
   
   try {
@@ -3040,7 +3054,7 @@ async function translateWithGemini(text, fromLang, toLang, updateStatus) {
 async function testGatewayConnection() {
   // 本番環境（デフォルト）: https://your-api-domain
   // ローカル開発時: localStorage.setItem('GLB_API_BASE_URL', 'http://127.0.0.1:8889')
-  const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://your-api-domain";
+  const API_BASE_URL = localStorage.getItem('GLB_API_BASE_URL') || "https://glb-api.onrender.com";
   const GLB_API_URL = `${API_BASE_URL}/translate`;
   
   try {
@@ -3293,8 +3307,7 @@ const importAllDataInput = document.getElementById("import-all-data-input");
 const performanceStatsBtn = document.getElementById("performance-stats-btn");
 const testGatewayBtn = document.getElementById("test-gateway");
 const setPlanFreeBtn = document.getElementById("set-plan-free");
-const setPlanBasicBtn = document.getElementById("set-plan-basic");
-const setPlanTravelerBtn = document.getElementById("set-plan-traveler");
+const setPlanProBtn = document.getElementById("set-plan-pro");
 const changePremiumDaysBtn = document.getElementById("change-premium-days");
 const upgradeModal = document.getElementById("upgrade-modal");
 const closeUpgradeModalBtn = document.getElementById("close-upgrade-modal");
@@ -4632,33 +4645,25 @@ setPlanFreeBtn.addEventListener("click", () => {
   updateUsageDisplay();
   setPlanFreeBtn.style.background = "var(--gold)";
   setPlanFreeBtn.style.color = "#000";
-  setPlanBasicBtn.style.background = "";
-  setPlanBasicBtn.style.color = "";
-  setPlanTravelerBtn.style.background = "";
-  setPlanTravelerBtn.style.color = "";
+  if (setPlanProBtn) {
+    setPlanProBtn.style.background = "";
+    setPlanProBtn.style.color = "";
+  }
   
   alert("無料版に切り替えました。\n\n【制限】\n• 月間5回まで（150k辞書のみ）\n• API使用不可");
 });
 
-setPlanBasicBtn.addEventListener("click", () => {
-  userPlan = "BASIC";
-  saveUserPlanAndUsage();
-  updateUsageDisplay();
-  setPlanBasicBtn.style.background = "var(--gold)";
-  setPlanBasicBtn.style.color = "#000";
-  setPlanTravelerBtn.style.background = "";
-  setPlanTravelerBtn.style.color = "";
-});
-
-setPlanTravelerBtn.addEventListener("click", () => {
-  userPlan = "TRAVELER";
-  saveUserPlanAndUsage();
-  updateUsageDisplay();
-  setPlanTravelerBtn.style.background = "var(--gold)";
-  setPlanTravelerBtn.style.color = "#000";
-  setPlanBasicBtn.style.background = "";
-  setPlanBasicBtn.style.color = "";
-});
+if (setPlanProBtn) {
+  setPlanProBtn.addEventListener("click", () => {
+    userPlan = "PRO";
+    saveUserPlanAndUsage();
+    updateUsageDisplay();
+    setPlanProBtn.style.background = "var(--gold)";
+    setPlanProBtn.style.color = "#000";
+    setPlanFreeBtn.style.background = "";
+    setPlanFreeBtn.style.color = "";
+  });
+}
 
 // NEゲートウェイ接続テスト
 testGatewayBtn.addEventListener("click", async () => {
