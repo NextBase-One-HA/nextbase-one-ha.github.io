@@ -5,69 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tomori World GLB | Global Language Breaker</title>
     <style>
-        :root { --gold: #d6b25e; --bg: #0a0a0a; --panel: #111; --text: #f2f2f2; }
+        :root { --gold: #d6b25e; --bg: #050505; --panel: #111; --text: #f2f2f2; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; }
+        
+        /* オープニング動画（Safari対策済） */
+        #intro { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+        #intro video { width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        .skip-btn { position: absolute; z-index: 10000; bottom: 50px; padding: 10px 30px; border: 1px solid var(--gold); color: var(--gold); background: transparent; border-radius: 20px; font-size: 14px; cursor: pointer; }
+
+        /* メインアプリUI */
+        #main-app { display: none; opacity: 0; transition: opacity 0.8s ease; padding-bottom: 50px; }
         header { padding: 40px 20px 20px; }
         h1 { font-size: 28px; letter-spacing: 4px; color: var(--gold); margin: 0; }
         p.catchphrase { color: #888; font-size: 14px; margin-top: 10px; }
         
-        /* 翻訳インターフェース */
         .app-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        textarea { width: 100%; height: 120px; background: var(--panel); color: #fff; border: 1px solid #333; border-radius: 12px; padding: 15px; font-size: 16px; margin-bottom: 15px; box-sizing: border-box; resize: none; }
+        textarea { width: 100%; height: 120px; background: var(--panel); color: #fff; border: 1px solid #333; border-radius: 12px; padding: 15px; font-size: 16px; margin-bottom: 15px; resize: none; }
         .execute-btn { background: var(--gold); color: #000; font-weight: bold; border: none; padding: 15px 40px; border-radius: 30px; font-size: 16px; cursor: pointer; letter-spacing: 2px; width: 100%; margin-bottom: 20px; }
         .result-box { min-height: 80px; background: #000; border: 1px solid var(--gold); border-radius: 12px; padding: 15px; text-align: left; font-size: 18px; margin-bottom: 40px; }
 
-        /* プラン＆決済エリア */
+        /* 収益化（Stripe） */
         .pricing-grid { display: grid; gap: 15px; text-align: left; margin-bottom: 40px; }
         .plan-card { background: var(--panel); border: 1px solid #333; padding: 20px; border-radius: 12px; }
         .plan-card h3 { margin: 0 0 10px; color: var(--gold); }
         .plan-card .price { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
         .buy-btn { display: block; background: #222; color: var(--gold); text-decoration: none; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; border: 1px solid var(--gold); }
         
-        /* フッター（法的防壁） */
         footer { font-size: 12px; color: #666; padding: 20px; border-top: 1px solid #222; }
         footer a { color: #888; text-decoration: none; margin: 0 10px; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>GLB</h1>
-        <p class="catchphrase">世界の言葉の壁をぶっ壊す。0秒台AI翻訳。</p>
-    </header>
-
-    <div class="app-container">
-        <textarea id="inputText" placeholder="翻訳・精錬したい言葉を入力してください..."></textarea>
-        <button class="execute-btn" onclick="executeTranslation()">GLB EXECUTE</button>
-        <div class="result-box" id="resultArea">
-            <span style="color: #666;">ここに結果が表示されます...</span>
-        </div>
-
-        <h2 style="font-size: 18px; letter-spacing: 2px; margin-bottom: 20px;">UNLOCK FULL POWER</h2>
-        <div class="pricing-grid">
-            <div class="plan-card">
-                <h3>GLB Basic (Monthly)</h3>
-                <div class="price">$1.99 / 月</div>
-                <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="buy-btn">Subscribe</a>
-            </div>
-            <div class="plan-card">
-                <h3>Tomori Engine (1演算)</h3>
-                <div class="price">¥70,000</div>
-                <p style="font-size: 12px; color: #888;">最高純度の自己最適化・深層同期</p>
-                <a href="https://buy.stripe.com/6oUdRb4F79OEgzZfuDasg07" class="buy-btn">Purchase Access</a>
-            </div>
-        </div>
+    <div id="intro">
+        <video id="intro-video" src="door.mp4" autoplay muted playsinline></video>
+        <button class="skip-btn" onclick="enterApp()">ENTER GLB</button>
     </div>
 
-    <footer>
-        <a href="/Worldwide-/terms.html">Terms of Service</a> | 
-        <a href="/Worldwide-/privacy.html">Privacy Policy</a> | 
-        <a href="/Worldwide-/legal.html">Legal Notice</a>
-        <p>© 2026 NEXT BASE Japan. All rights reserved.</p>
-    </footer>
+    <div id="main-app">
+        <header>
+            <h1>TOMORI WORLD GLB</h1>
+            <p class="catchphrase">世界の言葉の壁をぶっ壊す。0秒台AI翻訳。</p>
+        </header>
+
+        <div class="app-container">
+            <textarea id="inputText" placeholder="翻訳・精錬したい言葉を入力..."></textarea>
+            <button class="execute-btn" onclick="executeTranslation()">GLB EXECUTE</button>
+            
+            <div class="result-box" id="resultArea">
+                <span style="color: #666;">ここに結果が表示されます...</span>
+            </div>
+
+            <h2 style="font-size: 18px; letter-spacing: 2px; margin-bottom: 20px;">UNLOCK FULL POWER</h2>
+            <div class="pricing-grid">
+                <div class="plan-card">
+                    <h3>GLB Basic (Monthly)</h3>
+                    <div class="price">$1.99 / 月</div>
+                    <a href="https://buy.stripe.com/dRm3cx7Rj8KA0B1gyHasg01" class="buy-btn">Subscribe</a>
+                </div>
+                <div class="plan-card">
+                    <h3>Tomori Engine (1演算)</h3>
+                    <div class="price">¥70,000</div>
+                    <p style="font-size: 12px; color: #888;">最高純度の自己最適化・深層同期</p>
+                    <a href="https://buy.stripe.com/6oUdRb4F79OEgzZfuDasg07" class="buy-btn">Purchase Access</a>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <a href="/Worldwide-/terms.html">Terms of Service</a> | 
+            <a href="/Worldwide-/privacy.html">Privacy Policy</a> | 
+            <a href="/Worldwide-/legal.html">Legal Notice</a>
+            <p>© 2026 NEXT BASE Japan. All rights reserved.</p>
+        </footer>
+    </div>
 
     <script>
-        // GLB翻訳APIの呼び出し（NEゲートウェイ経由）
+        // ==========================================
+        // Safari 音声ロック解除ハック (最初のタップで空音声を再生)
+        // ==========================================
+        document.body.addEventListener('touchstart', function() {
+            let dummy = new SpeechSynthesisUtterance('');
+            speechSynthesis.speak(dummy);
+        }, { once: true });
+
+        // ==========================================
+        // オープニング動画制御
+        // ==========================================
+        const video = document.getElementById('intro-video');
+        const intro = document.getElementById('intro');
+        const mainApp = document.getElementById('main-app');
+
+        function enterApp() {
+            intro.style.opacity = '0';
+            setTimeout(() => {
+                intro.style.display = 'none';
+                mainApp.style.display = 'block';
+                setTimeout(() => mainApp.style.opacity = '1', 50);
+            }, 800);
+        }
+
+        // 動画が終わったら自動でアプリ画面へ
+        if(video) {
+            video.onended = enterApp;
+            // エラー等で再生されない場合のフォールバック(5秒後)
+            setTimeout(enterApp, 5000);
+        }
+
+        // ==========================================
+        // GLB 翻訳・精錬ロジック (API接続)
+        // ==========================================
         async function executeTranslation() {
             const input = document.getElementById('inputText').value;
             const resultArea = document.getElementById('resultArea');
@@ -76,18 +124,25 @@
             resultArea.innerHTML = '<span style="color: var(--gold);">Processing...</span>';
 
             try {
-                // ※指定されたCloud Runのエンドポイントへ接続
+                // NEゲートウェイへの通信
                 const response = await fetch('https://translate-wawnzcebpq-uc.a.run.app', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: input, from_lang: "ja", to_lang: "en" })
                 });
 
-                if (!response.ok) throw new Error('Network response was not ok');
+                if (!response.ok) throw new Error('API Error');
                 
                 const data = await response.json();
-                // JSONの "text" キーで結果を受け取る仕様に基づく
-                resultArea.innerText = data.text || data.translatedText || "エラー: 翻訳結果が空です";
+                const finalText = data.text || data.translatedText || "エラー: 翻訳結果が空です";
+                
+                // 結果の表示
+                resultArea.innerHTML = `<strong>${finalText}</strong>`;
+                
+                // Safariでも音が鳴る（最初のタップでロック解除済み）
+                const ut = new SpeechSynthesisUtterance(finalText);
+                ut.lang = 'en-US';
+                speechSynthesis.speak(ut);
                 
             } catch (error) {
                 console.error('Error:', error);
