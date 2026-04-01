@@ -5,33 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GLOBAL LANGUAGE BREAKER</title>
     <style>
-        /* 深淵な黒 (#050505) と洗練されたディープ・ゴールド (#C5A059) の融合 */
+        /* 親方の好きな「綺麗で洗練された色」: ディープゴールド & ミッドナイト */
         body { background: #050505; color: #C5A059; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        .header { font-size: 1.4rem; font-weight: 900; letter-spacing: 0.4rem; margin-bottom: 2rem; text-align: center; text-transform: uppercase; text-shadow: 0 0 10px rgba(197, 160, 89, 0.4); }
+        .header { font-size: 1.4rem; font-weight: 900; letter-spacing: 0.4rem; margin-bottom: 2rem; text-transform: uppercase; text-shadow: 0 0 10px rgba(197, 160, 89, 0.4); }
         
-        /* 入力エリア：ディープ・ゴールド (#C5A059) の境界とテキスト */
+        /* 入力エリア */
         .input-box { 
             width: 85%; max-width: 480px; height: 140px; background: #111; border: 2px solid #C5A059; 
             padding: 1.2rem; color: #C5A059; font-size: 1.5rem; border-radius: 15px; outline: none; text-align: center;
         }
 
-        /* 翻訳実行ボタン（ここに親方のロゴ icon.png が重なる） */
+        /* 黄金の翻訳ボタン：画像がなくても「GLB」と表示して絶対に出現させる */
         .glb-execute-btn {
-            width: 190px; height: 190px; margin: 2.5rem 0;
-            background: #191970 url('icon.png') no-repeat center; /* ミッドナイト・ブルー背景 */
+            width: 180px; height: 180px; margin: 2.5rem 0;
+            background: #191970 url('icon.png') no-repeat center; 
             background-size: contain;
             border: 4px solid #C5A059; border-radius: 50%;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 25px rgba(197, 160, 89, 0.3);
+            box-shadow: 0 0 30px rgba(197, 160, 89, 0.4);
             transition: transform 0.1s, box-shadow 0.1s;
         }
-        .glb-execute-btn:active { transform: scale(0.94); box-shadow: 0 0 10px #C5A059; }
-        .glb-execute-btn span { font-size: 2rem; font-weight: 900; color: #C5A059; text-shadow: 0 0 5px #000; }
+        .glb-execute-btn:active { transform: scale(0.92); box-shadow: 0 0 10px #C5A059; }
+        .glb-execute-btn span { font-size: 2.5rem; font-weight: 900; color: #C5A059; text-shadow: 0 0 10px #000; }
 
-        /* 結果表示エリア：純白 (#FFF) のテキスト */
+        /* 結果表示エリア */
         .result-box { 
             width: 85%; max-width: 480px; min-height: 100px; padding: 1.2rem;
-            border-left: 5px solid #C5A059; background: rgba(197, 160, 89, 0.05);
+            border-left: 5px solid #C5A059; background: rgba(197, 160, 89, 0.1);
             color: #FFF; font-size: 1.4rem; text-align: left;
         }
     </style>
@@ -42,12 +42,13 @@
     <textarea class="input-box" id="it" placeholder="INPUT JAPANESE..."></textarea>
     
     <button class="glb-execute-btn" onclick="exec()">
-        <span>GLB</span> </button>
+        <span>GLB</span>
+    </button>
     
-    <div class="result-box" id="res">READY...</div>
+    <div id="res" class="result-box">READY...</div>
 
     <script>
-        // 親方の知恵を封印した無限辞書
+        // 親方の魂：オンデバイス辞書
         const DICT = {
             'おはようございます': 'Good morning',
             'ありがとう': 'Thank you',
@@ -65,12 +66,12 @@
             resArea.style.color = "#C5A059";
             resArea.innerText = "TRANSLATING...";
 
-            // 通信なし・爆速判定
+            // 通信なし・爆速判定（サーバーエラーを回避）
             setTimeout(() => {
                 const hit = DICT[val];
                 resArea.style.color = "#FFF";
-                resArea.innerText = hit || "PENDING CLOUD SYNC (API REQUIRED)";
-            }, 400);
+                resArea.innerText = hit || "PENDING CLOUD SYNC (NOT IN DICTIONARY)";
+            }, 300);
         }
     </script>
 </body>
