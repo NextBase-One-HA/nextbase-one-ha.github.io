@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>GLB TRAVEL - EXECUTION</title>
+    
+    <!-- OGPメタタグ（SNS拡散用） -->
+    <meta property="og:title" content="GLB TRAVEL - More than a translator">
+    <meta property="og:description" content="Confidence in travel situations. Lost passport? Taxi problem? Get instant help.">
+    <meta property="og:image" content="https://nextbase-one-ha.github.io/glb-hero.jpg">
+    <meta property="og:url" content="https://nextbase-one-ha.github.io/apps/glb/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GLB TRAVEL - More than a translator">
+    <meta name="twitter:description" content="Confidence in travel situations. Lost passport? Taxi problem? Get instant help.">
+    <meta name="twitter:image" content="https://nextbase-one-ha.github.io/glb-hero.jpg">
     <style>
         :root { --gold: #d6b25e; --bg: #0a0a0a; --card: #1a1a1a; --noir-red: #ff0000; }
         body { 
@@ -73,6 +84,93 @@
         .action-steps li { margin: 4px 0; font-size: 14px; color: #ccc; }
         .footer { margin-top: 32px; padding-top: 16px; font-size: 11px; color: #666; border-top: 1px solid #222; }
         .footer a { color: #888; margin: 0 8px; text-decoration: none; }
+        
+        /* ユーザーが笑顔になる機能：成功アニメーション */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--gold);
+            animation: confetti-fall 2s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(500px) rotate(360deg); opacity: 0; }
+        }
+        .success-icon {
+            font-size: 80px;
+            animation: success-bounce 0.6s ease-out;
+        }
+        @keyframes success-bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+        
+        /* ローディングアニメーション */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(214, 178, 94, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--gold);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 結果表示のアニメーション */
+        .result-enter {
+            animation: result-fade-in 0.5s ease-out;
+        }
+        @keyframes result-fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 成功時のハイライト */
+        .success-highlight {
+            animation: success-pulse 0.6s ease-out;
+        }
+        @keyframes success-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(214, 178, 94, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(214, 178, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(214, 178, 94, 0); }
+        }
+        
+        /* エラーメッセージの改善 */
+        .error-message {
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 4px solid var(--noir-red);
+            padding: 12px;
+            border-radius: 8px;
+            color: #ff9999;
+            animation: error-shake 0.5s ease-out;
+        }
+        @keyframes error-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        /* 楽しい要素：絵文字アニメーション */
+        .emoji-float {
+            display: inline-block;
+            animation: emoji-float 2s ease-in-out infinite;
+        }
+        @keyframes emoji-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body>
@@ -105,7 +203,12 @@ GLB PRO ($4.99)
 
     <input type="text" id="q" placeholder="Type or select situation..." autocomplete="off">
     <div id="result-area">Select a situation or type to search...</div>
+    <div id="loading-indicator" style="display: none; text-align: center; margin: 20px 0;">
+        <div class="loading"></div>
+        <div style="margin-top: 10px; color: var(--gold); font-size: 14px;">Translating...</div>
+    </div>
     <div id="share-area" style="display: none;"></div>
+    <div id="success-animation" class="success-animation" style="display: none;"></div>
 
     <div class="footer">
         <div style="margin-bottom: 15px;">
@@ -186,15 +289,16 @@ GLB PRO ($4.99)
             cooldownMs: 5000,
             quota: { FREE: 0, PRO: 50 },
             async init() {
-                // Check URL parameter for situation
+                // Check URL parameter for situation（拡散エンジン：Situation Link）
                 const params = new URLSearchParams(window.location.search);
                 const situationParam = params.get('s');
                 if (situationParam && SITUATION_DATA[situationParam]) {
+                    // Situation URLが指定されている場合、すぐに状況を表示（拡散の核心）
                     this.loadSituation(situationParam);
                     return;
                 }
                 
-                // Show situation buttons
+                // 通常モード：状況ボタンを表示
                 document.getElementById('situation-buttons').style.display = 'grid';
                 
                 try {
@@ -209,7 +313,8 @@ GLB PRO ($4.99)
                         if (i > 0 && s && t) this.dict.set(s.toLowerCase(), t);
                     }
                 } catch (e) {
-                    console.error('Dictionary load error:', e);
+                    // ブラックボックス化：エラー詳細を隠す
+                    // 内部エラーはログに記録しない（ユーザーに見せない）
                 }
                 const saved = localStorage.getItem('GLB_USER_DICT');
                 if (saved) {
@@ -223,30 +328,114 @@ GLB PRO ($4.99)
                 const data = SITUATION_DATA[situationKey];
                 if (!data) return;
                 
+                // ページタイトルを動的変更（拡散用）
+                document.title = `${data.situation} - GLB TRAVEL`;
+                
+                // OGPメタタグを動的更新（SNS拡散用）
+                this.updateOGPTags(data, situationKey);
+                
                 const situationUrl = `${window.location.origin}${window.location.pathname}?s=${situationKey}`;
-                const shareText = `This helped me when I had a ${data.situation.toLowerCase()} problem while traveling.\n\n${situationUrl}`;
                 
                 const display = `
-                    <div class="situation-display">
-                        <h3>Situation</h3>
-                        <p><strong>${data.situation}</strong></p>
-                        <h3>Translation</h3>
-                        <p>${data.translation}</p>
+                    <div class="situation-display result-enter success-highlight">
+                        <h3>Situation <span class="emoji-float">✈️</span></h3>
+                        <p><strong>${this.escapeHtml(data.situation)}</strong></p>
+                        <h3>Translation <span class="emoji-float">✨</span></h3>
+                        <p>${this.escapeHtml(data.translation)}</p>
                         <div class="action-steps">
-                            <h3>Action</h3>
+                            <h3>Action <span class="emoji-float">🎯</span></h3>
                             <ol>
-                                ${data.action.map(step => `<li>${step}</li>`).join('')}
+                                ${data.action.map(step => `<li>${this.escapeHtml(step)}</li>`).join('')}
                             </ol>
                         </div>
                     </div>
-                    <button class="share-btn" onclick="navigator.clipboard.writeText('${shareText.replace(/'/g, "\\'")}').then(() => alert('Link copied! Share it with friends.'))">
-                        📤 Share this situation
-                    </button>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px;">
+                        <button class="share-btn" onclick="STELLA_BUS.captureScreenshot('${situationKey}')" style="margin: 0; background: var(--gold); color: #000; font-weight: bold;">
+                            📸 Screenshot
+                        </button>
+                        <button class="share-btn" onclick="STELLA_BUS.shareSituation('${situationKey}', 'copy')" style="margin: 0;">
+                            📋 Copy Link
+                        </button>
+                        <button class="share-btn" onclick="STELLA_BUS.shareSituation('${situationKey}', 'twitter')" style="margin: 0;">
+                            🐦 Twitter
+                        </button>
+                        <button class="share-btn" onclick="STELLA_BUS.shareSituation('${situationKey}', 'reddit')" style="margin: 0;">
+                            🔴 Reddit
+                        </button>
+                        <button class="share-btn" onclick="STELLA_BUS.shareSituation('${situationKey}', 'facebook')" style="margin: 0;">
+                            📘 Facebook
+                        </button>
+                    </div>
                 `;
                 
                 document.getElementById('result-area').innerHTML = display;
                 document.getElementById('share-area').innerHTML = '';
                 document.getElementById('situation-buttons').style.display = 'none';
+                document.getElementById('q').value = '';
+            },
+            
+            // OGPメタタグを動的更新（SNS拡散用）
+            updateOGPTags(data, situationKey) {
+                const situationUrl = `${window.location.origin}${window.location.pathname}?s=${situationKey}`;
+                const ogTitle = `${data.situation} - GLB TRAVEL`;
+                const ogDescription = `${data.translation} | ${data.action[0]}`;
+                
+                // 既存のOGPタグを更新
+                let ogTitleTag = document.querySelector('meta[property="og:title"]');
+                let ogDescTag = document.querySelector('meta[property="og:description"]');
+                let ogUrlTag = document.querySelector('meta[property="og:url"]');
+                let twitterTitleTag = document.querySelector('meta[name="twitter:title"]');
+                let twitterDescTag = document.querySelector('meta[name="twitter:description"]');
+                
+                if (ogTitleTag) ogTitleTag.setAttribute('content', ogTitle);
+                if (ogDescTag) ogDescTag.setAttribute('content', ogDescription);
+                if (ogUrlTag) ogUrlTag.setAttribute('content', situationUrl);
+                if (twitterTitleTag) twitterTitleTag.setAttribute('content', ogTitle);
+                if (twitterDescTag) twitterDescTag.setAttribute('content', ogDescription);
+            },
+            
+            // 拡散用シェア機能（Twitter、Reddit、Facebook対応）
+            shareSituation(situationKey, platform) {
+                const data = SITUATION_DATA[situationKey];
+                if (!data) return;
+                
+                const situationUrl = `${window.location.origin}${window.location.pathname}?s=${situationKey}`;
+                
+                let shareUrl = '';
+                let shareText = '';
+                
+                switch(platform) {
+                    case 'copy':
+                        shareText = `${data.situation} abroad? This tool saved me.\n\n${situationUrl}`;
+                        navigator.clipboard.writeText(shareText).then(() => {
+                            alert('Link copied! Share it with friends. 🎉');
+                        }).catch(() => {
+                            // フォールバック
+                            prompt('Copy this link:', situationUrl);
+                        });
+                        return;
+                    
+                    case 'twitter':
+                        shareText = encodeURIComponent(`${data.situation} abroad? This tool saved me.`);
+                        shareUrl = `https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(situationUrl)}`;
+                        break;
+                    
+                    case 'reddit':
+                        shareText = encodeURIComponent(data.situation);
+                        shareUrl = `https://reddit.com/submit?title=${shareText}&url=${encodeURIComponent(situationUrl)}`;
+                        break;
+                    
+                    case 'facebook':
+                        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(situationUrl)}`;
+                        break;
+                    
+                    default:
+                        return;
+                }
+                
+                if (shareUrl) {
+                    window.open(shareUrl, '_blank', 'width=600,height=400');
+                }
             },
             getPlan() {
                 const plan = localStorage.getItem('GLB_PLAN') || 'FREE';
@@ -264,15 +453,16 @@ GLB PRO ($4.99)
             // 旅行ロジックはAPI側に一本化（削除）
             // travelLogic() は API側の40パターンを使用
             async translateWithAPI(text) {
+                // ブラックボックス化：内部制限を一般化
                 if (text.length >= 200) {
-                    return { error: '文字数が200文字を超えています' };
+                    return { error: 'Text is too long. Please shorten your input.' };
                 }
                 const now = Date.now();
                 if (now - this.lastTranslateTime < this.cooldownMs) {
-                    return { error: 'クールダウン中です。しばらくお待ちください。' };
+                    return { error: 'Please wait a moment before trying again.' };
                 }
                 if (!this.checkQuota()) {
-                    return { error: 'クォータが上限に達しました。PROプランにアップグレードしてください。' };
+                    return { error: 'Upgrade to PRO plan for more translations.' };
                 }
                 try {
                     const plan = this.getPlan();
@@ -288,8 +478,9 @@ GLB PRO ($4.99)
                         })
                     });
                     if (!res.ok) {
-                        const errorData = await res.json().catch(() => ({ detail: 'API error' }));
-                        throw new Error(errorData.detail || 'API error');
+                        // ブラックボックス化：内部エラー詳細を隠す
+                        const errorData = await res.json().catch(() => ({ message: 'Service unavailable' }));
+                        throw new Error(errorData.message || 'Service temporarily unavailable');
                     }
                     const data = await res.json();
                     this.lastTranslateTime = now;
@@ -302,88 +493,359 @@ GLB PRO ($4.99)
                         used_ai: data.used_ai || false
                     };
                 } catch (e) {
-                    return { error: 'API接続エラー: ' + e.message };
+                    // ブラックボックス化：内部エラー詳細を隠す
+                    return { error: 'Service temporarily unavailable. Please try again later.' };
                 }
             },
+            // 成功アニメーション表示
+            showSuccessAnimation() {
+                const animEl = document.getElementById('success-animation');
+                animEl.style.display = 'block';
+                animEl.innerHTML = '<div class="success-icon">✨</div>';
+                
+                // パーティクルエフェクト
+                for (let i = 0; i < 20; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.background = ['#d6b25e', '#ff0000', '#fff', '#00ff00'][Math.floor(Math.random() * 4)];
+                    animEl.appendChild(confetti);
+                }
+                
+                setTimeout(() => {
+                    animEl.style.display = 'none';
+                    animEl.innerHTML = '';
+                }, 2000);
+            },
+            
             async search(q) {
                 if (!q || !q.trim()) {
-                    document.getElementById('result-area').innerHTML = '<span style="color:#666;">入力してください</span>';
+                    document.getElementById('result-area').innerHTML = '<span style="color:#666;">Please enter text or select a situation.</span>';
+                    document.getElementById('loading-indicator').style.display = 'none';
                     return;
                 }
+                
+                // ローディング表示（最適化：すべての検索で表示）
+                document.getElementById('loading-indicator').style.display = 'block';
+                document.getElementById('result-area').innerHTML = '';
+                
                 const lower = q.toLowerCase().trim();
                 let result = null;
                 let source = '';
+                let isSuccess = false;
                 
-                // 1. 150k辞書
-                result = this.dict.get(lower);
-                if (result) {
-                    source = '150k辞書';
-                } else {
-                    // 2. ユーザー辞書
-                    result = this.userDict.get(lower);
+                try {
+                    // 1. 150k辞書
+                    result = this.dict.get(lower);
                     if (result) {
-                        source = 'ユーザー辞書';
+                        source = '150k辞書';
+                        isSuccess = true;
                     } else {
-                        // 3. API fallback (旅行ロジック + AI翻訳を含む)
-                        const apiResult = await this.translateWithAPI(q);
-                        if (apiResult.translation) {
-                            result = apiResult.translation;
-                            // API側のsourceに基づいて表示
-                            if (apiResult.source === 'travel_logic') {
-                                source = '旅行ロジック';
-                            } else if (apiResult.source === 'ai') {
-                                source = 'AI翻訳';
-                            } else {
-                                source = 'API翻訳';
+                        // 2. ユーザー辞書
+                        result = this.userDict.get(lower);
+                        if (result) {
+                            source = 'ユーザー辞書';
+                            isSuccess = true;
+                        } else {
+                            // 3. API fallback (旅行ロジック + AI翻訳を含む)
+                            const apiResult = await this.translateWithAPI(q);
+                            if (apiResult.translation) {
+                                result = apiResult.translation;
+                                isSuccess = true;
+                                // API側のsourceに基づいて表示
+                                if (apiResult.source === 'travel_logic') {
+                                    source = '旅行ロジック';
+                                } else if (apiResult.source === 'ai') {
+                                    source = 'AI翻訳';
+                                } else {
+                                    source = 'API翻訳';
+                                }
+                            } else if (apiResult.error) {
+                                result = apiResult.error;
+                                source = 'エラー';
                             }
-                        } else if (apiResult.error) {
-                            result = apiResult.error;
-                            source = 'エラー';
                         }
                     }
+                } finally {
+                    // ローディング非表示
+                    document.getElementById('loading-indicator').style.display = 'none';
                 }
                 
                 // Format display with Situation + Translation + Action style for screenshot
                 let display = '';
-                if (result) {
+                if (result && isSuccess) {
+                    // 成功アニメーション
+                    this.showSuccessAnimation();
+                    
                     if (source === '旅行ロジック' || source === 'travel_logic') {
                         // Format for screenshot sharing
                         display = `
-                            <div class="situation-display">
-                                <h3>Situation</h3>
-                                <p><strong>${q}</strong></p>
-                                <h3>Translation</h3>
-                                <p>${result}</p>
+                            <div class="situation-display result-enter success-highlight">
+                                <h3>Situation <span class="emoji-float">✈️</span></h3>
+                                <p><strong>${this.escapeHtml(q)}</strong></p>
+                                <h3>Translation <span class="emoji-float">✨</span></h3>
+                                <p>${this.escapeHtml(result)}</p>
                             </div>
                         `;
                     } else {
-                        display = `<strong>${result}</strong><br><span style="color:#666; font-size:12px;">[${source}]</span>`;
+                        display = `
+                            <div class="result-enter success-highlight">
+                                <strong style="font-size: 18px;">${this.escapeHtml(result)}</strong>
+                                <br><span style="color:#666; font-size:12px;">[${source}] <span class="emoji-float">🎉</span></span>
+                            </div>
+                        `;
                     }
                     
-                    // Add share button
+                    // Add share buttons（拡散エンジン：Screenshot + Share）
                     const shareText = `This helped me while traveling.\n\n${window.location.href}`;
                     display += `
-                        <button class="share-btn" onclick="navigator.clipboard.writeText('${shareText.replace(/'/g, "\\'")}').then(() => alert('Link copied! Share it with friends.'))">
-                            📤 Share
-                        </button>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px;">
+                            <button class="share-btn" onclick="STELLA_BUS.captureResultScreenshot()" style="margin: 0; background: var(--gold); color: #000; font-weight: bold;">
+                                📸 Screenshot
+                            </button>
+                            <button class="share-btn" onclick="navigator.clipboard.writeText('${shareText.replace(/'/g, "\\'")}').then(() => {
+                                alert('Link copied! Share it with friends. 🎉');
+                            })" style="margin: 0;">
+                                📋 Copy Link
+                            </button>
+                            <button class="share-btn" onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent('This helped me while traveling.')}&url=${encodeURIComponent(window.location.href)}', '_blank')" style="margin: 0;">
+                                🐦 Twitter
+                            </button>
+                            <button class="share-btn" onclick="window.open('https://reddit.com/submit?title=${encodeURIComponent('Travel helper')}&url=${encodeURIComponent(window.location.href)}', '_blank')" style="margin: 0;">
+                                🔴 Reddit
+                            </button>
+                        </div>
                     `;
+                } else if (result && source === 'エラー') {
+                    display = `<div class="error-message">${this.escapeHtml(result)}</div>`;
                 } else {
-                    display = '<span style="color:#666;">No result found. Try another phrase or upgrade for AI assist.</span>';
+                    display = '<span style="color:#666;">No result found. Try another phrase or upgrade to PRO for AI assistance. 💡</span>';
                 }
+                
                 document.getElementById('result-area').innerHTML = display;
+            },
+            
+            // XSS対策：HTMLエスケープ
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+            
+            // Screenshot Engine（状況画面のスクリーンショット・最適解版）
+            async captureScreenshot(situationKey) {
+                const data = SITUATION_DATA[situationKey];
+                if (!data) return;
+                
+                const resultArea = document.getElementById('result-area');
+                if (!resultArea) {
+                    alert('No content to capture. Please try again.');
+                    return;
+                }
+                
+                // ローディング表示
+                const loadingMsg = document.createElement('div');
+                loadingMsg.id = 'screenshot-loading';
+                loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: var(--gold); padding: 20px; border-radius: 10px; z-index: 10001;';
+                loadingMsg.innerHTML = '<div class="loading"></div><div style="margin-top: 10px;">Capturing screenshot...</div>';
+                document.body.appendChild(loadingMsg);
+                
+                try {
+                    // html2canvasライブラリを使用（エラーハンドリング強化）
+                    if (typeof html2canvas === 'undefined') {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                        script.onerror = () => {
+                            document.body.removeChild(loadingMsg);
+                            alert('Screenshot library failed to load. Please use Share button instead.');
+                        };
+                        script.onload = () => {
+                            this.captureScreenshot(situationKey);
+                        };
+                        document.head.appendChild(script);
+                        return;
+                    }
+                    
+                    // タイムアウト設定（10秒）
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Screenshot timeout')), 10000)
+                    );
+                    
+                    const canvasPromise = html2canvas(resultArea, {
+                        backgroundColor: '#1a1a1a',
+                        scale: 2,
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: false
+                    });
+                    
+                    const canvas = await Promise.race([canvasPromise, timeoutPromise]);
+                    
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            document.body.removeChild(loadingMsg);
+                            alert('Failed to create screenshot. Please try again.');
+                            return;
+                        }
+                        
+                        if (navigator.clipboard && navigator.clipboard.write) {
+                            navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]).then(() => {
+                                document.body.removeChild(loadingMsg);
+                                alert('Screenshot copied! Paste it on SNS. 📸');
+                            }).catch(() => {
+                                document.body.removeChild(loadingMsg);
+                                this.downloadScreenshot(canvas, situationKey);
+                            });
+                        } else {
+                            document.body.removeChild(loadingMsg);
+                            this.downloadScreenshot(canvas, situationKey);
+                        }
+                    }, 'image/png');
+                } catch (e) {
+                    document.body.removeChild(loadingMsg);
+                    if (e.message === 'Screenshot timeout') {
+                        alert('Screenshot took too long. Please try again or use Share button.');
+                    } else {
+                        alert('Screenshot feature is not available. Please use Share button instead.');
+                    }
+                }
+            },
+            
+            // スクリーンショットダウンロード（フォールバック）
+            downloadScreenshot(canvas, situationKey) {
+                const data = SITUATION_DATA[situationKey];
+                const filename = `GLB_${(data?.situation || situationKey).replace(/\s+/g, '_')}_${Date.now()}.png`;
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    alert('Screenshot downloaded! Share it on SNS. 📸');
+                });
+            },
+            
+            // 検索結果のスクリーンショット（拡散エンジン・最適解版）
+            async captureResultScreenshot() {
+                const resultArea = document.getElementById('result-area');
+                if (!resultArea || !resultArea.textContent.trim()) {
+                    alert('No result to capture. Please search first.');
+                    return;
+                }
+                
+                // ローディング表示
+                const loadingMsg = document.createElement('div');
+                loadingMsg.id = 'screenshot-loading';
+                loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: var(--gold); padding: 20px; border-radius: 10px; z-index: 10001;';
+                loadingMsg.innerHTML = '<div class="loading"></div><div style="margin-top: 10px;">Capturing screenshot...</div>';
+                document.body.appendChild(loadingMsg);
+                
+                try {
+                    // html2canvasライブラリを使用（エラーハンドリング強化）
+                    if (typeof html2canvas === 'undefined') {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                        script.onerror = () => {
+                            document.body.removeChild(loadingMsg);
+                            alert('Screenshot library failed to load. Please use Share button instead.');
+                        };
+                        script.onload = () => {
+                            this.captureResultScreenshot();
+                        };
+                        document.head.appendChild(script);
+                        return;
+                    }
+                    
+                    // タイムアウト設定（10秒）
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Screenshot timeout')), 10000)
+                    );
+                    
+                    const canvasPromise = html2canvas(resultArea, {
+                        backgroundColor: '#1a1a1a',
+                        scale: 2,
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: false
+                    });
+                    
+                    const canvas = await Promise.race([canvasPromise, timeoutPromise]);
+                    
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            document.body.removeChild(loadingMsg);
+                            alert('Failed to create screenshot. Please try again.');
+                            return;
+                        }
+                        
+                        if (navigator.clipboard && navigator.clipboard.write) {
+                            navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]).then(() => {
+                                document.body.removeChild(loadingMsg);
+                                alert('Screenshot copied! Paste it on SNS. 📸');
+                            }).catch(() => {
+                                document.body.removeChild(loadingMsg);
+                                this.downloadResultScreenshot(canvas);
+                            });
+                        } else {
+                            document.body.removeChild(loadingMsg);
+                            this.downloadResultScreenshot(canvas);
+                        }
+                    }, 'image/png');
+                } catch (e) {
+                    document.body.removeChild(loadingMsg);
+                    if (e.message === 'Screenshot timeout') {
+                        alert('Screenshot took too long. Please try again or use Share button.');
+                    } else {
+                        alert('Screenshot feature is not available. Please use Share button instead.');
+                    }
+                }
+            },
+            
+            downloadResultScreenshot(canvas) {
+                const filename = `GLB_Travel_Helper_${Date.now()}.png`;
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    alert('Screenshot downloaded! Share it on SNS. 📸');
+                });
             }
         };
         
-        // Situation button handlers
+        // Situation button handlers（拡散エンジン：URL更新）
         document.querySelectorAll('.situation-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const situation = e.target.dataset.situation;
                 if (SITUATION_DATA[situation]) {
                     STELLA_BUS.loadSituation(situation);
-                    // Update URL
-                    window.history.pushState({}, '', `?s=${situation}`);
+                    // URLを更新（シェア可能なSituation Linkを生成）
+                    window.history.pushState({ situation }, '', `?s=${situation}`);
+                    // ページタイトルも更新
+                    document.title = `${SITUATION_DATA[situation].situation} - GLB TRAVEL`;
                 }
             });
+        });
+        
+        // ブラウザの戻る/進むボタン対応（Situation Linkの履歴管理）
+        window.addEventListener('popstate', (e) => {
+            const params = new URLSearchParams(window.location.search);
+            const situationParam = params.get('s');
+            if (situationParam && SITUATION_DATA[situationParam]) {
+                STELLA_BUS.loadSituation(situationParam);
+            } else {
+                document.getElementById('situation-buttons').style.display = 'grid';
+                document.getElementById('result-area').innerHTML = 'Select a situation or type to search...';
+                document.title = 'GLB TRAVEL - EXECUTION';
+            }
         });
 
         const input = document.getElementById('q');
@@ -406,8 +868,22 @@ GLB PRO ($4.99)
         (function initNoirTV() {
             const typingEl = document.getElementById('noir-typing');
             const cursorEl = document.getElementById('noir-cursor');
-            const DEFAULT_PHRASE = 'ノワールテレビ、放送中。';
-            let phrases = [DEFAULT_PHRASE];
+            
+            // GLB用NOIR TVフレーズ（旅行・翻訳・拡散テーマ）
+            const DEFAULT_PHRASES = [
+                'ノワールテレビ、放送中。',
+                'GLB TRAVEL - More than a translator.',
+                'Confidence in travel situations.',
+                'Lost passport? Taxi problem? Get instant help.',
+                'Situation Link ready. Share your travel moments.',
+                '150k dictionary loaded. Fast translation.',
+                'Travel logic active. 40 patterns available.',
+                'Screenshot Engine ready. Share on SNS.',
+                'World expansion in progress.',
+                'NextBase - 生活動線開通。'
+            ];
+            
+            let phrases = [...DEFAULT_PHRASES];
             let phraseIndex = 0;
             let typingIndex = 0;
             let currentText = '';
@@ -415,11 +891,11 @@ GLB PRO ($4.99)
 
             function typeNext() {
                 if (!typingEl) return;
-                currentText = phrases[phraseIndex % phrases.length] || DEFAULT_PHRASE;
+                currentText = phrases[phraseIndex % phrases.length] || DEFAULT_PHRASES[0];
                 if (typingIndex >= currentText.length) {
                     typingIndex = 0;
                     phraseIndex++;
-                    setTimeout(typeNext, 2200);
+                    setTimeout(typeNext, 2500); // フレーズ間の待機時間を少し長く
                     return;
                 }
                 typingEl.textContent = currentText.slice(0, typingIndex + 1);
@@ -433,16 +909,27 @@ GLB PRO ($4.99)
                 typeNext();
             }
 
-            fetch('/data/phrases.json', { cache: 'no-store' })
+            // 外部フレーズファイルがあれば読み込む（オプション）
+            // /data/phrases.json または /public/data/phrases.json を試行
+            Promise.race([
+                fetch('/data/phrases.json', { cache: 'no-store' }),
+                fetch('/public/data/phrases.json', { cache: 'no-store' })
+            ])
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(json => {
                     if (Array.isArray(json) && json.length) {
-                        phrases = json.filter(x => typeof x === 'string' && x.trim().length > 0);
-                        if (phrases.length === 0) phrases = [DEFAULT_PHRASE];
+                        const externalPhrases = json.filter(x => typeof x === 'string' && x.trim().length > 0);
+                        if (externalPhrases.length > 0) {
+                            // 既存フレーズとGLB用フレーズを統合
+                            phrases = [...DEFAULT_PHRASES, ...externalPhrases];
+                        }
                     }
                     start();
                 })
-                .catch(() => { start(); });
+                .catch(() => { 
+                    // 外部ファイルがなくてもデフォルトフレーズで動作
+                    start(); 
+                });
         })();
     </script>
 </body>
